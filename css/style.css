@@ -1,0 +1,13 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Nasconde le barre di scorrimento */
+    background-color: #1a2634;
+    width: 100%;
+    height: 100%;
+}
+canvas {
+    display: block; /* Rimuove spazi vuoti sotto il canvas */
+    width: 100vw;
+    height: 100vh;
+}
