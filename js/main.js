@@ -21,9 +21,17 @@ controls.target.set(0, 2, 0);
 controls.maxPolarAngle = Math.PI / 2 + 0.1; 
 controls.update();
 
-// 2. COSTRUZIONE DEL MONDO (Chiamiamo i moduli esterni)
+
+// 2. COSTRUZIONE DEL MONDO
 buildRistorante(scene);
 setupLuci(scene);
+
+// Carichiamo un tavolo al centro della stanza (X=0, Y=0, Z=0)
+// Nota: la scala '1' puoi aumentarla o diminuirla (es. 1.5 o 0.5) a seconda di quanto è grande l'asset di Kenney
+caricaMobile(scene, 'mobili/tableGlass.glb', {x: 0, y: 0, z: 0}, 1.5);
+
+// Carichiamo una sedia di fianco al tavolo
+caricaMobile(scene, 'mobili/chairModernCushion.glb', {x: -1.2, y: 0, z: 0}, 1.5);
 
 // Se vuoi aggiungere il pinguino gerarchico basterà sbloccare questa riga:
 // const player = createHierarchicalPenguin();
