@@ -5,13 +5,7 @@ Il gioco è un ristorante 3D interattivo ispirato al classico "Penguin Dinner", 
 
 ---
 
-## 🚀 Funzionalità Attuali
-
-
-
----
-
-## 📂 Struttura del Progetto
+##  Struttura del Progetto
 
 ```text
 final-project-ice_age_diner/
