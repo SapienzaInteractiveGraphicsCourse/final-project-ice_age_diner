@@ -1,5 +1,12 @@
 // js/ristorante.js
 
+// =========================================================================
+// VARIABILI GLOBALI DI RIFERIMENTO
+// =========================================================================
+// Dichiarate qui per permettere alla funzione impostaCielo di controllarle
+let luceAmbientaleGlobale;
+let soleGlobale;
+
 function buildRistorante(scene) {
     const stanzaGroup = new THREE.Group();
 
@@ -16,7 +23,7 @@ function buildRistorante(scene) {
     texturePavimento.wrapT = THREE.RepeatWrapping;
     texturePavimento.repeat.set(1, 1); 
 
-    // Materiali
+    // Materiali (Mantenuti i tuoi valori esatti)
     const matPavimento = new THREE.MeshStandardMaterial({ 
         map: texturePavimento, 
         roughness: 0.2,  
@@ -70,21 +77,57 @@ function buildRistorante(scene) {
 }
 
 function setupLuci(scene) {
-    const ambientLight = new THREE.AmbientLight(0xeeffff, 0.3);
-    scene.add(ambientLight);
+    // Assegniamo la luce alla variabile globale
+    luceAmbientaleGlobale = new THREE.AmbientLight(0xeeffff, 0.3);
+    scene.add(luceAmbientaleGlobale);
 
-    const sunLight = new THREE.SpotLight(0xffffff, 0.75); // Regolata intensità non accecante
-    sunLight.position.set(-3, 11, -3); 
-    sunLight.target.position.set(0, 0, 0); 
-    scene.add(sunLight.target);
+    // Assegniamo la SpotLight alla variabile globale (Mantenute le tue coordinate)
+    soleGlobale = new THREE.SpotLight(0xffffff, 0.75); 
+    soleGlobale.position.set(-3, 11, -3); 
+    soleGlobale.target.position.set(0, 0, 0); 
+    scene.add(soleGlobale.target);
 
-    sunLight.angle = Math.PI / 3.5; 
-    sunLight.penumbra = 0.4;        
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 2048;  
-    sunLight.shadow.mapSize.height = 2048; 
-    sunLight.shadow.camera.near = 0.5;
-    sunLight.shadow.camera.far = 25;
+    soleGlobale.angle = Math.PI / 3.5; 
+    soleGlobale.penumbra = 0.4;        
+    soleGlobale.castShadow = true;
+    soleGlobale.shadow.mapSize.width = 2048;  
+    soleGlobale.shadow.mapSize.height = 2048; 
+    soleGlobale.shadow.camera.near = 0.5;
+    soleGlobale.shadow.camera.far = 25;
 
-    scene.add(sunLight);
+    scene.add(soleGlobale);
+}
+
+// =========================================================================
+// FUNZIONE DI CAMBIO CICLO GIORNO / NOTTE (Chiamata dai pulsanti HTML)
+// =========================================================================
+function impostaCielo(stato) {
+    let coloreCielo, intensitaAmbiente, intensitaSole;
+
+    if (stato === 'giorno') {
+        coloreCielo = 0xd0e3f0;        // Azzurro artico chiaro diurno
+        intensitaAmbiente = 0.3;       // Intensità iniziale del tuo codice
+        intensitaSole = 0.75;          // Intensità iniziale della tua SpotLight
+    } else if (stato === 'notte') {
+        coloreCielo = 0x0a0f1d;        // Blu notte polare profondo
+        intensitaAmbiente = 0.05;      // Chiarore minimo notturno
+        intensitaSole = 0.15;          // La SpotLight diventa un debole riflesso della luna
+    }
+
+    // Cambiamo il colore dello sfondo
+    scene.background.setHex(coloreCielo);
+    
+    // Cambiamo il colore della nebbia allineandolo allo sfondo
+    if (scene.fog) {
+        scene.fog.color.setHex(coloreCielo);
+    }
+
+    // Applichiamo le nuove intensità alle sorgenti luminose
+    if (luceAmbientaleGlobale) {
+        luceAmbientaleGlobale.intensity = intensitaAmbiente;
+    }
+
+    if (soleGlobale) {
+        soleGlobale.intensity = intensitaSole;
+    }
 }

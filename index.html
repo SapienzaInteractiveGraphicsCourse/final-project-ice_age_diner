@@ -4,10 +4,48 @@
     <meta charset="UTF-8">
     <title>Ice Age Diner - Final Project</title>
     <link rel="stylesheet" href="css/style.css">
+    
+    <style>
+        /* Stile per il contenitore dei pulsanti */
+        #ui-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10; /* Forza i pulsanti a stare SOPRA il canvas 3D */
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Stile dei pulsanti in tema artico */
+        .btn-tempo {
+            padding: 10px 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 2px solid #ffffff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .btn-giorno { background-color: #e0f2fe; color: #0369a1; }
+        .btn-giorno:hover { background-color: #bae6fd; }
+
+        .btn-notte { background-color: #1e1b4b; color: #e0e7ff; border-color: #4338ca; }
+        .btn-notte:hover { background-color: #312e81; }
+    </style>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
+
+    <div id="ui-container">
+        <button class="btn-tempo btn-giorno" onclick="impostaCielo('giorno')">☀️ Giorno</button>
+        <button class="btn-tempo btn-notte" onclick="impostaCielo('notte')">🌙 Notte</button>
+    </div>
+
     <script src="js/ristorante.js"></script>
     <script src="js/penguin.js"></script>
     <script src="js/main.js"></script>

@@ -21,7 +21,7 @@ controls.target.set(0, 2, 0);
 controls.maxPolarAngle = Math.PI / 2 + 0.1; 
 controls.update();
 
-// 2. COSTRUZIONE DEL MONDO (Chiamiamo i moduli esterni!)
+// 2. COSTRUZIONE DEL MONDO (Chiamiamo i moduli esterni)
 buildRistorante(scene);
 setupLuci(scene);
 
