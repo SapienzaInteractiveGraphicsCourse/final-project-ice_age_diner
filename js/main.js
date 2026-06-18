@@ -1,26 +1,50 @@
 // js/main.js
 
-// 1. INIZIALIZZAZIONE ELEMENTI CORE
-const scene = new THREE.Scene();
-const coloreArtico = 0xd0e3f0;
-scene.background = new THREE.Color(coloreArtico);
-scene.fog = new THREE.Fog(coloreArtico, 15, 45);
+// =========================================================================
+// INSTANZIAMENTO LOADER GLOBALE
+// =========================================================================
+// Necessario a livello globale per permettere a buildRistorante e caricaMobile di funzionare
+const gltfLoader = new THREE.GLTFLoader();
 
+// =========================================================================
+// 1. INIZIALIZZAZIONE ELEMENTI CORE (AMBIENTE PROCEDURALE)
+// =========================================================================
+const scene = new THREE.Scene();
+const coloreArtico = 0xd0e3f0; // Colore iniziale diurno dello sfondo
+scene.background = new THREE.Color(coloreArtico);
+
+// Camera impostata con un FOV ottimale per la stanza a tutto schermo
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 8, 14); 
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true; 
+
+// Aggiornato alla proprietà moderna standard per la gestione dei colori sRGB
+renderer.outputColorSpace = THREE.SRGBColorSpace; 
+
 document.body.appendChild(renderer.domElement);
+
+// =========================================================================
+// CONFIGURAZIONE TELECAMERA "ALTEZZA CAMERIERE" (PROSPETTIVA ISOMETRICA)
+// =========================================================================
+// Posizioniamo la telecamera bassa e vicina al fronte (Z=7.5) per l'immersione
+camera.position.set(0, 2.8, 7.5);
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-controls.target.set(0, 2, 0); 
-controls.maxPolarAngle = Math.PI / 2 + 0.1; 
-controls.update();
 
+// Il target punta a Y=1.2 (altezza cameriere) e Z=-0.5 per inquadrare il locale
+controls.target.set(0, 1.2, -0.5);
+
+// --- LIMITI DI NAVIGAZIONE ---
+controls.minDistance = 4;        // Impedisce di zoomare troppo dentro gli arredi
+controls.maxDistance = 11;       // Impedisce di allontanarsi uscendo dalla mappa
+controls.minPolarAngle = 0.6;    // Impedisce una vista aerea zenitale completamente piatta
+controls.maxPolarAngle = 1.45;   // Blocco di sicurezza: impedisce di andare sotto il pavimento
+
+controls.update();
 
 // =========================================================================
 // 2. COSTRUZIONE DEL MONDO
@@ -30,86 +54,89 @@ setupLuci(scene);
 
 const scalaArredi = 1.5;
 
-// Definiamo i 3 tavoli esattamente come nel tuo disegno (X, Z)
+// Definiamo i 3 tavoli esattamente come nel disegno strutturale (X, Z)
 const configTavoli = [
     { x: 2.8,  z: -2.5 }, // Tavolo 1: In alto a destra (vicino al muro di fondo)
     { x: 1.0,  z: 0.0  }, // Tavolo 2: Centrale, più spostato verso sinistra
     { x: 2.8,  z: 2.5  }  // Tavolo 3: In basso a destra (vicino a noi)
 ];
 
-// Carichiamo i set di arredi
+// Carichiamo i set di arredi tramite ciclo coordinato
 configTavoli.forEach((tavolo) => {
-    //TAVOLO
+    // TAVOLO
     caricaMobile(scene, 'mobili/tableGlass.glb', { x: tavolo.x, y: 0, z: tavolo.z }, scalaArredi, 0);
-    //SEDIA RIVOLTA DI SPALLE
-    caricaMobile(scene, 'mobili/chairModernCushion.glb', { x: tavolo.x+0.8, y: 0, z: tavolo.z + 0.3 }, scalaArredi, Math.PI);
-    //SEDIA RIVOLTA VERSO DI NOI
-    caricaMobile(scene, 'mobili/chairModernCushion.glb', { x: tavolo.x+0.5, y: 0, z: tavolo.z - 1 }, scalaArredi, 0);
+    // SEDIA RIVOLTA DI SPALLE
+    caricaMobile(scene, 'mobili/chairModernCushion.glb', { x: tavolo.x + 0.8, y: 0, z: tavolo.z + 0.3 }, scalaArredi, Math.PI);
+    // SEDIA RIVOLTA VERSO DI NOI
+    caricaMobile(scene, 'mobili/chairModernCushion.glb', { x: tavolo.x + 0.5, y: 0, z: tavolo.z - 1 }, scalaArredi, 0);
 });
 
-//********************************** */
-
 // -------------------------------------------------------------------------
-// B) IL BANCONE CUCINA COMPONIBILE (Allineamento perfetto)
+// B) IL BANCONE CUCINA COMPONIBILE (Incastri millimetrici)
 // -------------------------------------------------------------------------
 const xCucina = -3.8; 
 const rotCucina = -Math.PI / 2;
 const passoZ = 0.65; 
+const partenzaZ = -5; // Appoggiato alla vetrata di fondo
 
-// Punto di partenza per appoggiarsi al muro in fondo
-const partenzaZ = -5; 
-
-// Pezzo 1: KitchenCabinet (Attaccato al muro di fondo)
 caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: xCucina, y: 0, z: partenzaZ }, scalaArredi, rotCucina);
-
-// Pezzo 2: KitchenStove (Fornelli)
 caricaMobile(scene, 'mobili/kitchenStove.glb', { x: xCucina, y: 0, z: partenzaZ + passoZ }, scalaArredi, rotCucina);
-
-// Pezzo 3: KitchenCabinet
 caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: xCucina, y: 0, z: partenzaZ + (passoZ * 2) }, scalaArredi, rotCucina);
-
-// Pezzo 4: KitchenSink (Lavandino)
 caricaMobile(scene, 'mobili/kitchenSink.glb', { x: xCucina, y: 0, z: partenzaZ + (passoZ * 3) }, scalaArredi, rotCucina);
-
-// Pezzo 5: KitchenCabinet 
 caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: xCucina, y: 0, z: partenzaZ + (passoZ * 4) }, scalaArredi, rotCucina);
-
-// Pezzo 6: KitchenCabinet 
 caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: xCucina, y: 0, z: partenzaZ + (passoZ * 5) }, scalaArredi, rotCucina);
-
-// Pezzo 7: KitchenCabinet 
 caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: xCucina, y: 0, z: partenzaZ + (passoZ * 6) }, scalaArredi, rotCucina);
-
-// Pezzo 8: KitchenCabinet 
 caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: xCucina, y: 0, z: partenzaZ + (passoZ * 7) }, scalaArredi, rotCucina);
 
-// Pezzo 9: KitchenCabinetCornerRound
+// Angolo terminale arrotondato ruotato a 90° per chiudere la penisola
 caricaMobile(scene, 'mobili/kitchenCabinetCornerRound.glb', { 
     x: xCucina + 0.68, 
     y: 0, 
     z: partenzaZ + (passoZ * 9) 
 }, scalaArredi, Math.PI / 2);
 
-
-
-
-
-
 // -------------------------------------------------------------------------
-// C) LA PORTA D'INGRESSO (A Destra in basso, vicino a noi)
+// C) LA PORTA D'INGRESSO
 // -------------------------------------------------------------------------
-// Posizionata sul lato destro (X positivo), avanzata (Z positivo) e ruotata di -90 gradi (-Math.PI / 2)
 caricaMobile(scene, 'mobili/doorwayFront.glb', { x: 4.8, y: 0, z: 3.5 }, scalaArredi, -Math.PI / 2);
 
-// 3. LOOP DI CALCOLO CONTINUO
+// =========================================================================
+// 3. LOOP DI ANIMAZIONE E TIMING CONTINUO
+// =========================================================================
+// Inizializziamo un clock per misurare i secondi stabili (evita accelerazioni su schermi a 144Hz)
+const clock = new THREE.Clock();
+
 function animate() {
     requestAnimationFrame(animate);
+    
+    const tempoDallInizio = clock.getElapsedTime();
+    const delta = clock.getDelta(); // Tempo trascorso tra il frame precedente e questo
+
+    // Sfoglia l'array degli iceberg e falli dondolare dolcemente sulle onde
+    if (typeof listaIcebergMelting !== 'undefined') {
+        listaIcebergMelting.forEach(iceberg => {
+            const dati = iceberg.userData;
+            
+            // Verifica di sicurezza per evitare errori se l'oggetto asincrono non è ancora caricato completamente
+            if (dati && dati.altezzaInizialeY !== undefined) {
+                // Moto armonico per l'altezza Y (ondeggia su e giù)
+                iceberg.position.y = dati.altezzaInizialeY + Math.sin(tempoDallInizio * dati.velocitaFluttuazione + dati.faseOnda) * 0.15;
+                
+                // Rotazione asimmetrica legata al delta temporale (stabile a qualsiasi frame rate)
+                iceberg.rotation.y += dati.velocitaRotazione * delta * 0.5;
+            }
+        });
+    }
+
+    // Aggiornamento dei controlli obbligatorio per l'effetto fluidità (Damping)
     controls.update(); 
+    
     renderer.render(scene, camera);
 }
 
 animate();
 
+// Gestione del ridimensionamento della finestra (Full Screen reattivo)
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();

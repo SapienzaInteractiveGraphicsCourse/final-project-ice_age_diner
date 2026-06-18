@@ -6,6 +6,24 @@
     <link rel="stylesheet" href="css/style.css">
     
     <style>
+        /* =========================================================================
+           RESET PER MODALITÀ A TUTTO SCHERMO
+           ========================================================================= */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Blocca la comparsa delle barre di scorrimento del browser */
+            background-color: #050e14; /* Sfondo scuro preventivo per evitare flash bianchi */
+        }
+
+        canvas {
+            display: block; /* Rimuove piccoli spazi vuoti strutturali sotto il canvas */
+            width: 100vw;
+            height: 100vh;
+        }
+
         /* Stile per il contenitore dei pulsanti */
         #ui-container {
             position: absolute;
