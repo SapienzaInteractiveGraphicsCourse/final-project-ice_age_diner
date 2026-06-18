@@ -39,13 +39,61 @@ function buildRistorante(scene) {
     pavimento.receiveShadow = true; 
     stanzaGroup.add(pavimento);
 
-    // B) Parete Retro
-    const geoPareteRetro = new THREE.PlaneGeometry(10, 5);
-    const pareteRetro = new THREE.Mesh(geoPareteRetro, matPareti);
-    pareteRetro.position.set(0, 2.5, -5); 
-    pareteRetro.castShadow = true;
-    pareteRetro.receiveShadow = true;
-    stanzaGroup.add(pareteRetro);
+    // =========================================================================
+    // B) PARETE RETRO (DI FONDO) CON 3 GRANDI VETRATE (Z = -5)
+    // =========================================================================
+    // Sostituiamo la vecchia parete solida con una struttura a pilastri e vetri trasparenti.
+    
+    // Materiale per il Vetro: MeshPhysicalMaterial per riflessi realistici e trasparenza
+    const matVetro = new THREE.MeshPhysicalMaterial({
+        color: 0xccf2ff,        // Tonalità azzurro ghiaccio
+        transparent: true,     // Abilita la trasparenza
+        opacity: 0.25,          // Molto trasparente
+        roughness: 0.1,         // Lucido
+        metalness: 0.1,
+        transmission: 0.9,      // Fa passare la luce esterna
+        ior: 1.5,               // Indice di rifrazione del vetro
+        side: THREE.DoubleSide  // Visibile da dentro e fuori
+    });
+
+    // 1. Il muretto basso di base (Zoccolo)
+    const geoZoccolo = new THREE.PlaneGeometry(10, 0.6);
+    const zoccolo = new THREE.Mesh(geoZoccolo, matPareti);
+    zoccolo.position.set(0, 0.3, -5); // Posizionato a Z = -5 (muro di fondo)
+    zoccolo.castShadow = true;
+    zoccolo.receiveShadow = true;
+    stanzaGroup.add(zoccolo);
+
+    // 2. La trave superiore del soffitto
+    const geoTrave = new THREE.PlaneGeometry(10, 0.6);
+    const trave = new THREE.Mesh(geoTrave, matPareti);
+    trave.position.set(0, 4.7, -5);   
+    trave.castShadow = true;
+    trave.receiveShadow = true;
+    stanzaGroup.add(trave);
+
+    // 3. I 4 Pilastri verticali di ghiaccio
+    const geoPilastro = new THREE.PlaneGeometry(0.4, 3.8);
+    const posizioniPilastriX = [-4.8, -1.6, 1.6, 4.8];
+    
+    posizioniPilastriX.forEach(posX => {
+        const pilastro = new THREE.Mesh(geoPilastro, matPareti);
+        pilastro.position.set(posX, 2.5, -5); // Centrato verticalmente a Y = 2.5
+        pilastro.castShadow = true;
+        pilastro.receiveShadow = true;
+        stanzaGroup.add(pilastro);
+    });
+
+    // 4. I 3 Grandi Pannelli di Vetro che guardano l'oceano
+    const geoVetro = new THREE.PlaneGeometry(2.8, 3.8);
+    const posizioniVetriX = [-3.2, 0, 3.2]; 
+    
+    posizioniVetriX.forEach(posX => {
+        const vetro = new THREE.Mesh(geoVetro, matVetro);
+        vetro.position.set(posX, 2.5, -5); 
+        vetro.receiveShadow = true; 
+        stanzaGroup.add(vetro);
+    });
 
     // C) Parete Sinistra
     const geoPareteSinistra = new THREE.PlaneGeometry(10, 5);
