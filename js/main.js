@@ -43,6 +43,7 @@ controls.update();
 // =========================================================================
 buildRistorante(scene);
 setupLuci(scene);
+aggiungiDecorations(scene);
 
 const scalaArredi = 1.5;
 
@@ -80,7 +81,44 @@ caricaMobile(scene, 'mobili/kitchenCabinetCornerRound.glb', { x: xCucina + 0.68,
 caricaMobile(scene, 'mobili/doorwayFront.glb', { x: 4.8, y: 0, z: 3.5 }, scalaArredi, -Math.PI / 2);
 
 // =========================================================================
-// 3. GENERAZIONE FARETTI "OCCHIO DI BUE" POTENZIATI E CALIBRATI SUI TAVOLI
+// ALLESTIMENTO OGGETTI SULLE MENSOLE DELLA PARETE DESTRA (CORRETTO)
+// =========================================================================
+const altezzaSuperficieMensola = 1.42; // Altezza per poggiare sopra la mensola
+const coordinataXMensola = 4.75;       // Allineamento lungo il muro destro
+
+// --- MENSOLA 1 (Fondo stanza - Quadro Caffè) ---
+// La Radio: spostata più a sinistra (Z = -2.2) e ruotata per guardare il ristorante (-Math.PI / 2)
+caricaMobile(scene, 'mobili/radio.glb', { 
+    x: coordinataXMensola, 
+    y: altezzaSuperficieMensola, 
+    z: -2.9 
+}, scalaArredi, -Math.PI / 2); 
+
+// La Pianta Grande (pottedPlant): spostata più a sinistra (Z = -1.6) vicino alla radio
+caricaMobile(scene, 'mobili/pottedPlant.glb', { 
+    x: coordinataXMensola, 
+    y: altezzaSuperficieMensola, 
+    z: -2 
+}, scalaArredi, 0);
+
+
+// --- MENSOLA 2 (Fronte stanza - Quadro Croissant) ---
+// La Pianta Piccola (plantSmall): caricata sul lato sinistro della seconda mensola (Z = 1.4)
+caricaMobile(scene, 'mobili/plantSmall2.glb', { 
+    x: coordinataXMensola, 
+    y: altezzaSuperficieMensola, 
+    z: 2.5 
+}, scalaArredi*2, 0);
+
+// La Lampada Rotonda: posizionata sul lato destro della seconda mensola (Z = 2.0)
+caricaMobile(scene, 'mobili/lampRoundTable.glb', { 
+    x: coordinataXMensola, 
+    y: altezzaSuperficieMensola, 
+    z: 2.0 
+}, scalaArredi*1.3, 0);
+
+// =========================================================================
+// 3. GENERAZIONE FARETTI "OCCHIO DI BUE" CALIBRATI SUI TAVOLI
 // =========================================================================
 const luciTavoli = [];
 const coloriAlert = [0x00ff00, 0xffaa00, 0xff0000]; // Verde, Arancione, Rosso

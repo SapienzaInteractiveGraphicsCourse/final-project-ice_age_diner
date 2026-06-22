@@ -408,3 +408,112 @@ function impostaCielo(valoreSlider) {
         });
     }
 }
+function aggiungiDecorations(scene) {
+    const textureLoader = new THREE.TextureLoader();
+
+    // =========================================================================
+    // 1. PARETE SINISTRA: Lavagna del Menù 
+    // =========================================================================
+    const gruppoLavagna = new THREE.Group();
+    gruppoLavagna.position.set(-4.9, 2.2, -2); 
+
+    const textureMenuSinistra = textureLoader.load("textures/menu.jpg");
+
+    // Spessore immagine impostato a 0.13
+    const geoLavagna = new THREE.BoxGeometry(0.13, 2, 3); 
+    const matLavagna = new THREE.MeshStandardMaterial({ 
+        map: textureMenuSinistra,
+        roughness: 0.6 
+    });
+    const meshLavagna = new THREE.Mesh(geoLavagna, matLavagna);
+    meshLavagna.castShadow = true;
+    meshLavagna.receiveShadow = true;
+    gruppoLavagna.add(meshLavagna);
+
+    // RISOLUZIONE Z-FIGHTING PARETE SINISTRA:
+    // Riduciamo lo spessore della cornice a 0.08 (più sottile della lavagna)
+    const geoCornice = new THREE.BoxGeometry(0.08, 2.1, 3.1);
+    const matCornice = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+    const meshCornice = new THREE.Mesh(geoCornice, matCornice);
+    
+    // Spostiamo la cornice verso l'esterno del locale (X negativa a -0.03) 
+    // così si incolla perfettamente dietro al pannello del menù senza compenetrarlo
+    meshCornice.position.x = -0.03; 
+    gruppoLavagna.add(meshCornice);
+    
+    scene.add(gruppoLavagna);
+
+    // =========================================================================
+    // 2. PARETE DESTRA: COMPOSIZIONE GENERALE (3 poster + lavagna CENTRALE)
+    // =========================================================================
+    
+    function creaPosterDestra(nomeTexture, posZ, posY) {
+        const gruppoPoster = new THREE.Group();
+        gruppoPoster.position.set(4.9, posY, posZ);
+
+        const tex = textureLoader.load("textures/" + nomeTexture);
+        
+        const geoP = new THREE.BoxGeometry(0.09, 1.0, 0.8);
+        const matP = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.5 });
+        const meshP = new THREE.Mesh(geoP, matP);
+        meshP.castShadow = true;
+        gruppoPoster.add(meshP);
+
+        const geoC = new THREE.BoxGeometry(0.06, 1.06, 0.86);
+        const matC = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+        const meshC = new THREE.Mesh(geoC, matC);
+        meshC.position.x = 0.01; 
+        gruppoPoster.add(meshC);
+
+        scene.add(gruppoPoster);
+    }
+
+    // Generazione dei 3 poster laterali parete destra [X,Y]
+    creaPosterDestra("quadro1.jpg", -2.5, 2.5); 
+    creaPosterDestra("quadro2.jpg",  0.0, 3.5); 
+    creaPosterDestra("quadro3.jpg",  2.5, 2.5); 
+
+    // --- POSTER/LAVAGNA CENTRALE PARETE DESTRA
+    const gruppoLavagnaDestra = new THREE.Group();
+    gruppoLavagnaDestra.position.set(4.9, 1.7, 0); 
+
+    const textureCentroDestra = textureLoader.load("textures/insegna.jpg");
+    
+    //misure= [Spessore, ALTEZZA, BASE]
+    const geoLavagnaD = new THREE.BoxGeometry(0.13, 1.5, 2.3); 
+    const matLavagnaD = new THREE.MeshStandardMaterial({ 
+        map: textureCentroDestra, 
+        roughness: 0.6 
+    });
+    const meshLavagnaD = new THREE.Mesh(geoLavagnaD, matLavagnaD);
+    meshLavagnaD.castShadow = true;
+    gruppoLavagnaDestra.add(meshLavagnaD);
+
+    //misure= [Spessore, ALTEZZA, BASE]
+    const geoCorniceD = new THREE.BoxGeometry(0.11, 1.6, 2.4);
+    const matCorniceD = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+    const meshCorniceD = new THREE.Mesh(geoCorniceD, matCorniceD);
+    meshCorniceD.position.x = 0.02; 
+    gruppoLavagnaDestra.add(meshCorniceD);
+    
+    scene.add(gruppoLavagnaDestra);
+
+    //MENSOLE BIANCHE***********************************************************************
+    const matMensola = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+    //misure= [sporgenza, spessore, lunghezza]
+    const geoMensola = new THREE.BoxGeometry(0.3, 0.1, 1.5); 
+
+    // Mensola 1: Sotto il quadro di fondo (Z = -1.8)
+    const meshMensola1 = new THREE.Mesh(geoMensola, matMensola);
+    meshMensola1.position.set(4.75, 1.4, -2.5); 
+    meshMensola1.castShadow = true;
+    meshMensola1.receiveShadow = true;
+    scene.add(meshMensola1);
+
+    // Mensola 2: Sotto il quadro frontale (Z = 1.8)
+    const meshMensola2 = new THREE.Mesh(geoMensola, matMensola);
+    meshMensola2.position.set(4.75, 1.4, 2.5);  
+    meshMensola2.castShadow = true;
+    meshMensola2.receiveShadow = true;
+    scene.add(meshMensola2);
+}
