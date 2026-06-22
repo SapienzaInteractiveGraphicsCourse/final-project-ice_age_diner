@@ -1,7 +1,5 @@
 // js/ristorante.js
 
-// js/ristorante.js
-
 // =========================================================================
 // VARIABILI GLOBALI DI RIFERIMENTO
 // =========================================================================
@@ -9,7 +7,7 @@ let luceAmbientaleGlobale;
 let soleGlobale;
 let meshMare; 
 const listaIcebergMelting = []; 
-const listaFaretti = []; // <--- NUOVA: Conterrà i faretti e i loro materiali emissivi
+const listaFaretti = []; // <--- Conterrà i faretti e i loro materiali emissivi
 
 function buildRistorante(scene) {
     const stanzaGroup = new THREE.Group();
@@ -106,10 +104,71 @@ function buildRistorante(scene) {
     pareteDestra.receiveShadow = true;
     stanzaGroup.add(pareteDestra);
 
-    // F) GRIGLIA STRUTTURALE SUL SOFFITTO (Y = 5) E FARETTI NOTTURNI
+    // =========================================================================
+    // PRIMO MURO ORIZZONTALE (COMPOSIZIONE AD ARCO CON TEXTURE SCALATA CORRETTAMENTE)
+    // =========================================================================
+    const gruppoMuroCucina = new THREE.Group();
+    gruppoMuroCucina.position.set(-3.25, 2.25, 2.05); 
+
+    // 1. MATERIALE COLONNA SINISTRA (Larghezza 0.5, Altezza 4.5)
+    const texColonnaSX = textureLoader.load('textures/ghiaccio_muro.jpg');
+    texColonnaSX.wrapS = THREE.RepeatWrapping; texColonnaSX.wrapT = THREE.RepeatWrapping;
+    texColonnaSX.repeat.set(0.2, 1.8); // Scala proporzionale per mantenere i mattoni grandi uguali
+    const matColonnaSX = new THREE.MeshStandardMaterial({ map: texColonnaSX, roughness: 0.6 });
+
+    const geoColonnaSX = new THREE.BoxGeometry(0.5, 4.5, 0.2);
+    const colonnaSX = new THREE.Mesh(geoColonnaSX, matColonnaSX);
+    colonnaSX.position.set(-1.5, 0, 0); 
+    colonnaSX.castShadow = true; colonnaSX.receiveShadow = true;
+    gruppoMuroCucina.add(colonnaSX);
+
+    // 2. MATERIALE COLONNA DESTRA (Larghezza 0.5, Altezza 4.5)
+    const texColonnaDX = textureLoader.load('textures/ghiaccio_muro.jpg');
+    texColonnaDX.wrapS = THREE.RepeatWrapping; texColonnaDX.wrapT = THREE.RepeatWrapping;
+    texColonnaDX.repeat.set(0.2, 1.8); 
+    const matColonnaDX = new THREE.MeshStandardMaterial({ map: texColonnaDX, roughness: 0.6 });
+
+    const geoColonnaDX = new THREE.BoxGeometry(0.5, 4.5, 0.2);
+    const colonnaDX = new THREE.Mesh(geoColonnaDX, matColonnaDX);
+    colonnaDX.position.set(1.5, 0, 0); 
+    colonnaDX.castShadow = true; colonnaDX.receiveShadow = true;
+    gruppoMuroCucina.add(colonnaDX);
+
+    // 3. MATERIALE TRAVE SUPERIORE (Larghezza 2.5, Altezza 0.7)
+    const texTrave = textureLoader.load('textures/ghiaccio_muro.jpg');
+    texTrave.wrapS = THREE.RepeatWrapping; texTrave.wrapT = THREE.RepeatWrapping;
+    texTrave.repeat.set(1.0, 0.28); // Scala proporzionale alla forma allungata e bassa della trave
+    const matTrave = new THREE.MeshStandardMaterial({ map: texTrave, roughness: 0.6 });
+
+    const geoTraveArco = new THREE.BoxGeometry(2.5, 0.7, 0.2);
+    const traveSopra = new THREE.Mesh(geoTraveArco, matTrave);
+    traveSopra.position.set(0, 1.9, 0); 
+    traveSopra.castShadow = true; traveSopra.receiveShadow = true;
+    gruppoMuroCucina.add(traveSopra);
+
+    stanzaGroup.add(gruppoMuroCucina);
+
+    // =========================================================================
+    // SECONDO MURO VERTICALE (CHIUSURA CUCINA CON TEXTURE GHIACCIO)
+    // =========================================================================
+    const gruppoMuroChiusura = new THREE.Group();
+    gruppoMuroChiusura.position.set(-1.5, 2.25, -1.5);
+
+    const geoMuroChiusura = new THREE.BoxGeometry(0.2, 4.5, 7.2); 
+    const meshMuroChiusura = new THREE.Mesh(geoMuroChiusura, matPareti);
+
+    meshMuroChiusura.castShadow = true;
+    meshMuroChiusura.receiveShadow = true;
+    gruppoMuroChiusura.add(meshMuroChiusura);
+
+    stanzaGroup.add(gruppoMuroChiusura);
+
+    // =========================================================================
+    // F) GRIGLIA STRUTTURALE SUL SOFFITTO (Y = 5) E FARETTI NOTTURNI (Riconnessi dentro la funzione)
+    // =========================================================================
     const matGriglia = new THREE.MeshStandardMaterial({ color: 0x1a2e3b, roughness: 0.5, metalness: 0.8 });
     const spessoreTrave = 0.08; const altezzaTrave = 0.08; const lunghezzaTotale = 10; 
-    const passiGriglia = [-3, 0, 3]; // Ridotti i passi a 3 per avere un'ottima distribuzione (9 faretti totali agli incroci)
+    const passiGriglia = [-3, 0, 3]; 
     
     passiGriglia.forEach(coordinata => {
         const geoTraveX = new THREE.BoxGeometry(lunghezzaTotale, altezzaTrave, spessoreTrave);
@@ -125,39 +184,33 @@ function buildRistorante(scene) {
         stanzaGroup.add(traveZ);
     });
 
-    // POSIZIONAMENTO DEI FARETTI AGLI INCROCI DELLA GRIGLIA
     passiGriglia.forEach(x => {
         passiGriglia.forEach(z => {
-            // Gruppo contenitore per il faretto
             const farettoGroup = new THREE.Group();
             farettoGroup.position.set(x, 4.9, z);
 
-            // 1. Il corpo metallico del faretto (un piccolo cono/cilindro)
             const geoCorpo = new THREE.CylinderGeometry(0.06, 0.1, 0.12, 16);
             const matCorpo = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.9, roughness: 0.2 });
             const corpo = new THREE.Mesh(geoCorpo, matCorpo);
             corpo.position.y = -0.06;
             farettoGroup.add(corpo);
 
-            // 2. La lampadina interna (materiale speciale con proprietà Emissive)
             const geoLampadina = new THREE.SphereGeometry(0.04, 16, 16);
             const matLampadina = new THREE.MeshStandardMaterial({
                 color: 0x000000,
-                emissive: 0x000000, // Spenta di default (giorno)
+                emissive: 0x000000, 
                 roughness: 0.1
             });
             const lampadina = new THREE.Mesh(geoLampadina, matLampadina);
             lampadina.position.y = -0.11;
             farettoGroup.add(lampadina);
 
-            // 3. La sorgente di luce reale (SpotLight che punta verso il pavimento)
             const luceFaretto = new THREE.SpotLight(0xfff0dd, 0, 8, Math.PI / 4, 0.5, 1); 
             luceFaretto.position.set(0, -0.12, 0);
             luceFaretto.castShadow = true;
             luceFaretto.shadow.mapSize.width = 512;
             luceFaretto.shadow.mapSize.height = 512;
             
-            // Creiamo un target invisibile subito sotto il faretto per direzionare il fascio verso il basso
             const targetInvisibile = new THREE.Object3D();
             targetInvisibile.position.set(0, -5, 0);
             farettoGroup.add(targetInvisibile);
@@ -166,7 +219,6 @@ function buildRistorante(scene) {
             farettoGroup.add(luceFaretto);
             stanzaGroup.add(farettoGroup);
 
-            // Salviamo i riferimenti nell'array globale per poterli manipolare al cambio orario
             listaFaretti.push({
                 luce: luceFaretto,
                 materialeLampadina: matLampadina
@@ -192,10 +244,9 @@ function buildRistorante(scene) {
     scene.add(meshMare);
 
     // =========================================================================
-    // GENERATORE DI ICEBERG REALI (CON ANCORAGGIO DI SICUREZZA AMPLIATO A 22 METRI)
+    // GENERATORE DI ICEBERG REALI
     // =========================================================================
     const numeroIcebergReali = 25; 
-    
     const textureIceberg = textureLoader.load('textures/ghiaccio_muro.jpg');
     textureIceberg.wrapS = THREE.RepeatWrapping;
     textureIceberg.wrapT = THREE.RepeatWrapping;
@@ -208,7 +259,6 @@ function buildRistorante(scene) {
         metalness: 0.1
     });
 
-    // Intercettatore URL per bloccare richieste 404 di texture non indicizzate nel server locale
     const managerBypass = new THREE.LoadingManager();
     managerBypass.setURLModifier((url) => {
         if (url.endsWith('.jpg') || url.endsWith('.png')) {
@@ -221,7 +271,6 @@ function buildRistorante(scene) {
 
     gltfLoaderIceberg.load('models/esterni/rock_moss_set_01_4k.gltf', (gltf) => {
         let geoEstratta = null;
-
         gltf.scene.traverse((child) => {
             if (child.isMesh && !geoEstratta) {
                 geoEstratta = child.geometry; 
@@ -234,15 +283,12 @@ function buildRistorante(scene) {
 
         for (let i = 0; i < numeroIcebergReali; i++) {
             const iceberg = new THREE.Mesh(geoEstratta, matIcebergReale);
-
             let posX, posZ;
             let siTrovaDentroLaStanza = true;
 
             while (siTrovaDentroLaStanza) {
                 posX = (Math.random() - 0.5) * 160;
                 posZ = (Math.random() - 0.5) * 160;
-
-                // CORREZIONE CRITICA: Esteso a 22.0 unità per tenere conto del raggio delle mesh scalate
                 if (Math.abs(posX) > 22.0 || Math.abs(posZ) > 22.0) {
                     siTrovaDentroLaStanza = false;
                 }
@@ -252,18 +298,14 @@ function buildRistorante(scene) {
             const scY = 3 + Math.random() * 6;
             const scZ = 4 + Math.random() * 8;
             iceberg.scale.set(scX, scY, scZ);
-
             iceberg.position.set(posX, -0.2, posZ);
-
             iceberg.rotation.x = Math.random() * 0.2; 
             iceberg.rotation.y = Math.random() * Math.PI * 2;
             iceberg.rotation.z = Math.random() * 0.2;
-
             iceberg.castShadow = true;
             iceberg.receiveShadow = true;
 
             iceberg.userData = {
-                // VELOCITÀ AGGIORNATA: Oscillazione più rapida (range 1.5 - 3.0) per un movimento evidente
                 velocitaFluttuazione: 1.5 + Math.random() * 1.5,
                 faseOnda: Math.random() * Math.PI * 2,
                 altezzaInizialeY: iceberg.position.y,
@@ -273,16 +315,12 @@ function buildRistorante(scene) {
             scene.add(iceberg);
             listaIcebergMelting.push(iceberg); 
         }
-        console.log("Iceberg Poly Haven posizionati in sicurezza in mare aperto!");
     }, undefined, (err) => {
-        console.warn("Algoritmo di fallback d'emergenza attivato.");
         const geoFallback = new THREE.IcosahedronGeometry(1, 0);
         for (let i = 0; i < numeroIcebergReali; i++) {
             const iceberg = new THREE.Mesh(geoFallback, matIcebergReale);
             let posX = (Math.random() - 0.5) * 160;
             let posZ = (Math.random() - 0.5) * 160;
-            
-            // Stesso blocco di sicurezza a 22 anche nel fallback procedurale
             if (Math.abs(posX) < 22 && Math.abs(posZ) < 22) posZ -= 35;
 
             const scY = 3 + Math.random() * 6;
@@ -290,7 +328,7 @@ function buildRistorante(scene) {
             iceberg.position.set(posX, -0.2, posZ);
             iceberg.castShadow = true; iceberg.receiveShadow = true;
             iceberg.userData = { 
-                velocitaFluttuazione: 2.2, // Velocizzato nel fallback
+                velocitaFluttuazione: 2.2, 
                 faseOnda: Math.random(), 
                 altezzaInizialeY: iceberg.position.y, 
                 velocitaRotazione: 0.04 
@@ -301,20 +339,18 @@ function buildRistorante(scene) {
     });
 } 
 
+
+
+
+
 function setupLuci(scene) {
     luceAmbientaleGlobale = new THREE.AmbientLight(0xeeffff, 0.45);
     scene.add(luceAmbientaleGlobale);
 
     soleGlobale = new THREE.DirectionalLight(0xffffff, 0.75); 
-    
-    // =========================================================================
-    // MODIFICA QUESTA RIGA: Invertiamo i segni di X e Z da (-30, 50, 20) a (30, 50, -20)
-    // =========================================================================
     soleGlobale.position.set(30, 50, -20); 
-    
     soleGlobale.castShadow = true;
     
-    // Configurazione del box delle ombre (lascialo invariato)
     soleGlobale.shadow.camera.left = -30;
     soleGlobale.shadow.camera.right = 30;
     soleGlobale.shadow.camera.top = 30;
@@ -328,192 +364,146 @@ function setupLuci(scene) {
     scene.add(soleGlobale);
 }
 
-// =========================================================================
-// GESTORE ATMOSFERA FLUIDA: GIORNO ➔ TRAMONTO ➔ NOTTE (BILANCIATO)
-// =========================================================================
-function impostaCielo(valoreSlider) {
-    // Trasformiamo il valore dello slider (0-100) in un fattore tra 0.0 e 1.0
-    const v = valoreSlider / 100;
 
-    // Configurazione dei 3 stati fondamentali bilanciati per non accecare l'utente
-    // Cerca questo blocco all'inizio di impostaCielo(valoreSlider)
+
+
+
+function impostaCielo(valoreSlider) {
+    const v = valoreSlider / 100;
     const stati = {
-        giorno: { 
-            cielo: 0xd0e3f0, 
-            mare: 0x1c3a4e, 
-            amb: 0.7,       // AUMENTATO da 0.45 a 0.68: Illumina le zone in ombra e definisce i bordi dei tavoli scuri
-            sole: 0.7,      // Abbassato leggermente a 0.70 per bilanciare il pavimento ed evitare bruciature
-            soleCol: 0xffffff, 
-            faretti: 0.0 
-        },
+        giorno: { cielo: 0xd0e3f0, mare: 0x1c3a4e, amb: 0.7, sole: 0.7, soleCol: 0xffffff, faretti: 0.0 },
         tramonto: { cielo: 0xf39c12, mare: 0x3a2312, amb: 0.40, sole: 0.85, soleCol: 0xff6b4a, faretti: 0.4 },
-        notte:    { cielo: 0x070b12, mare: 0x0b141d, amb: 0.08, sole: 0.25, soleCol: 0x7fa1ff, faretti: 1.0 }
+        notte:     { cielo: 0x070b12, mare: 0x0b141d, amb: 0.08, sole: 0.25, soleCol: 0x7fa1ff, faretti: 1.0 }
     };
 
     let colCielo = new THREE.Color();
     let colMare = new THREE.Color();
     let intAmb, intSole, colSole, intFaretti;
 
-    // FASE 1: Transizione da Giorno a Tramonto (Slider da 0 a 50, ovvero v da 0.0 a 0.5)
     if (v <= 0.5) {
-        const t = v / 0.5; // Normalizziamo il sotto-intervallo tra 0 e 1
-        
+        const t = v / 0.5;
         colCielo.lerpColors(new THREE.Color(stati.giorno.cielo), new THREE.Color(stati.tramonto.cielo), t);
         colMare.lerpColors(new THREE.Color(stati.giorno.mare), new THREE.Color(stati.tramonto.mare), t);
         colSole = new THREE.Color().lerpColors(new THREE.Color(stati.giorno.soleCol), new THREE.Color(stati.tramonto.soleCol), t);
-        
         intAmb = THREE.MathUtils.lerp(stati.giorno.amb, stati.tramonto.amb, t);
         intSole = THREE.MathUtils.lerp(stati.giorno.sole, stati.tramonto.sole, t);
         intFaretti = THREE.MathUtils.lerp(stati.giorno.faretti, stati.tramonto.faretti, t);
-    } 
-    // FASE 2: Transizione da Tramonto a Notte (Slider da 50 a 100, ovvero v da 0.5 a 1.0)
-    else {
-        const t = (v - 0.5) / 0.5; // Normalizziamo il sotto-intervallo tra 0 e 1
-        
+    } else {
+        const t = (v - 0.5) / 0.5;
         colCielo.lerpColors(new THREE.Color(stati.tramonto.cielo), new THREE.Color(stati.notte.cielo), t);
         colMare.lerpColors(new THREE.Color(stati.tramonto.mare), new THREE.Color(stati.notte.mare), t);
         colSole = new THREE.Color().lerpColors(new THREE.Color(stati.tramonto.soleCol), new THREE.Color(stati.notte.soleCol), t);
-        
         intAmb = THREE.MathUtils.lerp(stati.tramonto.amb, stati.notte.amb, t);
         intSole = THREE.MathUtils.lerp(stati.tramonto.sole, stati.notte.sole, t);
         intFaretti = THREE.MathUtils.lerp(stati.tramonto.faretti, stati.notte.faretti, t);
     }
 
-    // Applichiamo i dati interpolati alla scena di Three.js
     if (typeof scene !== 'undefined') {
         scene.background = colCielo;
         if (scene.fog) scene.fog.color = colCielo;
     }
-
-    if (meshMare && meshMare.material) {
-        meshMare.material.color = colMare;
-    }
-
-    if (luceAmbientaleGlobale) {
-        luceAmbientaleGlobale.intensity = intAmb;
-    }
-
+    if (meshMare && meshMare.material) meshMare.material.color = colMare;
+    if (luceAmbientaleGlobale) luceAmbientaleGlobale.intensity = intAmb;
     if (soleGlobale) {
         soleGlobale.intensity = intSole;
         soleGlobale.color = colSole;
     }
-
-    // I faretti sul soffitto iniziano ad accendersi debolmente già al tramonto per dare atmosfera!
     if (typeof listaFaretti !== 'undefined') {
         listaFaretti.forEach(faretto => {
             faretto.luce.intensity = intFaretti;
-            // Sfuma il filamento interno della lampadina da spento a luce calda calda
             const colEmissive = new THREE.Color(0x000000).lerp(new THREE.Color(0xfff0dd), intFaretti);
             faretto.materialeLampadina.emissive = colEmissive;
         });
     }
 }
+
+
+
 function aggiungiDecorations(scene) {
-    const textureLoader = new THREE.TextureLoader();
+    const textureLoader = new THREE.TextureLoader();
 
-    // =========================================================================
-    // 1. PARETE SINISTRA: Lavagna del Menù 
-    // =========================================================================
-    const gruppoLavagna = new THREE.Group();
-    gruppoLavagna.position.set(-4.9, 2.2, -2); 
+    // =========================================================================
+    // 1. LAVAGNA DEL MENÙ (SPOSTATA SUL NUOVO MURO VERTICALE DELLA CUCINA)
+    
+    const gruppoLavagna = new THREE.Group();
+    
+    gruppoLavagna.position.set(-1.38, 2.2, -1.5); 
 
-    const textureMenuSinistra = textureLoader.load("textures/menu.jpg");
+    const textureMenuSinistra = textureLoader.load("textures/menu.jpg");
+    const geoLavagna = new THREE.BoxGeometry(0.13, 2, 3); 
+    const matLavagna = new THREE.MeshStandardMaterial({ map: textureMenuSinistra, roughness: 0.6 });
+    const meshLavagna = new THREE.Mesh(geoLavagna, matLavagna);
+    meshLavagna.castShadow = true;
+    meshLavagna.receiveShadow = true;
+    gruppoLavagna.add(meshLavagna);
 
-    // Spessore immagine impostato a 0.13
-    const geoLavagna = new THREE.BoxGeometry(0.13, 2, 3); 
-    const matLavagna = new THREE.MeshStandardMaterial({ 
-        map: textureMenuSinistra,
-        roughness: 0.6 
-    });
-    const meshLavagna = new THREE.Mesh(geoLavagna, matLavagna);
-    meshLavagna.castShadow = true;
-    meshLavagna.receiveShadow = true;
-    gruppoLavagna.add(meshLavagna);
+    // Cornice posteriore (ora posizionata a Z negativo rispetto al gruppo per stare dietro il pannello)
+    const geoCornice = new THREE.BoxGeometry(0.08, 2.1, 3.1);
+    const matCornice = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+    const meshCornice = new THREE.Mesh(geoCornice, matCornice);
+    meshCornice.position.x = -0.03; 
+    gruppoLavagna.add(meshCornice);
+    
+    scene.add(gruppoLavagna);
+    
+    // =========================================================================
+    // 2. PARETE DESTRA: COMPOSIZIONE GENERALE
 
-    // RISOLUZIONE Z-FIGHTING PARETE SINISTRA:
-    // Riduciamo lo spessore della cornice a 0.08 (più sottile della lavagna)
-    const geoCornice = new THREE.BoxGeometry(0.08, 2.1, 3.1);
-    const matCornice = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
-    const meshCornice = new THREE.Mesh(geoCornice, matCornice);
-    
-    // Spostiamo la cornice verso l'esterno del locale (X negativa a -0.03) 
-    // così si incolla perfettamente dietro al pannello del menù senza compenetrarlo
-    meshCornice.position.x = -0.03; 
-    gruppoLavagna.add(meshCornice);
-    
-    scene.add(gruppoLavagna);
+    function creaPosterDestra(nomeTexture, posZ, posY) {
+        const gruppoPoster = new THREE.Group();
+        gruppoPoster.position.set(4.9, posY, posZ);
 
-    // =========================================================================
-    // 2. PARETE DESTRA: COMPOSIZIONE GENERALE (3 poster + lavagna CENTRALE)
-    // =========================================================================
-    
-    function creaPosterDestra(nomeTexture, posZ, posY) {
-        const gruppoPoster = new THREE.Group();
-        gruppoPoster.position.set(4.9, posY, posZ);
+        const tex = textureLoader.load("textures/" + nomeTexture);
+        const geoP = new THREE.BoxGeometry(0.09, 1.0, 0.8);
+        const matP = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.5 });
+        const meshP = new THREE.Mesh(geoP, matP);
+        meshP.castShadow = true;
+        gruppoPoster.add(meshP);
 
-        const tex = textureLoader.load("textures/" + nomeTexture);
-        
-        const geoP = new THREE.BoxGeometry(0.09, 1.0, 0.8);
-        const matP = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.5 });
-        const meshP = new THREE.Mesh(geoP, matP);
-        meshP.castShadow = true;
-        gruppoPoster.add(meshP);
+        const geoC = new THREE.BoxGeometry(0.06, 1.06, 0.86);
+        const matC = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+        const meshC = new THREE.Mesh(geoC, matC);
+        meshC.position.x = 0.01; 
+        gruppoPoster.add(meshC);
 
-        const geoC = new THREE.BoxGeometry(0.06, 1.06, 0.86);
-        const matC = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
-        const meshC = new THREE.Mesh(geoC, matC);
-        meshC.position.x = 0.01; 
-        gruppoPoster.add(meshC);
+        scene.add(gruppoPoster);
+    }
 
-        scene.add(gruppoPoster);
-    }
+    creaPosterDestra("quadro1.jpg", -2.5, 2.5); 
+    creaPosterDestra("quadro2.jpg",  0.0, 3.5); 
+    creaPosterDestra("quadro3.jpg",  2.5, 2.5); 
 
-    // Generazione dei 3 poster laterali parete destra [X,Y]
-    creaPosterDestra("quadro1.jpg", -2.5, 2.5); 
-    creaPosterDestra("quadro2.jpg",  0.0, 3.5); 
-    creaPosterDestra("quadro3.jpg",  2.5, 2.5); 
+    // --- POSTER/LAVAGNA CENTRALE PARETE DESTRA
+    const gruppoLavagnaDestra = new THREE.Group();
+    gruppoLavagnaDestra.position.set(4.9, 1.7, 0); 
 
-    // --- POSTER/LAVAGNA CENTRALE PARETE DESTRA
-    const gruppoLavagnaDestra = new THREE.Group();
-    gruppoLavagnaDestra.position.set(4.9, 1.7, 0); 
+    const textureCentroDestra = textureLoader.load("textures/insegna.jpg");
+    const geoLavagnaD = new THREE.BoxGeometry(0.13, 1.5, 2.3); 
+    const matLavagnaD = new THREE.MeshStandardMaterial({ map: textureCentroDestra, roughness: 0.6 });
+    const meshLavagnaD = new THREE.Mesh(geoLavagnaD, matLavagnaD);
+    meshLavagnaD.castShadow = true;
+    gruppoLavagnaDestra.add(meshLavagnaD);
 
-    const textureCentroDestra = textureLoader.load("textures/insegna.jpg");
-    
-    //misure= [Spessore, ALTEZZA, BASE]
-    const geoLavagnaD = new THREE.BoxGeometry(0.13, 1.5, 2.3); 
-    const matLavagnaD = new THREE.MeshStandardMaterial({ 
-        map: textureCentroDestra, 
-        roughness: 0.6 
-    });
-    const meshLavagnaD = new THREE.Mesh(geoLavagnaD, matLavagnaD);
-    meshLavagnaD.castShadow = true;
-    gruppoLavagnaDestra.add(meshLavagnaD);
+    const geoCorniceD = new THREE.BoxGeometry(0.11, 1.6, 2.4);
+    const matCorniceD = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+    const meshCorniceD = new THREE.Mesh(geoCorniceD, matCorniceD);
+    meshCorniceD.position.x = 0.02; 
+    gruppoLavagnaDestra.add(meshCorniceD);
+    scene.add(gruppoLavagnaDestra);
 
-    //misure= [Spessore, ALTEZZA, BASE]
-    const geoCorniceD = new THREE.BoxGeometry(0.11, 1.6, 2.4);
-    const matCorniceD = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
-    const meshCorniceD = new THREE.Mesh(geoCorniceD, matCorniceD);
-    meshCorniceD.position.x = 0.02; 
-    gruppoLavagnaDestra.add(meshCorniceD);
-    
-    scene.add(gruppoLavagnaDestra);
+    // MENSOLE BIANCHE
+    const matMensola = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+    const geoMensola = new THREE.BoxGeometry(0.3, 0.1, 1.5); 
 
-    //MENSOLE BIANCHE***********************************************************************
-    const matMensola = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
-    //misure= [sporgenza, spessore, lunghezza]
-    const geoMensola = new THREE.BoxGeometry(0.3, 0.1, 1.5); 
+    const meshMensola1 = new THREE.Mesh(geoMensola, matMensola);
+    meshMensola1.position.set(4.75, 1.4, -2.5); 
+    meshMensola1.castShadow = true;
+    meshMensola1.receiveShadow = true;
+    scene.add(meshMensola1);
 
-    // Mensola 1: Sotto il quadro di fondo (Z = -1.8)
-    const meshMensola1 = new THREE.Mesh(geoMensola, matMensola);
-    meshMensola1.position.set(4.75, 1.4, -2.5); 
-    meshMensola1.castShadow = true;
-    meshMensola1.receiveShadow = true;
-    scene.add(meshMensola1);
-
-    // Mensola 2: Sotto il quadro frontale (Z = 1.8)
-    const meshMensola2 = new THREE.Mesh(geoMensola, matMensola);
-    meshMensola2.position.set(4.75, 1.4, 2.5);  
-    meshMensola2.castShadow = true;
-    meshMensola2.receiveShadow = true;
-    scene.add(meshMensola2);
+    const meshMensola2 = new THREE.Mesh(geoMensola, matMensola);
+    meshMensola2.position.set(4.75, 1.4, 2.5);  
+    meshMensola2.castShadow = true;
+    meshMensola2.receiveShadow = true;
+    scene.add(meshMensola2);
 }

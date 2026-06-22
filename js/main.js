@@ -47,39 +47,74 @@ aggiungiDecorations(scene);
 
 const scalaArredi = 1.5;
 
-// Definiamo i 3 tavoli strutturali (X, Z)
+// --- A) I 3 TAVOLI STRUTTURALI (X, Z) ---
 const configTavoli = [
     { x: 2.8,  z: -2.5 }, // Tavolo 1: In alto a destra
     { x: 1.0,  z: 0.0  }, // Tavolo 2: Centrale
     { x: 2.8,  z: 2.5  }  // Tavolo 3: In basso a destra
 ];
 
-// Carichiamo i set di arredi tramite ciclo coordinato
 configTavoli.forEach((tavolo) => {
     caricaMobile(scene, 'mobili/tableGlass.glb', { x: tavolo.x, y: 0, z: tavolo.z }, scalaArredi, 0);
     caricaMobile(scene, 'mobili/chairModernCushion.glb', { x: tavolo.x + 0.8, y: 0, z: tavolo.z + 0.3 }, scalaArredi, Math.PI);
     caricaMobile(scene, 'mobili/chairModernCushion.glb', { x: tavolo.x + 0.5, y: 0, z: tavolo.z - 1 }, scalaArredi, 0);
 });
 
-// B) Il bancone cucina componibile
-const xCucina = -3.8; 
-const rotCucina = -Math.PI / 2;
-const passoZ = 0.65; 
-const partenzaZ = -5; 
+// =========================================================================
+// B) NUOVO ASSETTO MOBILI CUCINA (CONTATTO PERFETTO SENZA BUCHI O COMPENETRAZIONI)
+// =========================================================================
 
-caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: xCucina, y: 0, z: partenzaZ }, scalaArredi, rotCucina);
-caricaMobile(scene, 'mobili/kitchenStove.glb', { x: xCucina, y: 0, z: partenzaZ + passoZ }, scalaArredi, rotCucina);
-caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: xCucina, y: 0, z: partenzaZ + (passoZ * 2) }, scalaArredi, rotCucina);
-caricaMobile(scene, 'mobili/kitchenSink.glb', { x: xCucina, y: 0, z: partenzaZ + (passoZ * 3) }, scalaArredi, rotCucina);
-caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: xCucina, y: 0, z: partenzaZ + (passoZ * 4) }, scalaArredi, rotCucina);
-caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: xCucina, y: 0, z: partenzaZ + (passoZ * 5) }, scalaArredi, rotCucina);
-caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: xCucina, y: 0, z: partenzaZ + (passoZ * 6) }, scalaArredi, rotCucina);
-caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: xCucina, y: 0, z: partenzaZ + (passoZ * 7) }, scalaArredi, rotCucina);
-caricaMobile(scene, 'mobili/kitchenCabinetCornerRound.glb', { x: xCucina + 0.68, y: 0, z: partenzaZ + (passoZ * 9) }, scalaArredi, Math.PI / 2);
+const larghezzaMobileScalato = 0.65; 
 
-// C) La porta d'ingresso
+//fila 1 (sotto)
+const valX1=-4.3
+const valZ1=-4.3
+caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: valX1, y: 0, z: valZ1 }, scalaArredi, Math.PI / 2);
+caricaMobile(scene, 'mobili/kitchenSink.glb',    { x: valX1, y: 0, z: valZ1+larghezzaMobileScalato }, scalaArredi, Math.PI / 2); 
+caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: valX1, y: 0, z: valZ1+2*larghezzaMobileScalato }, scalaArredi, Math.PI / 2); 
+caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: valX1, y: 0, z: valZ1+3*larghezzaMobileScalato }, scalaArredi, Math.PI / 2);
+caricaMobile(scene, 'mobili/kitchenStove.glb',   { x: valX1, y: 0, z: valZ1+4*larghezzaMobileScalato }, scalaArredi, Math.PI / 2); 
+caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: valX1, y: 0, z: valZ1+5*larghezzaMobileScalato }, scalaArredi, Math.PI / 2);  
+caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: valX1, y: 0, z: valZ1+6*larghezzaMobileScalato }, scalaArredi, Math.PI / 2);  
+caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: valX1, y: 0, z: valZ1+7*larghezzaMobileScalato }, scalaArredi, Math.PI / 2); 
+
+//fila 1 (sopra)
+const valX12 = -4.7;
+const valY12 = 3; // Altezza calibrata per i pensili (se metti 5 volano troppo in alto rispetto ai muri)
+const valZ12 = -4.3;
+
+caricaMobile(scene, 'mobili/kitchenCabinetUpperDouble.glb', { x: valX12, y: valY12, z: valZ12 }, scalaArredi, Math.PI / 2);
+caricaMobile(scene, 'mobili/kitchenCabinetUpperDouble.glb', { x: valX12, y: valY12, z: valZ12 + larghezzaMobileScalato }, scalaArredi, Math.PI / 2); 
+caricaMobile(scene, 'mobili/kitchenCabinetUpperDouble.glb', { x: valX12, y: valY12, z: valZ12 + 2 * larghezzaMobileScalato }, scalaArredi, Math.PI / 2); 
+caricaMobile(scene, 'mobili/kitchenCabinetUpperDouble.glb', { x: valX12, y: valY12, z: valZ12 + 3 * larghezzaMobileScalato }, scalaArredi, Math.PI / 2);
+caricaMobile(scene, 'mobili/kitchenCabinetUpperDouble.glb', { x: valX12, y: valY12, z: valZ12 + 4 * larghezzaMobileScalato }, scalaArredi, Math.PI / 2); 
+caricaMobile(scene, 'mobili/kitchenCabinetUpperDouble.glb', { x: valX12, y: valY12, z: valZ12 + 5 * larghezzaMobileScalato }, scalaArredi, Math.PI / 2);  
+caricaMobile(scene, 'mobili/kitchenCabinetUpperDouble.glb', { x: valX12, y: valY12, z: valZ12 + 6 * larghezzaMobileScalato }, scalaArredi, Math.PI / 2);  
+caricaMobile(scene, 'mobili/kitchenCabinetUpperDouble.glb', { x: valX12, y: valY12, z: valZ12 + 7 * larghezzaMobileScalato }, scalaArredi, Math.PI / 2);
+
+//fila 2 (sotto)
+const valX2=-2.2
+const valZ2=-4.3
+caricaMobile(scene, 'mobili/kitchenFridgeLarge.glb',{ x: valX2, y: 0, z: -5 }, scalaArredi, -Math.PI / 2);
+caricaMobile(scene, 'mobili/kitchenCabinet.glb',{ x: valX2, y: 0, z: valZ2 }, scalaArredi, -Math.PI / 2);
+caricaMobile(scene, 'mobili/kitchenCabinet.glb',{ x: valX2, y: 0, z: valZ2+larghezzaMobileScalato }, scalaArredi, -Math.PI / 2);
+caricaMobile(scene, 'mobili/kitchenCabinet.glb',{ x: valX2, y: 0, z: valZ2+2*larghezzaMobileScalato }, scalaArredi, -Math.PI / 2);  
+caricaMobile(scene, 'mobili/kitchenCabinet.glb',{ x: valX2, y: 0, z: valZ2+3*larghezzaMobileScalato }, scalaArredi, -Math.PI / 2);  
+
+//fila 3 (orizzontale - Crea la L partendo dal fondo della Fila 1)
+// Si ancora esattamente alla fine della Fila 1 sulla coordinata Z
+const valX3 = -5;
+const valZ3 = valZ1 + 7 * larghezzaMobileScalato; 
+
+// Posizioniamo i 4 moduli in orizzontale verso destra (lungo l'asse X)
+// Partiamo da +1 per non sovrapporci all'ultimo blocco della Fila 1
+caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: valX3 + 1 * larghezzaMobileScalato, y: 0, z: valZ3 }, scalaArredi, Math.PI);
+caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: valX3 + 2 * larghezzaMobileScalato, y: 0, z: valZ3 }, scalaArredi, Math.PI); 
+caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: valX3 + 3 * larghezzaMobileScalato, y: 0, z: valZ3 }, scalaArredi, Math.PI);  
+caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: valX3 + 4 * larghezzaMobileScalato, y: 0, z: valZ3 }, scalaArredi, Math.PI);
+
+// --- C) LA PORTA D'INGRESSO ---
 caricaMobile(scene, 'mobili/doorwayFront.glb', { x: 4.8, y: 0, z: 3.5 }, scalaArredi, -Math.PI / 2);
-
 // =========================================================================
 // ALLESTIMENTO OGGETTI SULLE MENSOLE DELLA PARETE DESTRA (CORRETTO)
 // =========================================================================
