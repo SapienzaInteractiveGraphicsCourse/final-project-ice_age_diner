@@ -30,9 +30,9 @@ function buildRistorante(scene) {
     // Materiali del ristorante - Configurato in MeshPhysicalMaterial per supportare il clearcoat del ghiaccio
     const matPavimento = new THREE.MeshPhysicalMaterial({ 
         map: texturePavimento, 
-        roughness: 0.2,  
+        roughness: 0.4,  
         clearcoat: 1.5,
-        clearcoatRoughness: 0.3
+        clearcoatRoughness: 0.4
     });
     const matPareti = new THREE.MeshStandardMaterial({ map: textureMuro, roughness: 0.6 });
 
@@ -302,21 +302,19 @@ function buildRistorante(scene) {
 } 
 
 function setupLuci(scene) {
-    // 1. LUCE AMBIENTALE DIFFUSA: Aumentiamo l'intensità diurna di base (da 0.3 a 0.6)
-    // per dare una forte luminosità generale a tutto il panorama esterno.
-    luceAmbientaleGlobale = new THREE.AmbientLight(0xeeffff, 0.6);
+    luceAmbientaleGlobale = new THREE.AmbientLight(0xeeffff, 0.45);
     scene.add(luceAmbientaleGlobale);
 
-    // 2. SOLE DIRETZIONALE: Sostituiamo la vecchia SpotLight con una DirectionalLight.
-    // I suoi raggi paralleli illumineranno il ristorante, il mare e gli iceberg all'infinito.
-    soleGlobale = new THREE.DirectionalLight(0xffffff, 1.2); 
-    soleGlobale.position.set(-30, 50, 20); // Posizionato in alto e lateralmente come un vero sole polare
+    soleGlobale = new THREE.DirectionalLight(0xffffff, 0.75); 
     
-    // Attiviamo le ombre direzionali sul mondo
+    // =========================================================================
+    // MODIFICA QUESTA RIGA: Invertiamo i segni di X e Z da (-30, 50, 20) a (30, 50, -20)
+    // =========================================================================
+    soleGlobale.position.set(30, 50, -20); 
+    
     soleGlobale.castShadow = true;
     
-    // Ampliamo l'area di calcolo delle ombre del sole (l'ortografica "box") 
-    // per coprire sia il ristorante sia gli iceberg vicini visibili dalle vetrate
+    // Configurazione del box delle ombre (lascialo invariato)
     soleGlobale.shadow.camera.left = -30;
     soleGlobale.shadow.camera.right = 30;
     soleGlobale.shadow.camera.top = 30;
@@ -330,57 +328,83 @@ function setupLuci(scene) {
     scene.add(soleGlobale);
 }
 
-function impostaCielo(stato) {
-    let coloreCielo, coloreMare, intensitaAmbiente, intensitaSole, coloreSole;
-    let intensitaFaretti, coloreEmissiveFaretto;
+// =========================================================================
+// GESTORE ATMOSFERA FLUIDA: GIORNO ➔ TRAMONTO ➔ NOTTE (BILANCIATO)
+// =========================================================================
+function impostaCielo(valoreSlider) {
+    // Trasformiamo il valore dello slider (0-100) in un fattore tra 0.0 e 1.0
+    const v = valoreSlider / 100;
 
-    if (stato === 'giorno') {
-        coloreCielo = 0xd0e3f0;        
-        coloreMare = 0x1c3a4e;         
-        intensitaAmbiente = 0.6;       
-        intensitaSole = 1.2;           
-        coloreSole = 0xffffff;
+    // Configurazione dei 3 stati fondamentali bilanciati per non accecare l'utente
+    // Cerca questo blocco all'inizio di impostaCielo(valoreSlider)
+    const stati = {
+        giorno: { 
+            cielo: 0xd0e3f0, 
+            mare: 0x1c3a4e, 
+            amb: 0.7,       // AUMENTATO da 0.45 a 0.68: Illumina le zone in ombra e definisce i bordi dei tavoli scuri
+            sole: 0.7,      // Abbassato leggermente a 0.70 per bilanciare il pavimento ed evitare bruciature
+            soleCol: 0xffffff, 
+            faretti: 0.0 
+        },
+        tramonto: { cielo: 0xf39c12, mare: 0x3a2312, amb: 0.40, sole: 0.85, soleCol: 0xff6b4a, faretti: 0.4 },
+        notte:    { cielo: 0x070b12, mare: 0x0b141d, amb: 0.08, sole: 0.25, soleCol: 0x7fa1ff, faretti: 1.0 }
+    };
+
+    let colCielo = new THREE.Color();
+    let colMare = new THREE.Color();
+    let intAmb, intSole, colSole, intFaretti;
+
+    // FASE 1: Transizione da Giorno a Tramonto (Slider da 0 a 50, ovvero v da 0.0 a 0.5)
+    if (v <= 0.5) {
+        const t = v / 0.5; // Normalizziamo il sotto-intervallo tra 0 e 1
         
-        // Di giorno i faretti sono completamente spenti
-        intensitaFaretti = 0;
-        coloreEmissiveFaretto = 0x000000;
-    } else if (stato === 'notte') {
-        coloreCielo = 0x070b12;        
-        coloreMare = 0x0b141d;         
-        intensitaAmbiente = 0.08;      
-        intensitaSole = 0.25;          
-        coloreSole = 0x7fa1ff;         
+        colCielo.lerpColors(new THREE.Color(stati.giorno.cielo), new THREE.Color(stati.tramonto.cielo), t);
+        colMare.lerpColors(new THREE.Color(stati.giorno.mare), new THREE.Color(stati.tramonto.mare), t);
+        colSole = new THREE.Color().lerpColors(new THREE.Color(stati.giorno.soleCol), new THREE.Color(stati.tramonto.soleCol), t);
         
-        // Di notte i faretti si accendono con una bella luce calda e intensa sul tavolo/pavimento
-        intensitaFaretti = 1; 
-        coloreEmissiveFaretto = 0xfff0dd; // Bagliore caldo della lampadina calda
+        intAmb = THREE.MathUtils.lerp(stati.giorno.amb, stati.tramonto.amb, t);
+        intSole = THREE.MathUtils.lerp(stati.giorno.sole, stati.tramonto.sole, t);
+        intFaretti = THREE.MathUtils.lerp(stati.giorno.faretti, stati.tramonto.faretti, t);
+    } 
+    // FASE 2: Transizione da Tramonto a Notte (Slider da 50 a 100, ovvero v da 0.5 a 1.0)
+    else {
+        const t = (v - 0.5) / 0.5; // Normalizziamo il sotto-intervallo tra 0 e 1
+        
+        colCielo.lerpColors(new THREE.Color(stati.tramonto.cielo), new THREE.Color(stati.notte.cielo), t);
+        colMare.lerpColors(new THREE.Color(stati.tramonto.mare), new THREE.Color(stati.notte.mare), t);
+        colSole = new THREE.Color().lerpColors(new THREE.Color(stati.tramonto.soleCol), new THREE.Color(stati.notte.soleCol), t);
+        
+        intAmb = THREE.MathUtils.lerp(stati.tramonto.amb, stati.notte.amb, t);
+        intSole = THREE.MathUtils.lerp(stati.tramonto.sole, stati.notte.sole, t);
+        intFaretti = THREE.MathUtils.lerp(stati.tramonto.faretti, stati.notte.faretti, t);
     }
 
+    // Applichiamo i dati interpolati alla scena di Three.js
     if (typeof scene !== 'undefined') {
-        scene.background = new THREE.Color(coloreCielo);
-        if (scene.fog) {
-            scene.fog.color.setHex(coloreCielo);
-        }
+        scene.background = colCielo;
+        if (scene.fog) scene.fog.color = colCielo;
     }
 
     if (meshMare && meshMare.material) {
-        meshMare.material.color.setHex(coloreMare);
+        meshMare.material.color = colMare;
     }
 
     if (luceAmbientaleGlobale) {
-        luceAmbientaleGlobale.intensity = intensitaAmbiente;
+        luceAmbientaleGlobale.intensity = intAmb;
     }
 
     if (soleGlobale) {
-        soleGlobale.intensity = intensitaSole;
-        soleGlobale.color.setHex(coloreSole);
+        soleGlobale.intensity = intSole;
+        soleGlobale.color = colSole;
     }
 
-    // AGGIORNAMENTO DINAMICO DEI FARETTI
-    listaFaretti.forEach(faretto => {
-        // Regola la potenza della luce proiettata a terra
-        faretto.luce.intensity = intensitaFaretti;
-        // Cambia il colore del materiale della sfera interna per farla sembrare accesa/accesa a neon
-        faretto.materialeLampadina.emissive.setHex(coloreEmissiveFaretto);
-    });
+    // I faretti sul soffitto iniziano ad accendersi debolmente già al tramonto per dare atmosfera!
+    if (typeof listaFaretti !== 'undefined') {
+        listaFaretti.forEach(faretto => {
+            faretto.luce.intensity = intFaretti;
+            // Sfuma il filamento interno della lampadina da spento a luce calda calda
+            const colEmissive = new THREE.Color(0x000000).lerp(new THREE.Color(0xfff0dd), intFaretti);
+            faretto.materialeLampadina.emissive = colEmissive;
+        });
+    }
 }

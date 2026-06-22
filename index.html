@@ -2,67 +2,51 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ice Age Diner - Final Project</title>
     <link rel="stylesheet" href="css/style.css">
     
-    <style>
-        /* =========================================================================
-           RESET PER MODALITÀ A TUTTO SCHERMO
-           ========================================================================= */
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden; /* Blocca la comparsa delle barre di scorrimento del browser */
-            background-color: #050e14; /* Sfondo scuro preventivo per evitare flash bianchi */
-        }
-
-        canvas {
-            display: block; /* Rimuove piccoli spazi vuoti strutturali sotto il canvas */
-            width: 100vw;
-            height: 100vh;
-        }
-
-        /* Stile per il contenitore dei pulsanti */
-        #ui-container {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10; /* Forza i pulsanti a stare SOPRA il canvas 3D */
-            display: flex;
-            gap: 10px;
-        }
-
-        /* Stile dei pulsanti in tema artico */
-        .btn-tempo {
-            padding: 10px 20px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-weight: bold;
-            text-transform: uppercase;
-            border: 2px solid #ffffff;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        }
-
-        .btn-giorno { background-color: #e0f2fe; color: #0369a1; }
-        .btn-giorno:hover { background-color: #bae6fd; }
-
-        .btn-notte { background-color: #1e1b4b; color: #e0e7ff; border-color: #4338ca; }
-        .btn-notte:hover { background-color: #312e81; }
-    </style>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
 
-    <div id="ui-container">
-        <button class="btn-tempo btn-giorno" onclick="impostaCielo('giorno')">☀️ Giorno</button>
-        <button class="btn-tempo btn-notte" onclick="impostaCielo('notte')">🌙 Notte</button>
+    <div id="ui-top-left" class="ui-panel">
+        <label>⏰ Working Time</label>
+        
+        <div class="slider-wrapper">
+            <div class="slider-track-visual">
+                <div class="track-segment giorno-seg"></div>
+                <div class="track-segment tramonto-seg"></div>
+                <div class="track-segment notte-seg"></div>
+            </div>
+            <input type="range" id="time-slider" min="0" max="100" value="0" step="1">
+        </div>
+
+        <div class="slider-labels">
+            <span class="label-item">☀️<br><small>Day</small></span>
+            <span class="label-item">🌅<br><small>Sunset</small></span>
+            <span class="label-item">🌙<br><small>Night</small></span>
+        </div>
+    </div>
+
+    <div id="ui-top-right" class="ui-panel">
+        <div class="stars-container">
+            <span class="star" data-value="1">☆</span>
+            <span class="star" data-value="2">☆</span>
+            <span class="star" data-value="3">☆</span>
+            <span class="star" data-value="4">☆</span>
+            <span class="star" data-value="5">☆</span>
+        </div>
+        <div id="earnings-counter">💰 Cash: $ 00.00</div>
+    </div>
+
+    <div id="ui-side-right" class="ui-panel">
+        <h3>💡 Luci Tavoli (clicca più volte)</h3>
+        <button id="btn-faretto-1" class="game-btn">Faretto 1</button>
+        <button id="btn-faretto-2" class="game-btn">Faretto 2</button>
+        <button id="btn-faretto-3" class="game-btn">Faretto 3</button>
     </div>
 
     <script src="js/ristorante.js"></script>

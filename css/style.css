@@ -1,13 +1,196 @@
-html, body {
+/* css/style.css */
+body {
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Nasconde le barre di scorrimento */
-    background-color: #1a2634;
-    width: 100%;
-    height: 100%;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    user-select: none;
 }
-canvas {
-    display: block; /* Rimuove spazi vuoti sotto il canvas */
-    width: 100vw;
-    height: 100vh;
+
+/* Stile base per tutti i pannelli dell'interfaccia */
+.ui-panel {
+    position: absolute;
+    background: rgba(26, 46, 59, 0.75); /* Blu scuro artico semitrasparente */
+    border: 2px solid #4a7a96;
+    border-radius: 12px;
+    padding: 15px;
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 10;
+    backdrop-filter: blur(5px); /* Effetto vetro sfocato sullo sfondo */
+}
+
+/* css/style.css - Aggiornamento Slider a 3 Segmenti */
+
+#ui-top-left {
+    top: 20px;
+    left: 20px;
+    width: 260px;
+}
+
+#ui-top-left label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 12px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #e0f2fe;
+}
+
+/* Contenitore per la sovrapposizione dei binari */
+.slider-wrapper {
+    position: relative;
+    width: 100%;
+    height: 24px;
+    display: flex;
+    align-items: center;
+}
+
+/* La nostra barra visiva personalizzata divisa in 3 */
+.slider-track-visual {
+    position: absolute;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    display: flex;
+    overflow: hidden;
+    pointer-events: none; /* Fa passare i clic del mouse sotto, allo slider vero */
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+}
+
+/* I tre segmenti al 33.33% */
+.track-segment {
+    height: 100%;
+    width: 33.333%;
+}
+.giorno-seg   { background: #f1c40f; } /* Giallo */
+.tramonto-seg { background: #e67e22; } /* Arancione */
+.notte-seg    { background: #2980b9; } /* Blu */
+
+/* Rendiamo lo slider nativo invisibile nel binario, ma manteniamo visibile e stilizzato il cursore (pallina) */
+#time-slider {
+    position: absolute;
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent; /* Nasconde il binario standard di Windows/Mac */
+    margin: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+/* Stilizzazione della levetta (pallina) per Chrome, Webkit e Safari */
+#time-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #1a2e3b;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    transition: transform 0.1s ease;
+}
+#time-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* Stilizzazione della levetta per Firefox */
+#time-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #1a2e3b;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    transition: transform 0.1s ease;
+}
+#time-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* Griglia inferiore per allineare le icone perfettamente sotto i segmenti */
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding: 0 5px;
+}
+
+.label-item {
+    font-size: 16px;
+    text-align: center;
+    width: 33.333%;
+    color: #a5c2d5;
+    line-height: 1.2;
+}
+
+.label-item small {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    margin-top: 2px;
+    opacity: 0.8;
+}
+
+/* Pannello Alto Destra (Stelle e Soldi) */
+#ui-top-right {
+    top: 20px;
+    right: 20px;
+    text-align: right;
+    min-width: 180px;
+}
+.stars-container {
+    font-size: 24px;
+    color: #ffcc00; /* Colore oro per le stelline */
+    margin-bottom: 5px;
+    letter-spacing: 3px;
+}
+.star.active {
+    content: "★"; /* Verrà usato via JS per colorarle piene */
+}
+#earnings-counter {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2ecc71; /* Verde brillante per i soldi */
+    font-family: 'Courier New', Courier, monospace; /* Font stile registratore di cassa */
+}
+
+/* Pannello Laterale Destra (Menu Faretti) */
+#ui-side-right {
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%); /* Centrato verticalmente */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 130px;
+}
+#ui-side-right h3 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    text-align: center;
+    border-bottom: 1px solid #4a7a96;
+    padding-bottom: 5px;
+}
+
+/* Stile per i pulsanti di gioco */
+.game-btn {
+    background: #2c3e50;
+    border: 1px solid #34495e;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+.game-btn:hover {
+    background: #34495e;
+    border-color: #00d2ff;
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
+}
+.game-btn:active {
+    transform: scale(0.95);
 }
