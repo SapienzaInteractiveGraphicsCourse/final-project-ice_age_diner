@@ -20,21 +20,23 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.appendChild(renderer.domElement);
 
 // =========================================================================
-// CONFIGURAZIONE TELECAMERA "ALTEZZA CAMERIERE"
+// CONFIGURAZIONE TELECAMERA "ALTEZZA CAMERIERE" (INTRO DA LONTANO)
 // =========================================================================
-camera.position.set(0, 2.8, 7.5);
+// FIX: Impostiamo subito la posizione lontana per il menu iniziale
+camera.position.set(0, 8.0, 15.5); 
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-controls.target.set(0, 1.2, -0.5);
+// Il mirino iniziale punta verso l'alto per inquadrare il panorama dall'alto
+controls.target.set(0, 5.0, 0);
 
 controls.minDistance = 4;        
 controls.maxDistance = 11;       
 controls.minPolarAngle = 0.6;    
 controls.maxPolarAngle = 1.45;   
 
-//mettere TRUE se vuoi riattivare i movimenti del mouse come rotazione, traslazione e zoom
+// Mettere TRUE se vuoi riattivare i movimenti del mouse come rotazione, traslazione e zoom
 controls.enableRotate = false; 
 controls.enableZoom = false;   
 controls.enablePan = false;    
@@ -49,11 +51,12 @@ const btnGenerale = document.getElementById('btn-generale');
 const btnSala = document.getElementById('btn-sala');
 const btnCucina = document.getElementById('btn-cucina');
 
-// STATO DELLA TELECAMERA: Impostiamo i valori di partenza standard del ristorante
-const camTargetPos = new THREE.Vector3(0, 2.8, 7.5);   
-const camTargetLook = new THREE.Vector3(0, 1.2, -0.5);  
+// STATO DELLA TELECAMERA: Impostiamo i valori di partenza coerenti con il menu iniziale (0, 8.0, 15.5)
+// così la telecamera resta immobile finché non si preme "Inizia Gioco"
+const camTargetPos = new THREE.Vector3(0, 8.0, 15.5);   
+const camTargetLook = new THREE.Vector3(0, 5.0, 0);  
 
-// Nuova funzione di utilità per gestire lo stato active su 3 bottoni contemporaneamente
+// Funzione di utilità per gestire lo stato active su 3 bottoni contemporaneamente
 function impostaBottoneAttivo(attivo, inattivo1, inattivo2) {
     attivo.classList.add('active');
     inattivo1.classList.remove('active');
@@ -62,11 +65,11 @@ function impostaBottoneAttivo(attivo, inattivo1, inattivo2) {
 
 if (btnGenerale && btnSala && btnCucina) {
     
-    // --- CONFIGURAZIONE VISTA GENERALE (Ritorno ai valori di caricamento) ---
+    // --- CONFIGURAZIONE VISTA GENERALE (Ritorno ai valori di caricamento standard del locale) ---
     btnGenerale.addEventListener('click', () => {
         impostaBottoneAttivo(btnGenerale, btnSala, btnCucina);
-        camTargetPos.set(0, 2.8, 7.5);     // Posizione iniziale standard
-        camTargetLook.set(0, 1.2, -0.5);   // Target iniziale standard
+        camTargetPos.set(0, 2.8, 7.5);     // Posizione interna standard
+        camTargetLook.set(0, 1.2, -0.5);   // Target interno standard
     });
 
     // --- CONFIGURAZIONE VISTA SALA ---
@@ -85,8 +88,25 @@ if (btnGenerale && btnSala && btnCucina) {
 }
 
 // =========================================================================
-// 2. COSTRUZIONE DEL MONDO E LUCI DI BASE
+// LOGICA PULSANTE START MENU
 // =========================================================================
+const startMenu = document.getElementById('start-menu');
+const btnStart = document.getElementById('btn-start');
+
+if (btnStart && startMenu) {
+    btnStart.addEventListener('click', () => {
+        // Nasconde il menu con la dissolvenza CSS
+        startMenu.classList.add('hidden');
+        
+        // Attiva la transizione fluida: la telecamera scenderà in picchiata dentro il locale
+        camTargetPos.set(0, 2.8, 7.5);
+        camTargetLook.set(0, 1.2, -0.5);
+    });
+}
+
+// =========================================================================
+// 2. COSTRUZIONE DEL MONDO E LUCI DI BASE
+// ========================================================================= 
 buildRistorante(scene);
 setupLuci(scene);
 aggiungiDecorations(scene);
@@ -161,6 +181,9 @@ caricaMobile(scene, 'mobili/kitchenCabinet.glb', { x: valX3 + 4 * larghezzaMobil
 
 // --- C) LA PORTA D'INGRESSO ---
 caricaMobile(scene, 'mobili/doorwayFront.glb', { x: 4.8, y: 0, z: 3.5 }, scalaArredi, -Math.PI / 2);
+
+
+
 // =========================================================================
 // ALLESTIMENTO OGGETTI SULLE MENSOLE DELLA PARETE DESTRA (CORRETTO)
 // =========================================================================
@@ -287,6 +310,9 @@ for (let i = 1; i <= 3; i++) {
         });
     }
 }
+
+
+
 
 // =========================================================================
 // 5. LOOP DI ANIMAZIONE E TIMING CONTINUO (CON INTERPOLAZIONE TELECAMERA)

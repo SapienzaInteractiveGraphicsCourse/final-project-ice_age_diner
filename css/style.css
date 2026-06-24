@@ -6,6 +6,66 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     user-select: none;
 }
+#start-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #101a26 0%, #1d354d 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Sopra a tutto il resto, inclusa la canvas */
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.menu-content {
+    text-align: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #ffffff;
+}
+
+.game-title {
+    font-size: 48px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    text-shadow: 0 0 20px rgba(85, 204, 255, 0.6);
+}
+
+.game-subtitle {
+    font-size: 18px;
+    color: #a0c0d0;
+    margin-bottom: 40px;
+}
+
+.start-btn {
+    background-color: #55ccff;
+    color: #121212;
+    border: none;
+    padding: 15px 40px;
+    font-size: 18px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
+}
+
+.start-btn:hover {
+    background-color: #ffffff;
+    box-shadow: 0 0 25px #55ccff;
+    transform: scale(1.05);
+}
+
+/* Classe di utility per nascondere il menu */
+#start-menu.hidden {
+    opacity: 0;
+    pointer-events: none; /* Impedisce di cliccare sul menu invisibile */
+    transform: scale(1.05); /* Effetto leggero zoom-in mentre sparisce */
+}
 
 /* Stile base per tutti i pannelli dell'interfaccia */
 .ui-panel {
