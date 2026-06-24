@@ -194,3 +194,39 @@ body {
 .game-btn:active {
     transform: scale(0.95);
 }
+
+#camera-controls {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 100; /* Sopra la canvas di Three.js */
+}
+
+.cam-btn {
+    background-color: rgba(30, 40, 50, 0.85);
+    color: #ffffff;
+    border: 2px solid #55ccff;
+    padding: 10px 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.cam-btn:hover {
+    background-color: #55ccff;
+    color: #121212;
+    box-shadow: 0 0 10px #55ccff;
+}
+
+.cam-btn.active {
+    background-color: #55ccff;
+    color: #121212;
+    border-color: #ffffff;
+}

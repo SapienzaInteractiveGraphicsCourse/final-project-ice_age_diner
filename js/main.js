@@ -1,5 +1,3 @@
-// js/main.js
-
 // =========================================================================
 // INSTANZIAMENTO LOADER GLOBALE
 // =========================================================================
@@ -36,7 +34,55 @@ controls.maxDistance = 11;
 controls.minPolarAngle = 0.6;    
 controls.maxPolarAngle = 1.45;   
 
+//mettere TRUE se vuoi riattivare i movimenti del mouse come rotazione, traslazione e zoom
+controls.enableRotate = false; 
+controls.enableZoom = false;   
+controls.enablePan = false;    
+
 controls.update();
+
+
+// =========================================================================
+// GESTIONE CAMBIO TELECAMERA CON TRANSIZIONE FLUIDA (3 PULSANTI)
+// =========================================================================
+const btnGenerale = document.getElementById('btn-generale');
+const btnSala = document.getElementById('btn-sala');
+const btnCucina = document.getElementById('btn-cucina');
+
+// STATO DELLA TELECAMERA: Impostiamo i valori di partenza standard del ristorante
+const camTargetPos = new THREE.Vector3(0, 2.8, 7.5);   
+const camTargetLook = new THREE.Vector3(0, 1.2, -0.5);  
+
+// Nuova funzione di utilità per gestire lo stato active su 3 bottoni contemporaneamente
+function impostaBottoneAttivo(attivo, inattivo1, inattivo2) {
+    attivo.classList.add('active');
+    inattivo1.classList.remove('active');
+    inattivo2.classList.remove('active');
+}
+
+if (btnGenerale && btnSala && btnCucina) {
+    
+    // --- CONFIGURAZIONE VISTA GENERALE (Ritorno ai valori di caricamento) ---
+    btnGenerale.addEventListener('click', () => {
+        impostaBottoneAttivo(btnGenerale, btnSala, btnCucina);
+        camTargetPos.set(0, 2.8, 7.5);     // Posizione iniziale standard
+        camTargetLook.set(0, 1.2, -0.5);   // Target iniziale standard
+    });
+
+    // --- CONFIGURAZIONE VISTA SALA ---
+    btnSala.addEventListener('click', () => {
+        impostaBottoneAttivo(btnSala, btnGenerale, btnCucina);
+        camTargetPos.set(2.0, 2.2, 5.5);   
+        camTargetLook.set(1.5, 1.0, 0.0);  
+    });
+
+    // --- CONFIGURAZIONE VISTA CUCINA ---
+    btnCucina.addEventListener('click', () => {
+        impostaBottoneAttivo(btnCucina, btnGenerale, btnSala);
+        camTargetPos.set(-2.8, 2.2, 4.8);   
+        camTargetLook.set(-3.2, 1.2, -1.8); 
+    });
+}
 
 // =========================================================================
 // 2. COSTRUZIONE DEL MONDO E LUCI DI BASE
@@ -243,7 +289,7 @@ for (let i = 1; i <= 3; i++) {
 }
 
 // =========================================================================
-// 5. LOOP DI ANIMAZIONE E TIMING CONTINUO
+// 5. LOOP DI ANIMAZIONE E TIMING CONTINUO (CON INTERPOLAZIONE TELECAMERA)
 // =========================================================================
 const clock = new THREE.Clock();
 
@@ -253,6 +299,7 @@ function animate() {
     const tempoDallInizio = clock.getElapsedTime();
     const delta = clock.getDelta(); 
 
+    // --- ANIMAZIONE FLUTTUAZIONE ICEBERG ---
     if (typeof listaIcebergMelting !== 'undefined') {
         listaIcebergMelting.forEach(iceberg => {
             const dati = iceberg.userData;
@@ -263,12 +310,22 @@ function animate() {
         });
     }
 
+    // --- TRANSIZIONE FLUIDA DELLA TELECAMERA ---
+    // Controlla che le variabili di destinazione dei bottoni esistano per evitare errori al primo avvio
+    if (typeof camTargetPos !== 'undefined' && typeof camTargetLook !== 'undefined') {
+        // 0.05 regola la morbidezza: più è basso, più la transizione sarà lenta e cinematografica
+        camera.position.lerp(camTargetPos, 0.05);
+        controls.target.lerp(camTargetLook, 0.05);
+    }
+
+    // Aggiorna i controlli e renderizza la scena
     controls.update(); 
     renderer.render(scene, camera);
 }
 
 animate();
 
+// --- GESTIONE RIDIMENSIONAMENTO FINESTRA ---
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
