@@ -1,73 +1,95 @@
 <!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ice Age Diner - Final Project</title>
-    <link rel="stylesheet" href="css/style.css">
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Ice Age Diner - Final Project</title>
 
-    <div id="camera-controls">
-        <button id="btn-cucina" class="cam-btn">Vista Cucina</button>
-        <button id="btn-generale" class="cam-btn active">Vista Generale</button>
-        <button id="btn-sala" class="cam-btn">Vista Sala</button>
-    </div>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-</head>
-<body>
-    <div id="start-menu">
-        <div class="menu-content">
-            <h1 class="game-title">Ice Age Diner</h1>
-            <p class="game-subtitle">Welcome in your arctic restaurant! </p>
-            <button id="btn-start" class="start-btn">Start</button>
-        </div>
-    </div>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="css/style.css">
 
+        <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    </head>
+    <body>
+        <div id="start-menu">
+            <div id="main-menu-content" class="menu-box">
+                <h1 class="game-title">Ice Age Diner</h1>
+                <p class="game-subtitle">Welcome to your arctic restaurant!</p>
 
-    
-
-    <div id="ui-top-left" class="ui-panel">
-        <label>⏰ Working Time</label>
-        
-        <div class="slider-wrapper">
-            <div class="slider-track-visual">
-                <div class="track-segment giorno-seg"></div>
-                <div class="track-segment tramonto-seg"></div>
-                <div class="track-segment notte-seg"></div>
+                <div class="menu-buttons">
+                    <button id="btn-start" class="menu-btn"><i class="fas fa-play"></i> Start</button>
+                    <button id="btn-settings" class="menu-btn"><i class="fas fa-cog"></i> Settings</button>
+                </div>
             </div>
-            <input type="range" id="time-slider" min="0" max="100" value="0" step="1">
+
+            <div id="settings-panel" class="menu-box hidden-panel">
+                <h2 class="panel-title"><i class="fa fa-sliders-h"></i> Settings</h2>
+
+                <div class="setting-item">
+                    <label><i class="fas fa-volume-up"></i> Volume</label>
+                    <input type="range" id="volume-slider" min="0" max="100" value="50">
+                </div>
+
+                <div class="setting-item controls-info">
+                    <h3><i class="fas fa-gamepad"></i> Controls</h3>
+                    <p><strong>W</strong> - Move up</p>
+                    <p><strong>A</strong> - Move left</p>
+                    <p><strong>S</strong> - Move down</p>
+                    <p><strong>D</strong> - Move right</p>
+                    <p><strong>Mouse Click</strong> - Interact</p>
+                </div>
+
+                <button id="btn-back" class="menu-btn"><i class="fas fa-arrow-left"></i> Back</button>
+            </div>
         </div>
 
-        <div class="slider-labels">
-            <span class="label-item">☀️<br><small>Day</small></span>
-            <span class="label-item">🌅<br><small>Sunset</small></span>
-            <span class="label-item">🌙<br><small>Night</small></span>
-        </div>
-    </div>
+        <div id="game-ui">
+            <div id="camera-controls">
+                <button id="btn-kitchen" class="cam-btn">Kitchen view</button>
+                <button id="btn-general" class="cam-btn">General view</button>
+                <button id="btn-main-room" class="cam-btn">Main room view</button>
+            </div>
 
-    <div id="ui-top-right" class="ui-panel">
-        <div class="stars-container">
-            <span class="star" data-value="1">☆</span>
-            <span class="star" data-value="2">☆</span>
-            <span class="star" data-value="3">☆</span>
-            <span class="star" data-value="4">☆</span>
-            <span class="star" data-value="5">☆</span>
-        </div>
-        <div id="earnings-counter">💰 Cash: $ 00.00</div>
-    </div>
+            <div id="ui-top-left" class="ui-panel">
+                <label>Working time</label>
+                <div class="slider-wrapper">
+                    <div class="slider-track-visual">
+                        <div class="track-segment giorno-seg"></div>
+                        <div class="track-segment tramonto-seg"></div>
+                        <div class="track-segment notte-seg"></div>
+                    </div>
+                    <input type="range" id="time-slider" min="0" max="100" value="0" step="1"> 
+                </div>
+                <div class="slider-labels">
+                    <span class="label-item">Sole<br><small>Day</small></span>
+                    <span class="label-item">Tramonto<br><small>Sunset</small></span>
+                    <span class="label-item">Luna<br><small>Night</small></span>
+                </div>
+            </div>
 
-    <div id="ui-side-right" class="ui-panel">
-        <h3>💡 Luci Tavoli (clicca più volte)</h3>
-        <button id="btn-faretto-1" class="game-btn">Faretto 1</button>
-        <button id="btn-faretto-2" class="game-btn">Faretto 2</button>
-        <button id="btn-faretto-3" class="game-btn">Faretto 3</button>
-    </div>
+            <div id="ui-top-right" class="ui-panel">
+                <div class="stars-container">
+                    <span class="star" data-value="1">Stella</span>
+                    <span class="star" data-value="2">Stella</span>
+                    <span class="star" data-value="3">Stella</span>
+                    <span class="star" data-value="4">Stella</span>
+                    <span class="star" data-value="5">Stella</span>
+                </div>
+                <div id="earnings-counter">Soldi: Cash $00.00</div>
+            </div>
 
-    <script src="js/ristorante.js"></script>
-    <script src="js/arredi.js"></script> 
-    <script src="js/penguin.js"></script>
-    <script src="js/main.js"></script>
-</body>
+            <div id="ui-side-right" class="ui-panel">
+                <h3>Lampadina Tables Lights</h3>
+                <button id="btn-faretto-1" class="game-btn">Faretto 1</button>
+                <button id="btn-faretto-2" class="game-btn">Faretto 2</button>
+                <button id="btn-faretto-3" class="game-btn">Faretto 3</button>
+            </div>
+        </div> 
+        <script src="js/restaurant.js"></script>
+        <script src="js/furniture.js"></script>
+        <script src="js/penguin.js"></script>
+        <script src="js/main.js"></script>
+    </body>
 </html>
