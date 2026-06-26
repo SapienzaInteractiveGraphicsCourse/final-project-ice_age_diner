@@ -110,7 +110,6 @@ function startGame() {
     const frontDivisor = new THREE.Mesh(new THREE.BoxGeometry(thickness, height, 10), materialMuri);
     frontDivisor.position.set(divisorWallX, height / 2, 15);
     scene.add(frontDivisor);
-
     
     const divisorLowWall = new THREE.Mesh(new THREE.BoxGeometry(thickness, 3.5, 20), materialMuri);
     divisorLowWall.position.set(divisorWallX, 3.5 / 2, 0);
