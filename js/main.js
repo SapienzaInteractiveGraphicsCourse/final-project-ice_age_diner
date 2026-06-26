@@ -124,7 +124,7 @@ function startGame() {
     column.position.set(divisorWallX + (mainRoomWidth / 2), height / 2, -depth / 2);
     scene.add(column);
 
-    const backDivisor = new THREE.Mesh(new THREE.PlaneGeometry(depthSepWalls, height), wallMaterial);
+    /*const backDivisor = new THREE.Mesh(new THREE.PlaneGeometry(depthSepWalls, height), wallMaterial);
     backDivisor.position.set(divisorWallX, height / 2, -(depth / 2) + (depthSepWalls / 2));
     backDivisor.rotation.y = Math.PI / 2;
     scene.add(backDivisor);
@@ -132,20 +132,20 @@ function startGame() {
     const frontDivisor = new THREE.Mesh(new THREE.PlaneGeometry(depthSepWalls, height), wallMaterial);
     frontDivisor.position.set(divisorWallX, height / 2, (depth / 2) - (depthSepWalls / 2));
     frontDivisor.rotation.y = Math.PI / 2;
-    scene.add(frontDivisor);
+    scene.add(frontDivisor);*/
     
-    const divisorLowWall = new THREE.Mesh(new THREE.PlaneGeometry(counterDepth, 3.5), wallMaterial);
+    const divisorLowWall = new THREE.Mesh(new THREE.PlaneGeometry(depth, 3.5), wallMaterial);
     divisorLowWall.position.set(divisorWallX, 3.5 / 2, 0);
     divisorLowWall.rotation.y = Math.PI / 2;
     scene.add(divisorLowWall);
 
-    const divisorHighWall = new THREE.Mesh(new THREE.PlaneGeometry(counterDepth, 2), wallMaterial);
+    const divisorHighWall = new THREE.Mesh(new THREE.PlaneGeometry(depth, 2), wallMaterial);
     divisorHighWall.position.set(divisorWallX, height - (2 / 2), 0);
     divisorHighWall.rotation.y = Math.PI / 2;
     scene.add(divisorHighWall);
 
     const counterMaterial = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.3, metalness: 0.5 });
-    const counter = new THREE.Mesh(new THREE.BoxGeometry(counterWidth, counterThickness, counterDepth), counterMaterial);
+    const counter = new THREE.Mesh(new THREE.BoxGeometry(counterWidth, counterThickness, depth), counterMaterial);
     counter.position.set(divisorWallX, 3.5 + (counterThickness / 2), 0);
     scene.add(counter);
 
