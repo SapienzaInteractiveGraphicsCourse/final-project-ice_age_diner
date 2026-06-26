@@ -4,7 +4,7 @@
 
 ---
 
-##  Struttura del Progetto
+##  Structure of the project
 
 ```text
 final-project-ice_age_diner/
