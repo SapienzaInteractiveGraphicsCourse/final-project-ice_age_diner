@@ -198,6 +198,9 @@ function buildRestaurant() {
     window.gameControls = controls;
     window.addEventListener('resize', onWindowResize, false);
 
+    spawnPenguin(-10, 0, -10);
+    spawnPenguin(-20, 0, 5);
+
     animate();
 }
 
