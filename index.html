@@ -39,6 +39,7 @@
                     <p><strong>S</strong> - Move down</p>
                     <p><strong>D</strong> - Move right</p>
                     <p><strong>Mouse Click</strong> - Interact</p>
+                    <p><strong>Space bar</strong> - Pause</p>
                 </div>
 
                 <button id="btn-back" class="menu-btn"><i class="fas fa-arrow-left"></i> Back</button>
@@ -87,9 +88,35 @@
                 <button id="btn-faretto-3" class="game-btn">Faretto 3</button>
             </div>
         </div> 
-        <script src="js/restaurant.js"></script>
-        <script src="js/furniture.js"></script>
-        <script src="js/penguin.js"></script>
-        <script src="js/main.js"></script>
+
+        <button id="in-game-settings-btn" class="hidden-panel"><i class="fas fa-cog"></i></button>
+        <div id="pause-menu" class="hidden-panel">
+            <div class="pause-menu-content menu-box">
+                <h2 class="panel-title">Pause</h2>
+
+                <div class="setting-item">
+                    <label><i class="fas fa-volume-up"></i> Volume</label>
+                    <input type="range" id="in-game-volume-slider" min="0" max="100" value="50">
+
+                </div>
+
+                <div class="setting-item controls-info">
+                    <h3><i class="fas fa-gamepad"></i> Controls</h3>
+                    <p><strong>W A S D</strong> - Move</p>
+                    <p><strong>Mouse Click</strong> - Interact</p>
+                    <p><strong>ESC</strong> - Resume</p>
+                </div>
+
+                <div class="menu-buttons">
+                    <button id="btn-resume" class="menu-btn"><i class="fas fa-play"></i> Continue</buttons>
+                    <button id="btn-quit" class="menu-btn"><i class="fas fa-sign-out-alt"></i> Main Menu</buttons>
+                </div>
+            </div>
+        </div>
+
+        <script defer src="js/restaurant.js"></script>
+        <script defer src="js/furniture.js"></script>
+        <script defer src="js/penguin.js"></script>
+        <script defer src="js/main.js"></script>
     </body>
 </html>
