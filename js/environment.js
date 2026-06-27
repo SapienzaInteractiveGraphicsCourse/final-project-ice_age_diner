@@ -35,11 +35,12 @@ function loadEnvironment(scene, icebergsArray) {
 
 
 
-function loadFurniture(scene, path, x, z, scale = 1) {
+function loadFurniture(scene, path, x, z, scale = 1000) {
     const loader = new THREE.GLTFLoader();
 
     loader.load(path, (gltf) => {
         const model = gltf.scene;
+        console.log(model)
         model.position.set(x, 0, z);
         model.scale.set(scale, scale, scale);
         
@@ -47,6 +48,7 @@ function loadFurniture(scene, path, x, z, scale = 1) {
             if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
+                child.scale.set(scale, scale, scale);
             }
         });
 

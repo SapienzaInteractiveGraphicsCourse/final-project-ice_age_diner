@@ -200,6 +200,7 @@ function buildRestaurant() {
 
     spawnPenguin(-10, 0, -10);
     spawnPenguin(-20, 0, 5);
+    loadFurniture(scene, 'models/furniture/tableCoffee.glb', 20, 10, 1.5);
 
     animate();
 }
