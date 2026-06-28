@@ -53,7 +53,7 @@ function buildRestaurant() {
 
     //add the floor to the scene
     //BoxGeometry is used to create a rectangular floor with specified width, thickness, and depth
-    const floorGeometry = new THREE.BoxGeometry(width, thickness, depth);
+    const floorGeometry = new THREE.BoxGeometry(width + 0.5, thickness, depth + 0.5);
     const floorMaterial = new THREE.MeshStandardMaterial({ map: iceFloorTexture, roughness: 0.2, metalness: 0.1 }); 
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
     floor.position.y = -thickness / 2; 
@@ -62,20 +62,28 @@ function buildRestaurant() {
     //creation of the walls using BoxGeometry and MeshStandardMaterial with ice wall texture
     const wallMaterial = new THREE.MeshStandardMaterial({ map: iceWallTexture, roughness: 0.2, metalness: 0.1 });
 
-    const sideWallGeometry = new THREE.BoxGeometry(thickness, height, depth);
+    const sideWallGeometry = new THREE.PlaneGeometry(depth + 2, height + 4);
 
     const leftWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+    leftWall.rotation.y = Math.PI / 2;
     leftWall.position.set(-width / 2, height / 2, 0);
     scene.add(leftWall);
 
     const rightWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+    rightWall.rotation.y = -Math.PI / 2;
     rightWall.position.set(width / 2, height / 2, 0);
     scene.add(rightWall);
 
-    //back wall of the kitchen, only the part on the left of the divisor wall
-    const kitchenBackWall = new THREE.Mesh(new THREE.BoxGeometry(kitchenWidth, height, thickness), wallMaterial);
+    //walls of the kitchen, only the part on the left of the divisor wall
+    const kitchenWallGeometry = new THREE.PlaneGeometry(kitchenWidth + 2, height + 4);
+    const kitchenBackWall = new THREE.Mesh(kitchenWallGeometry, wallMaterial);
     kitchenBackWall.position.set(-(width / 2) + (kitchenWidth / 2), height / 2, -depth / 2);
     scene.add(kitchenBackWall);
+
+    const kitchenFrontWall = new THREE.Mesh(kitchenWallGeometry, wallMaterial);
+    kitchenFrontWall.rotation.y = Math.PI;
+    kitchenFrontWall.position.set(-(width / 2) + (kitchenWidth / 2), height / 2, depth / 2);
+    scene.add(kitchenFrontWall);
 
     //parts of the divisor wall, back is the part behind the counter, front is the part in front of the counter,
     //low wall is the part below the counter, high wall is the part above the counter
@@ -102,12 +110,14 @@ function buildRestaurant() {
     scene.add(counter);
 
     //back wall of the main room with three windows, created using a shape with holes for the windows
+    const overlapX = 0; //to avoid gaps between walls
+    const overlapY = 2; //to avoid gaps between walls
     const backWallShape = new THREE.Shape();
-    backWallShape.moveTo(-mainRoomWidth/2, 0);
-    backWallShape.lineTo(mainRoomWidth/2, 0);
-    backWallShape.lineTo(mainRoomWidth/2, height);
-    backWallShape.lineTo(-mainRoomWidth/2, height);
-    backWallShape.lineTo(-mainRoomWidth/2, 0);
+    backWallShape.moveTo(-mainRoomWidth/2 - overlapX, -overlapY);
+    backWallShape.lineTo(mainRoomWidth/2 + overlapX, -overlapY);
+    backWallShape.lineTo(mainRoomWidth/2 + overlapX, height + overlapY);
+    backWallShape.lineTo(-mainRoomWidth/2 - overlapX, height + overlapY);
+    backWallShape.lineTo(-mainRoomWidth/2 - overlapX, -overlapY);
 
     //centers of the three windows on the back wall
     const backWindowCenters = [-25, 0, 25]; 
@@ -128,8 +138,8 @@ function buildRestaurant() {
     });
 
     //create a 3D geometry from the shape and apply the wall material, then position it in the scene
-    const extrudeSettingsBW = { depth: thickness, bevelEnabled: false, curveSegments: 32 };
-    const backWallGeom = new THREE.ExtrudeGeometry(backWallShape, extrudeSettingsBW);
+    //const extrudeSettingsBW = { depth: thickness, bevelEnabled: false, curveSegments: 32 };
+    const backWallGeom = new THREE.ShapeGeometry(backWallShape);
 
     //fix for the textures
     const posAttributeBW = backWallGeom.attributes.position;
@@ -151,19 +161,39 @@ function buildRestaurant() {
 
     //create a mesh from the geometry and add it to the scene
     const backWallMesh = new THREE.Mesh(backWallGeom, wallMaterial);
-    backWallMesh.position.set(divisorWallX + (mainRoomWidth / 2), 0, -depth / 2 - thickness / 2);
+    backWallMesh.position.set(divisorWallX + (mainRoomWidth / 2), 0, -depth / 2);
     scene.add(backWallMesh);
 
-    //create window frames for the three windows on the back wall using a custom function and position them in the scene
+    const frontWallMesh = new THREE.Mesh(backWallGeom, wallMaterial);
+    frontWallMesh.rotation.y = Math.PI; 
+    frontWallMesh.position.set(divisorWallX + (mainRoomWidth / 2), 0, depth / 2);
+    scene.add(frontWallMesh);
+
+    //create the window frames for the back wall windows and add them to a group, then add the group to the scene
+    const backWindowsGroup = new THREE.Group();
     backWindowCenters.forEach(cx => {
         const windowFrame = createWindowFrame(16, 7, 8, 0.5, 1.2, counterMaterial);
         windowFrame.position.set(divisorWallX + (mainRoomWidth / 2) + cx, 4, -depth / 2);
-        scene.add(windowFrame);
+        backWindowsGroup.add(windowFrame);
     });
+    scene.add(backWindowsGroup);
+    
+    window.backWindowsGroup = backWindowsGroup;
+
+     const frontWindowsGroup = new THREE.Group();
+    backWindowCenters.forEach(cx => {
+        const windowFrame = createWindowFrame(16, 7, 8, 0.5, 1.2, counterMaterial);
+        windowFrame.rotation.y = Math.PI; 
+        windowFrame.position.set(divisorWallX + (mainRoomWidth / 2) - cx, 4, depth / 2);
+        frontWindowsGroup.add(windowFrame);
+    });
+    scene.add(frontWindowsGroup);
+    
+    window.frontWindowsGroup = frontWindowsGroup;
 
     //ceiling created using a PlaneGeometry in this way it can be seen only from below
     //allowing the player to see the interior of the restaurant from above without obstruction
-    const ceilingGeometry = new THREE.PlaneGeometry(width, depth);
+    const ceilingGeometry = new THREE.PlaneGeometry(width + 1, depth + 1);
     const ceilingMaterial = new THREE.MeshStandardMaterial({ 
         map: iceFloorTexture, 
         roughness: 0.2, 
@@ -213,6 +243,15 @@ function animate() {
     
     if (window.gameControls) {
         window.gameControls.update();
+    }
+
+    //window groups visibility based on camera position to prevent obstruction of view 
+    if (window.backWindowsGroup) {
+        window.backWindowsGroup.visible = camera.position.z > -25;
+    }
+
+    if (window.frontWindowsGroup) {
+        window.frontWindowsGroup.visible = camera.position.z < 25;
     }
 
     renderer.render(scene, camera);
