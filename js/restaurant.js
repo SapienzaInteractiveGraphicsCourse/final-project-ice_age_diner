@@ -182,7 +182,8 @@ function buildRestaurant() {
     //controls for the camera using OrbitControls, allowing the player to rotate, zoom, and pan the camera
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-    controls.maxPolarAngle = Math.PI / 2 - 0.05; 
+    controls.minPolarAngle = Math.PI / 2.2;
+    controls.maxPolarAngle = Math.PI / 2.2; 
 
     controls.minDistance = 5; 
     controls.maxDistance = 45; 
@@ -200,7 +201,7 @@ function buildRestaurant() {
 
     spawnPenguin(-10, 0, -10);
     spawnPenguin(-20, 0, 5);
-    loadFurniture(scene, 'models/furniture/tableCoffee.glb', 20, 10, 1.5);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', 20, 10);
 
     animate();
 }
