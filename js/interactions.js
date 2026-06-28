@@ -3,7 +3,7 @@ let mouse;
 let interactionCamera;
 let interactionScene;
 
-// fucntion to setup the raycasting and mouse click interactions
+// function to setup the raycasting and mouse click interactions
 function setupInteractions(camera, scene) {
     raycaster = new THREE.Raycaster();
     mouse = new THREE.Vector2();

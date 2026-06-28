@@ -88,6 +88,8 @@ function createPenguinModel(){
     penguinGroup.scale.set(2, 2, 2);
     penguinGroup.userData.leftFlipper = leftFlipper;
     penguinGroup.userData.rightFlipper = rightFlipper;
+    penguinGroup.userData.leftFoot = leftFoot;
+    penguinGroup.userData.rightFoot = rightFoot;
 
     return penguinGroup;
 }
@@ -106,3 +108,62 @@ function spawnPenguin(x, y, z){
     console.log("A new penguin has entered the diner!");
     return penguin;
 }
+
+function startWalking(penguin) {
+    if (penguin.userData.isWalking) return;
+    penguin.userData.isWalking = true;
+
+    const duration = 250; 
+    const swingAngle = Math.PI / 5; 
+
+    const leftFoot = penguin.userData.leftFoot;
+    const rightFoot = penguin.userData.rightFoot;
+
+    // --- ANIMAZIONE PIEDI (Sempre attiva) ---
+    const leftFootFwd = new TWEEN.Tween(leftFoot.rotation).to({ x: swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+    const leftFootBwd = new TWEEN.Tween(leftFoot.rotation).to({ x: -swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+    const rightFootBwd = new TWEEN.Tween(rightFoot.rotation).to({ x: -swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+    const rightFootFwd = new TWEEN.Tween(rightFoot.rotation).to({ x: swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+
+    leftFootFwd.chain(leftFootBwd); leftFootBwd.chain(leftFootFwd);
+    rightFootBwd.chain(rightFootFwd); rightFootFwd.chain(rightFootBwd);
+
+    penguin.userData.tweens = [leftFootFwd, rightFootBwd];
+
+    // --- ANIMAZIONE ALI (Solo se NON ha il piatto) ---
+    if (!penguin.userData.hasPlate) {
+        const leftFlipper = penguin.userData.leftFlipper;
+        const rightFlipper = penguin.userData.rightFlipper;
+
+        const leftFlipBwd = new TWEEN.Tween(leftFlipper.rotation).to({ x: swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+        const leftFlipFwd = new TWEEN.Tween(leftFlipper.rotation).to({ x: -swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+        const rightFlipFwd = new TWEEN.Tween(rightFlipper.rotation).to({ x: -swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+        const rightFlipBwd = new TWEEN.Tween(rightFlipper.rotation).to({ x: swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+
+        leftFlipBwd.chain(leftFlipFwd); leftFlipFwd.chain(leftFlipBwd);
+        rightFlipFwd.chain(rightFlipBwd); rightFlipBwd.chain(rightFlipFwd);
+
+        penguin.userData.tweens.push(leftFlipBwd, rightFlipFwd);
+    }
+
+    penguin.userData.tweens.forEach(tween => tween.start());
+}
+
+function stopWalking(penguin) {
+    if (!penguin.userData.isWalking) return;
+    penguin.userData.isWalking = false;
+
+    if (penguin.userData.tweens) {
+        penguin.userData.tweens.forEach(tween => tween.stop());
+    }
+
+    new TWEEN.Tween(penguin.userData.leftFoot.rotation).to({ x: 0 }, 200).start();
+    new TWEEN.Tween(penguin.userData.rightFoot.rotation).to({ x: 0 }, 200).start();
+
+    if (!penguin.userData.hasPlate) {
+        new TWEEN.Tween(penguin.userData.leftFlipper.rotation).to({ x: 0, z: -Math.PI / 6 }, 200).start();
+        new TWEEN.Tween(penguin.userData.rightFlipper.rotation).to({ x: 0, z: Math.PI / 6 }, 200).start();
+    }
+}
+
+

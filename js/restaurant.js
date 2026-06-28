@@ -279,8 +279,10 @@ function buildRestaurant() {
     window.gameControls = controls;
     window.addEventListener('resize', onWindowResize, false);
 
-    spawnPenguin(-10, 0, -10);
+    const waiter = spawnPenguin(-10, 0, -10);
+    setupControls(waiter);
     spawnPenguin(-20, 0, 5);
+
     loadDoor(scene, 'models/furniture/doorway.glb', width / 2, 0, 10, -Math.PI / 2, 10);
     loadFurniture(scene, 'models/furniture/kitchenSink.glb', -54, -10, Math.PI / 2);
     loadFurniture(scene, 'models/furniture/kitchenFridgeLarge.glb', -55, 20, Math.PI / 2, 0, 13, openable = true);
@@ -290,11 +292,30 @@ function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -54, -5, Math.PI / 2);
     loadFurniture(scene, 'models/furniture/kitchenCoffeeMachine.glb', -55, -5, Math.PI / 2, 5.5);
 
-    animate();
+    animate(waiter, camera);
 }
 
-function animate() {
-    requestAnimationFrame(animate);
+function animate(waiter, camera) {
+    requestAnimationFrame(() => animate(waiter, camera));
+
+    updateMovement(waiter);
+
+    /////////////////////////NEED TO FIX THE MOVEMENT OF THE CAMERA, IT IS NOT FOLLOWING THE WAITER CORRECTLY/////////////////////////
+    if (waiter && camera) {
+        let targetX = waiter.position.x;
+
+        const limiteSinistro = -60; 
+        const limiteDestro = 60;
+
+        if (targetX < limiteSinistro) targetX = limiteSinistro;
+        if (targetX > limiteDestro) targetX = limiteDestro;
+
+        
+        camera.position.x = targetX;
+        
+        
+        camera.lookAt(targetX, 5, 0); 
+    }
 
     if (isPaused) return;
     
