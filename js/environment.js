@@ -35,13 +35,14 @@ function loadEnvironment(scene, icebergsArray) {
 
 
 
-function loadFurniture(scene, path, x, z, scale = 10) {
+function loadFurniture(scene, path, x, z, rotation, scale = 10) {
     const loader = new THREE.GLTFLoader();
 
     loader.load(path, (gltf) => {
         const model = gltf.scene;
         console.log(model)
         model.position.set(x, 0, z);
+        model.rotation.y = rotation;
         model.scale.set(scale, scale, scale);
         
         model.traverse((child) => {

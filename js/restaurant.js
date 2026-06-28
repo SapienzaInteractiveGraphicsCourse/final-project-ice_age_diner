@@ -5,8 +5,10 @@ function buildRestaurant() {
 
     camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
 
+    //view to the room
     camera.position.set(0, 20, 35); 
     camera.lookAt(0, 0, 0);
+
     if (audioListener) camera.add(audioListener);
 
     //antialiasing for smoother edges
@@ -231,7 +233,8 @@ function buildRestaurant() {
 
     spawnPenguin(-10, 0, -10);
     spawnPenguin(-20, 0, 5);
-    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', 20, 10);
+    loadFurniture(scene, 'models/furniture/kitchenSink.glb', -55, -10, Math.PI / 2);
+    loadFurniture(scene, 'models/furniture/kitchenFridgeLarge.glb', -56, 10, Math.PI / 2);
 
     animate();
 }
