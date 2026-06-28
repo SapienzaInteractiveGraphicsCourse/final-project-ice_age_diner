@@ -1,25 +1,26 @@
 function buildRestaurant() {
-    //creation of the scene, camera, and renderer
+    // Creation of the scene, camera, and renderer
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x87ceeb);
 
     camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-    //view to the room
+    // View to the room
     camera.position.set(0, 20, 35); 
     camera.lookAt(0, 0, 0);
 
     if (audioListener) camera.add(audioListener);
 
-    //antialiasing for smoother edges
+    // === RENDERER SHADOW SETUP ===
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true; 
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
     
-    //renderer behind the UI elements
+    // Renderer behind the UI elements
     renderer.domElement.style.position = 'absolute';
     renderer.domElement.style.top = '0';
     renderer.domElement.style.left = '0';
-    //renderer.domElement.style.zIndex = '-1'; 
     renderer.domElement.style.pointerEvents = 'auto';
     
     document.body.appendChild(renderer.domElement);
@@ -30,7 +31,7 @@ function buildRestaurant() {
         console.warn("error in file interactions.js");
     }
 
-    //global variables for restaurant dimensions
+    // Global variables for restaurant dimensions
     const width = 120;  
     const depth = 50; 
     const height = 20;
@@ -45,30 +46,50 @@ function buildRestaurant() {
     const counterDepth = 44;
 
     const depthSepWalls = (depth - counterDepth) / 2;
+const textureLoader = new THREE.TextureLoader();
+    const iceFloorTexture = textureLoader.load('textures/Fabric081B_1K-JPG_Color.jpg');
+    const iceWallTexture = textureLoader.load('textures/Tiles019_1K-JPG_Color.jpg');
+    
+    // Independent texture instance for small wall elements to prevent stretching
+    const iceSmallWallTexture = textureLoader.load('textures/Tiles019_1K-JPG_Color.jpg');
 
-    //textures for the floor and walls they are repeated to cover the entire surface
-    const textureLoader = new THREE.TextureLoader();
-    const iceFloorTexture = new THREE.TextureLoader().load('textures/ice_texture.jpg');
-    const iceWallTexture = new THREE.TextureLoader().load('textures/ice_wall.jpg');
-
+    // Applied clean cartoon-style wrapping values
     iceFloorTexture.wrapS = THREE.RepeatWrapping;
     iceFloorTexture.wrapT = THREE.RepeatWrapping;
-    iceFloorTexture.repeat.set(15, 12);
+    iceFloorTexture.repeat.set(6, 5);
 
     iceWallTexture.wrapS = THREE.RepeatWrapping;
     iceWallTexture.wrapT = THREE.RepeatWrapping;
-    iceWallTexture.repeat.set(12, 3);
+    iceWallTexture.repeat.set(4, 1);
 
-    //add the floor to the scene
-    //BoxGeometry is used to create a rectangular floor with specified width, thickness, and depth
+    // Adjusted repetition scale specifically tailored for small/low surfaces
+    iceSmallWallTexture.wrapS = THREE.RepeatWrapping;
+    iceSmallWallTexture.wrapT = THREE.RepeatWrapping;
+    iceSmallWallTexture.repeat.set(7, 0.3);
+
+    // === FLOOR SET TO RECEIVE SHADOWS WITH ADVANCED ICY GLOW EFFECT ===
     const floorGeometry = new THREE.BoxGeometry(width + 0.5, thickness, depth + 0.5);
-    const floorMaterial = new THREE.MeshStandardMaterial({ map: iceFloorTexture, roughness: 0.2, metalness: 0.1 }); 
+    
+    // FORCED HIGH GLOSS: Using MeshPhysicalMaterial for true icy reflectivity
+    const floorMaterial = new THREE.MeshPhysicalMaterial({ 
+        map: iceFloorTexture, 
+        roughness: 0.01,          // Near 0 makes it a perfect, crisp mirror
+        metalness: 0.1,           // Kept low to keep it looking like organic ice, not steel
+        clearcoat: 1.0,           // Maximum thick polished lacquer layer
+        clearcoatRoughness: 0.0,  // Perfectly smooth reflection coat
+        transmission: 0.3,        // Gives it a slight semi-translucent, glass-like depth
+        ior: 1.31,                // The real physical Index of Refraction of ice!
+        thickness: 2.0            // Simulates internal light refraction inside the ice slab
+    }); 
+    
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
     floor.position.y = -thickness / 2; 
+    floor.receiveShadow = true; 
     scene.add(floor);
 
-    //creation of the walls using BoxGeometry and MeshStandardMaterial with ice wall texture
+    // Material setups for main walls and detail walls
     const wallMaterial = new THREE.MeshStandardMaterial({ map: iceWallTexture, roughness: 0.2, metalness: 0.1 });
+    const detailWallMaterial = new THREE.MeshStandardMaterial({ map: iceSmallWallTexture, roughness: 0.2, metalness: 0.1 });
 
     const sideWallGeometry = new THREE.PlaneGeometry(depth + 2, height + 4);
 
@@ -77,27 +98,23 @@ function buildRestaurant() {
     leftWall.position.set(-width / 2, height / 2, 0);
     scene.add(leftWall);
 
-    /*const rightWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
-    rightWall.rotation.y = -Math.PI / 2;
-    rightWall.position.set(width / 2, height / 2, 0);
-    scene.add(rightWall);*/
     const overlapXRight = 1; 
     const overlapYRight = 2; 
     const rightWallShape = new THREE.Shape();
     
-    // Disegniamo il perimetro del muro
+    // Draw wall perimeter
     rightWallShape.moveTo(-depth/2 - overlapXRight, -overlapYRight);
     rightWallShape.lineTo(depth/2 + overlapXRight, -overlapYRight);
     rightWallShape.lineTo(depth/2 + overlapXRight, height + overlapYRight);
     rightWallShape.lineTo(-depth/2 - overlapXRight, height + overlapYRight);
     rightWallShape.lineTo(-depth/2 - overlapXRight, -overlapYRight);
 
-    // Misure precise calcolate dal tuo file doorway.glb (scalato a 10)
-    const doorW = 5;    // Larghezza buco
-    const doorH = 10.5; // Altezza buco
-    const doorZ = 10;   // Posizione sulla parete
+    // Exact door bounds matching doorway asset
+    const doorW = 5;    
+    const doorH = 10.5; 
+    const doorZ = 10;   
 
-    // Ritagliamo il buco per la porta
+    // Cut the doorway hole out of the wall shape
     const doorHole = new THREE.Path();
     doorHole.moveTo(doorZ - doorW/2, -overlapYRight);
     doorHole.lineTo(doorZ - doorW/2, doorH);
@@ -107,7 +124,7 @@ function buildRestaurant() {
 
     const rightWallGeom = new THREE.ShapeGeometry(rightWallShape);
     
-    // Ripariamo le coordinate UV per evitare che la texture del ghiaccio si deformi
+    // Fix UV coordinates to prevent wall texture distortion
     const posAttrRW = rightWallGeom.attributes.position;
     const uvAttrRW = rightWallGeom.attributes.uv;
     if (uvAttrRW) {
@@ -124,7 +141,7 @@ function buildRestaurant() {
     rightWall.position.set(width / 2, 0, 0); 
     scene.add(rightWall);
 
-    //walls of the kitchen, only the part on the left of the divisor wall
+    // Walls of the kitchen, only the part on the left of the divisor wall
     const kitchenWallGeometry = new THREE.PlaneGeometry(kitchenWidth + 2, height + 4);
     const kitchenBackWall = new THREE.Mesh(kitchenWallGeometry, wallMaterial);
     kitchenBackWall.position.set(-(width / 2) + (kitchenWidth / 2), height / 2, -depth / 2);
@@ -135,8 +152,7 @@ function buildRestaurant() {
     kitchenFrontWall.position.set(-(width / 2) + (kitchenWidth / 2), height / 2, depth / 2);
     scene.add(kitchenFrontWall);
 
-    //parts of the divisor wall, back is the part behind the counter, front is the part in front of the counter,
-    //low wall is the part below the counter, high wall is the part above the counter
+    // Parts of the divisor wall
     const backDivisor = new THREE.Mesh(new THREE.BoxGeometry(thickness, height, depthSepWalls), wallMaterial);
     backDivisor.position.set(divisorWallX, height / 2, -(depth / 2) + (depthSepWalls / 2));
     scene.add(backDivisor);
@@ -145,23 +161,24 @@ function buildRestaurant() {
     frontDivisor.position.set(divisorWallX, height / 2, (depth / 2) - (depthSepWalls / 2));
     scene.add(frontDivisor);
     
-    const divisorLowWall = new THREE.Mesh(new THREE.BoxGeometry(thickness,  3.5, counterDepth), wallMaterial);
+    // === APPLIED DETAIL MATERIAL ON LOW/HIGH DIVISORS TO PREVENT STRETCHING ===
+    const divisorLowWall = new THREE.Mesh(new THREE.BoxGeometry(thickness,  3.5, counterDepth), detailWallMaterial);
     divisorLowWall.position.set(divisorWallX, 3.5 / 2, 0);
     scene.add(divisorLowWall);
 
-    const divisorHighWall = new THREE.Mesh(new THREE.BoxGeometry(thickness, 3.5, counterDepth), wallMaterial);
+    const divisorHighWall = new THREE.Mesh(new THREE.BoxGeometry(thickness, 3.5, counterDepth), detailWallMaterial);
     divisorHighWall.position.set(divisorWallX, height - (3.5 / 2), 0);
     scene.add(divisorHighWall);
 
-    //counter with a brown material to simulate wood, positioned in front of the divisor wall
+    // Counter with a brown material to simulate wood, positioned in front of the divisor wall
     const counterMaterial = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.3, metalness: 0.5 });
     const counter = new THREE.Mesh(new THREE.BoxGeometry(counterWidth, counterThickness, counterDepth), counterMaterial);
     counter.position.set(divisorWallX, 3.5 + (counterThickness / 2), 0);
     scene.add(counter);
 
-    //back wall of the main room with three windows, created using a shape with holes for the windows
-    const overlapX = 0; //to avoid gaps between walls
-    const overlapY = 2; //to avoid gaps between walls
+    // Back wall of the main room with three windows, created using a shape with holes for the windows
+    const overlapX = 0; // To avoid gaps between walls
+    const overlapY = 2; // To avoid gaps between walls
     const backWallShape = new THREE.Shape();
     backWallShape.moveTo(-mainRoomWidth/2 - overlapX, -overlapY);
     backWallShape.lineTo(mainRoomWidth/2 + overlapX, -overlapY);
@@ -169,7 +186,7 @@ function buildRestaurant() {
     backWallShape.lineTo(-mainRoomWidth/2 - overlapX, height + overlapY);
     backWallShape.lineTo(-mainRoomWidth/2 - overlapX, -overlapY);
 
-    //centers of the three windows on the back wall
+    // Centers of the three windows on the back wall
     const backWindowCenters = [-25, 0, 25]; 
     backWindowCenters.forEach(cx => {
         const hole = new THREE.Path();
@@ -178,7 +195,7 @@ function buildRestaurant() {
         const h = 7;     
         const bottomY = 4; 
         
-        //create a hole for the window using a path with an arc for the top
+        // Create a hole for the window using a path with an arc for the top
         hole.moveTo(cx - r, bottomY);
         hole.lineTo(cx - r, bottomY + h);
         hole.absarc(cx, bottomY + h, r, Math.PI, 0, true); 
@@ -187,11 +204,10 @@ function buildRestaurant() {
         backWallShape.holes.push(hole);
     });
 
-    //create a 3D geometry from the shape and apply the wall material, then position it in the scene
-    //const extrudeSettingsBW = { depth: thickness, bevelEnabled: false, curveSegments: 32 };
+    // Create a 3D geometry from the shape and apply the wall material, then position it in the scene
     const backWallGeom = new THREE.ShapeGeometry(backWallShape);
 
-    //fix for the textures
+    // Fix for the texture coordinates mapping
     const posAttributeBW = backWallGeom.attributes.position;
     const uvAttributeBW = backWallGeom.attributes.uv;
     if (uvAttributeBW) {
@@ -209,7 +225,7 @@ function buildRestaurant() {
          uvAttributeBW.needsUpdate = true;
     }
 
-    //create a mesh from the geometry and add it to the scene
+    // Create a mesh from the geometry and add it to the scene
     const backWallMesh = new THREE.Mesh(backWallGeom, wallMaterial);
     backWallMesh.position.set(divisorWallX + (mainRoomWidth / 2), 0, -depth / 2);
     scene.add(backWallMesh);
@@ -219,7 +235,7 @@ function buildRestaurant() {
     frontWallMesh.position.set(divisorWallX + (mainRoomWidth / 2), 0, depth / 2);
     scene.add(frontWallMesh);
 
-    //create the window frames for the back wall windows and add them to a group, then add the group to the scene
+    // Create the window frames for the back wall windows and add them to a group, then add the group to the scene
     const backWindowsGroup = new THREE.Group();
     backWindowCenters.forEach(cx => {
         const windowFrame = createWindowFrame(16, 7, 8, 0.5, 1.2, counterMaterial);
@@ -230,7 +246,7 @@ function buildRestaurant() {
     
     window.backWindowsGroup = backWindowsGroup;
 
-     const frontWindowsGroup = new THREE.Group();
+    const frontWindowsGroup = new THREE.Group();
     backWindowCenters.forEach(cx => {
         const windowFrame = createWindowFrame(16, 7, 8, 0.5, 1.2, counterMaterial);
         windowFrame.rotation.y = Math.PI; 
@@ -241,8 +257,7 @@ function buildRestaurant() {
     
     window.frontWindowsGroup = frontWindowsGroup;
 
-    //ceiling created using a PlaneGeometry in this way it can be seen only from below
-    //allowing the player to see the interior of the restaurant from above without obstruction
+    // Ceiling created using a PlaneGeometry so it can be seen only from below
     const ceilingGeometry = new THREE.PlaneGeometry(width + 1, depth + 1);
     const ceilingMaterial = new THREE.MeshStandardMaterial({ 
         map: iceFloorTexture, 
@@ -250,24 +265,61 @@ function buildRestaurant() {
         metalness: 0.1
     });
     const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
-
     ceiling.rotation.x = Math.PI / 2; 
     ceiling.position.y = height; 
     scene.add(ceiling);
 
-    //lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); 
+    // === OPTIMIZED GRID SPOTLIGHT SYSTEM (Prevents GPU Shader Unit Crashes) ===
+    const ambientLight = new THREE.AmbientLight(0xd0e3f0, 0.4); 
     scene.add(ambientLight);
 
-    //controls for the camera using OrbitControls, allowing the player to rotate, zoom, and pan the camera
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    const lampGeometry = new THREE.CylinderGeometry(0.4, 0.5, 0.3, 8); 
+    const lampMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const spotlightIntensity = 1.2; 
+    
+    const xDistance = 20;           
+    const zDistance = 12;           
+    let shadowLightCount = 0; // Safe counter to cap live shadow maps under WebGL limit
 
+    for (let x = -50; x <= 50; x += xDistance) {
+        for (let z = -20; z <= 20; z += zDistance) {
+            // Render physical fixture model on ceiling
+            const physicalLamp = new THREE.Mesh(lampGeometry, lampMaterial);
+            physicalLamp.position.set(x, 19.95, z); 
+            scene.add(physicalLamp);
+
+            // Render functional cone spotlight
+            const gridSpotlight = new THREE.SpotLight(0xffffff, spotlightIntensity);
+            gridSpotlight.position.set(x, 19.8, z); 
+            gridSpotlight.target.position.set(x, 0, z);
+            
+            gridSpotlight.angle = Math.PI / 2.2; 
+            gridSpotlight.penumbra = 1.0;        
+            gridSpotlight.distance = 30;         
+            gridSpotlight.decay = 1.2;           
+            
+            // Allocate shadow casting limits selectively to maintain hardware stability
+            if (shadowLightCount < 4 && (x === -10 || x === 30) && z === 0) {
+                gridSpotlight.castShadow = true;
+                gridSpotlight.shadow.mapSize.width = 1024;
+                gridSpotlight.shadow.mapSize.height = 1024;
+                gridSpotlight.shadow.bias = -0.001;
+                shadowLightCount++;
+            } else {
+                gridSpotlight.castShadow = false; 
+            }
+
+            scene.add(gridSpotlight);
+            scene.add(gridSpotlight.target);
+        }
+    }
+
+    // Controls for the camera using OrbitControls, allowing rotation, zoom, and panning
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.minPolarAngle = Math.PI / 2.2;
     controls.maxPolarAngle = Math.PI / 2.2; 
-
     controls.minDistance = 5; 
     controls.maxDistance = 45; 
-
     controls.target.set(0, 4, 0);
     controls.update();
 
@@ -300,21 +352,19 @@ function animate(waiter, camera) {
 
     updateMovement(waiter);
 
-    /////////////////////////NEED TO FIX THE MOVEMENT OF THE CAMERA, IT IS NOT FOLLOWING THE WAITER CORRECTLY/////////////////////////
     if (waiter && camera) {
         let targetX = waiter.position.x;
-
         const limiteSinistro = -60; 
         const limiteDestro = 60;
 
         if (targetX < limiteSinistro) targetX = limiteSinistro;
         if (targetX > limiteDestro) targetX = limiteDestro;
 
+        // Follow target along the camera tracking path
+        camera.position.x = -targetX;
         
-        camera.position.x = targetX;
-        
-        
-        camera.lookAt(targetX, 5, 0); 
+        // INVERTED LOOK-AT: Look in the opposite X direction of the waiter
+        camera.lookAt(-targetX, 5, 0); 
     }
 
     if (isPaused) return;
@@ -323,7 +373,7 @@ function animate(waiter, camera) {
         window.gameControls.update();
     }
 
-    //window groups visibility based on camera position to prevent obstruction of view 
+    // Window groups visibility management based on camera position Z-depth
     if (window.backWindowsGroup) {
         window.backWindowsGroup.visible = camera.position.z > -25;
     }
@@ -341,14 +391,11 @@ function animate(waiter, camera) {
 
 function onWindowResize() {
     const aspect = window.innerWidth / window.innerHeight;
-    const viewSize = 35; 
-
     camera.aspect = aspect;
     camera.updateProjectionMatrix(); 
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-//function to create a window frame with specified width, height, corner radius, frame thickness, depth, and material
 function createWindowFrame(w, h, r, frameThick, depth, material) {
     const group = new THREE.Group();
 
