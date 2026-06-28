@@ -35,13 +35,13 @@ function loadEnvironment(scene, icebergsArray) {
 
 
 
-function loadFurniture(scene, path, x, z, rotation, scale = 10) {
+function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, openable = false) {
     const loader = new THREE.GLTFLoader();
 
     loader.load(path, (gltf) => {
         const model = gltf.scene;
         console.log(model)
-        model.position.set(x, 0, z);
+        model.position.set(x, y, z);
         model.rotation.y = rotation;
         model.scale.set(scale, scale, scale);
         
@@ -49,6 +49,19 @@ function loadFurniture(scene, path, x, z, rotation, scale = 10) {
             if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
+
+                if (openable) {
+                    const name = child.name.toLowerCase();
+                    
+                    if (name.includes('door')) {
+                        child.userData.isInteractable = true;
+                        child.userData.isOpen = false;
+                        
+                        child.userData.doorType = name.includes('left') ? 'left' : 'right';
+                        
+                        child.userData.originalRotation = child.rotation.y;
+                    }
+                }
             }
         });
 
@@ -56,5 +69,51 @@ function loadFurniture(scene, path, x, z, rotation, scale = 10) {
         console.log(`Mobile caricato: ${path}`);
     }, undefined, (error) => {
         console.error(`Errore caricamento ${path}:`, error);
+    });
+}
+
+
+function loadDoor(scene, path, x, y, z, rotation, scale = 10) {
+    const loader = new THREE.GLTFLoader();
+
+    loader.load(path, (gltf) => {
+        const doorModel = gltf.scene;
+        
+        // 1. Creiamo la cerniera invisibile
+        const hingeGroup = new THREE.Group();
+        hingeGroup.position.set(x, y, z);
+        hingeGroup.rotation.y = rotation;
+        hingeGroup.scale.set(scale, scale, scale);
+        
+        hingeGroup.userData.isOpen = false;
+        hingeGroup.userData.originalRotation = hingeGroup.rotation.y;
+
+        // 2. Misuriamo la porta per allinearla
+        const box = new THREE.Box3().setFromObject(doorModel);
+        const width = box.max.x - box.min.x; 
+        
+        // Spostiamo la porta dentro la cerniera.
+        // Se la porta si apre dal lato sbagliato, basterà togliere il " - " qui sotto.
+        doorModel.position.x = -(width / 2);
+
+        hingeGroup.add(doorModel);
+        scene.add(hingeGroup);
+
+        // 3. Rendiamo cliccabili tutti i pezzi della porta
+        doorModel.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                child.userData.isInteractable = true;
+                child.userData.doorType = 'single'; 
+                
+                // Diciamo al laser che deve ruotare la cerniera intera, non i singoli pezzi!
+                child.userData.targetToRotate = hingeGroup; 
+            }
+        });
+        
+        console.log(`Porta caricata: ${path}`);
+    }, undefined, (error) => {
+        console.error(`Errore caricamento porta ${path}:`, error);
     });
 }

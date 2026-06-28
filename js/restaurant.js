@@ -24,6 +24,12 @@ function buildRestaurant() {
     
     document.body.appendChild(renderer.domElement);
 
+    if (typeof setupInteractions === 'function') {
+        setupInteractions(camera, scene);
+    } else {
+        console.warn("error in file interactions.js");
+    }
+
     //global variables for restaurant dimensions
     const width = 120;  
     const depth = 50; 
@@ -71,9 +77,51 @@ function buildRestaurant() {
     leftWall.position.set(-width / 2, height / 2, 0);
     scene.add(leftWall);
 
-    const rightWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+    /*const rightWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
     rightWall.rotation.y = -Math.PI / 2;
     rightWall.position.set(width / 2, height / 2, 0);
+    scene.add(rightWall);*/
+    const overlapXRight = 1; 
+    const overlapYRight = 2; 
+    const rightWallShape = new THREE.Shape();
+    
+    // Disegniamo il perimetro del muro
+    rightWallShape.moveTo(-depth/2 - overlapXRight, -overlapYRight);
+    rightWallShape.lineTo(depth/2 + overlapXRight, -overlapYRight);
+    rightWallShape.lineTo(depth/2 + overlapXRight, height + overlapYRight);
+    rightWallShape.lineTo(-depth/2 - overlapXRight, height + overlapYRight);
+    rightWallShape.lineTo(-depth/2 - overlapXRight, -overlapYRight);
+
+    // Misure precise calcolate dal tuo file doorway.glb (scalato a 10)
+    const doorW = 5;    // Larghezza buco
+    const doorH = 10.5; // Altezza buco
+    const doorZ = 10;   // Posizione sulla parete
+
+    // Ritagliamo il buco per la porta
+    const doorHole = new THREE.Path();
+    doorHole.moveTo(doorZ - doorW/2, -overlapYRight);
+    doorHole.lineTo(doorZ - doorW/2, doorH);
+    doorHole.lineTo(doorZ + doorW/2, doorH);
+    doorHole.lineTo(doorZ + doorW/2, -overlapYRight);
+    rightWallShape.holes.push(doorHole);
+
+    const rightWallGeom = new THREE.ShapeGeometry(rightWallShape);
+    
+    // Ripariamo le coordinate UV per evitare che la texture del ghiaccio si deformi
+    const posAttrRW = rightWallGeom.attributes.position;
+    const uvAttrRW = rightWallGeom.attributes.uv;
+    if (uvAttrRW) {
+        for (let i = 0; i < posAttrRW.count; i++) { 
+            const x = posAttrRW.getX(i);
+            const y = posAttrRW.getY(i);
+            uvAttrRW.setXY(i, (x + depth/2) / depth, y / height);
+        }
+        uvAttrRW.needsUpdate = true;
+    }
+
+    const rightWall = new THREE.Mesh(rightWallGeom, wallMaterial);
+    rightWall.rotation.y = -Math.PI / 2;
+    rightWall.position.set(width / 2, 0, 0); 
     scene.add(rightWall);
 
     //walls of the kitchen, only the part on the left of the divisor wall
@@ -233,8 +281,14 @@ function buildRestaurant() {
 
     spawnPenguin(-10, 0, -10);
     spawnPenguin(-20, 0, 5);
-    loadFurniture(scene, 'models/furniture/kitchenSink.glb', -55, -10, Math.PI / 2);
-    loadFurniture(scene, 'models/furniture/kitchenFridgeLarge.glb', -56, 10, Math.PI / 2);
+    loadDoor(scene, 'models/furniture/doorway.glb', width / 2, 0, 10, -Math.PI / 2, 10);
+    loadFurniture(scene, 'models/furniture/kitchenSink.glb', -54, -10, Math.PI / 2);
+    loadFurniture(scene, 'models/furniture/kitchenFridgeLarge.glb', -55, 20, Math.PI / 2, 0, 13, openable = true);
+    loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -54, 10, Math.PI / 2);
+    loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -54, 5, Math.PI / 2);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -54, 0, Math.PI / 2);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -54, -5, Math.PI / 2);
+    loadFurniture(scene, 'models/furniture/kitchenCoffeeMachine.glb', -55, -5, Math.PI / 2, 5.5);
 
     animate();
 }
@@ -255,6 +309,10 @@ function animate() {
 
     if (window.frontWindowsGroup) {
         window.frontWindowsGroup.visible = camera.position.z < 25;
+    }
+
+    if (typeof TWEEN !== 'undefined') {
+        TWEEN.update();
     }
 
     renderer.render(scene, camera);
