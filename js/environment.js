@@ -113,31 +113,26 @@ function createIcebergs(scene, icebergsArray, count) {
     });
 
     for (let i = 0; i < count; i++) {
-        // 1. Partiamo da una geometria di base
         const geometry = new THREE.DodecahedronGeometry(5, 1);
         const pos = geometry.attributes.position;
         const vertex = new THREE.Vector3();
         
-        // Mappa per salvare le deformazioni dei vertici coincidenti
+        // to save the displacement values for vertices that share the same direction
         const displacementMap = {};
 
-        // 2. Deformiamo matematicamente ogni singolo vertice
         for (let v = 0; v < pos.count; v++) {
             vertex.fromBufferAttribute(pos, v);
             
-            // Portiamo il vertice a distanza fissa dal centro
             vertex.normalize();
-            
-            // Creiamo una "chiave" unica per questa direzione per raggruppare i vertici condivisi
-            // Arrotondiamo per evitare i difetti di precisione dei decimali (es. 0.99999 vs 1.0)
+            // Create a unique key for the vertex based on its normalized position
             const key = Math.round(vertex.x * 100) + '_' + Math.round(vertex.y * 100) + '_' + Math.round(vertex.z * 100);
             
             let deform;
             if (displacementMap[key]) {
-                // Se questo angolo dell'iceberg è già stato deformato, copiamo i valori gemelli!
+                // if we've already calculated a deformation for this direction, reuse it
                 deform = displacementMap[key];
             } else {
-                // Se è un angolo nuovo, calcoliamo una deformazione casuale e la salviamo
+                // if it's a new angle, calculate a random deformation and save it
                 deform = {
                     radius: 4 + Math.random() * 3,
                     heightStretch: 1 + (Math.random() * 1.5)
@@ -145,27 +140,23 @@ function createIcebergs(scene, icebergsArray, count) {
                 displacementMap[key] = deform;
             }
             
-            // Moltiplichiamo per il raggio
             vertex.multiplyScalar(deform.radius);
             
-            // Se il punto è sopra l'acqua lo tiriamo in alto (per fare le punte)
-            // Se è sotto l'acqua lo schiacciamo un po'
+            // Stretch the height of the iceberg based on its y-coordinate
             if (vertex.y > 0) {
                 vertex.y *= deform.heightStretch;
             } else {
                 vertex.y *= 0.5;
             }
 
-            // Aggiorniamo la geometria con la nuova posizione del vertice
             pos.setXYZ(v, vertex.x, vertex.y, vertex.z);
         }
         
-        // 3. Ricalcoliamo le normali per far funzionare bene la luce con il flatShading
+        
         geometry.computeVertexNormals();
 
         const iceberg = new THREE.Mesh(geometry, material);
         
-        // Random position around the scene, but not too close to the center (where the restaurant is)
         const angle = Math.random() * Math.PI * 2;
         const minDistance = 110; 
         const maxDistance = 220; 
