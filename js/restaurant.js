@@ -340,11 +340,11 @@ function buildRestaurant() {
     window.addEventListener('resize', onWindowResize, false);
 
     // Spawning
-    const waiter = spawnPenguin(-10, 0, -10);
+    const waiter = spawnPenguin(KITCHEN_POS.IDLE_WAITER, 'waiter');
     setupControls(waiter);
-    const chef = spawnPenguin(-60, 0, 5);
+    const chef = spawnPenguin(KITCHEN_POS.IDLE_CHEF, 'chef');
     setupControls(chef);
-    const dishwasher = spawnPenguin(-60, 0, -5);
+    const dishwasher = spawnPenguin(KITCHEN_POS.IDLE_DISHWASHER, 'dishwasher');
     setupControls(dishwasher);
 
     if (waiter){
@@ -411,6 +411,7 @@ function animate(waiter, camera, icebergs){
         TWEEN.update();
     }
 
+    updateRoutines(); // Update penguin routines
     renderer.render(scene, camera);
 }
 

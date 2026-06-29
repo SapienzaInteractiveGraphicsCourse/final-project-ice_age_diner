@@ -1,6 +1,16 @@
 //Array that will keep track of all the penguins
 const penguins = []
 
+const KITCHEN_POS = {
+    FRIDGE: new THREE.Vector3(-65, 0, 15),   
+    STOVE: new THREE.Vector3(-65, 0, 5),     
+    COUNTER: new THREE.Vector3(-42, 0, 0),   
+    IDLE_CHEF: new THREE.Vector3(-55, 0, 5), 
+    IDLE_WAITER: new THREE.Vector3(-10, 0, 10),
+    IDLE_DISHWASHER: new THREE.Vector3(-55, 0, 15),
+    SINK: new THREE.Vector3(-65, 0, -10)     
+};
+
 //Creates the model of a penguin
 function createPenguinModel(){
     const penguinGroup = new THREE.Group();
@@ -96,9 +106,14 @@ function createPenguinModel(){
     return penguinGroup;
 }
 
-function spawnPenguin(x, y, z){
+function spawnPenguin(position, role){
     const penguin = createPenguinModel();
-    penguin.position.set(x, y, z);
+    penguin.position.copy(position);
+    penguin.userData.role = role;
+    penguin.userData.state = 'IDLE'; 
+    penguin.userData.timer = 0;
+    penguin.userData.speed = 0.4;
+    penguin.userData.hasPlate = false;
 
     scene.add(penguin);
 
@@ -175,4 +190,164 @@ function stopWalking(penguin) {
         new TWEEN.Tween(penguin.userData.leftFlipper.rotation).to({ x: 0 }, 200).start();
         new TWEEN.Tween(penguin.userData.rightFlipper.rotation).to({ x: 0 }, 200).start();
     }
+}
+
+function moveTowards(penguin, targetPos){
+    if (!penguin) return;
+
+    const dx = targetPos.x - penguin.position.x;
+    const dz = targetPos.z - penguin.position.z;
+    const distance = Math.sqrt(dx * dx + dz * dz);
+
+    if (distance > 0.5) {
+        const dirX = dx / distance;
+        const dirZ = dz / distance;
+
+        penguin.position.x += dirX * penguin.userData.speed;
+        penguin.position.z += dirZ * penguin.userData.speed;
+        penguin.rotation.y = Math.atan2(dirX, dirZ);
+
+        if (typeof startWalking === "function") startWalking(penguin);
+            return false;
+    }else {
+        if (typeof stopWalking === "function") stopWalking(penguin);
+        return true; 
+    }
+}
+
+function updateRoutines(){
+    penguins.forEach(penData => {
+        const penguin = penData.mesh;
+        if (penguin.userData.role === 'chef'){
+            updateChefRoutine(penguin);
+        }
+        else if (penguin.userData.role === 'dishwasher'){
+            updateDishwasherRoutine(penguin);
+        }
+    });
+}
+
+
+function updateChefRoutine(chef) {
+    switch(chef.userData.state) {
+        case 'IDLE':
+            break;
+
+        case 'WALK_FRIDGE':
+            if (moveTowards(chef, KITCHEN_POS.FRIDGE)) {
+                // moved to fridge, now perform action
+                chef.rotation.y = -Math.PI / 2; 
+                chef.userData.state = 'ACTION_FRIDGE';
+                chef.userData.timer = 60; // 1 second to "grab" ingredients
+            }
+            break;
+
+        case 'ACTION_FRIDGE':
+            chef.userData.timer--;
+            if (chef.userData.timer <= 0) {
+                console.log("CHEF: ingredients grabbed! Now to the stove.");
+                chef.userData.state = 'WALK_STOVE';
+            }
+            break;
+
+        case 'WALK_STOVE':
+            if (moveTowards(chef, KITCHEN_POS.STOVE)) {
+                // stove reached, now perform cooking action
+                chef.rotation.y = -Math.PI / 2;
+                chef.userData.state = 'ACTION_STOVE';
+                chef.userData.timer = 300; 
+            }
+            break;
+
+        case 'ACTION_STOVE':
+            chef.userData.timer--;
+            // Animate the chef's rotation slightly to simulate stirring or cooking
+            chef.rotation.y = (-Math.PI / 2) + Math.sin(chef.userData.timer * 0.2) * 0.1;
+            
+            if (chef.userData.timer <= 0) {
+                console.log("CHEF: Dish ready! Taking it to the counter.");
+                chef.userData.hasPlate = true; 
+                chef.userData.state = 'WALK_COUNTER';
+            }
+            break;
+
+        case 'WALK_COUNTER':
+            if (moveTowards(chef, KITCHEN_POS.COUNTER)) {
+                chef.rotation.y = Math.PI / 2;
+                chef.userData.state = 'ACTION_COUNTER';
+                chef.userData.timer = 60; 
+            }
+            break;
+
+        case 'ACTION_COUNTER':
+            chef.userData.timer--;
+            if (chef.userData.timer <= 0) {
+                console.log("CHEF: Order delivered on the counter!");
+                chef.userData.hasPlate = false;
+                
+                // TO BE ADDED PLATE ON COUNTER LOGIC HERE
+                
+                chef.userData.state = 'WALK_IDLE';
+            }
+            break;
+
+        case 'WALK_IDLE':
+            if (moveTowards(chef, KITCHEN_POS.IDLE_CHEF)) {
+                chef.rotation.y = Math.PI; 
+                chef.userData.state = 'IDLE';
+            }
+            break;
+    }
+}
+
+function updateDishwasherRoutine(dishwasher) {
+    switch(dishwasher.userData.state) {
+        case 'IDLE':
+            break;
+
+        case 'WALK_COUNTER':
+            if (moveTowards(dishwasher, KITCHEN_POS.COUNTER)) {
+                dishwasher.rotation.y = Math.PI / 2; 
+                dishwasher.userData.state = 'ACTION_COUNTER';
+                dishwasher.userData.timer = 60; 
+            }
+            break;
+
+        case 'ACTION_COUNTER':
+            dishwasher.userData.timer--;
+            //LOGIC TO PICK UP DIRTY PLATE FROM COUNTER HERE
+            if (dishwasher.userData.timer <= 0) {
+                console.log("DISHWASHER: Dirty plate picked up! Now to the sink.");
+                dishwasher.userData.state = 'WALK_SINK';
+            }
+            break;
+        
+        case 'WALK_SINK':
+            if (moveTowards(dishwasher, KITCHEN_POS.SINK)) {
+                dishwasher.rotation.y = -Math.PI / 2; 
+                dishwasher.userData.state = 'ACTION_SINK';
+                dishwasher.userData.timer = 300; 
+            }
+            break;
+
+        case 'ACTION_SINK':
+            dishwasher.userData.timer--;
+            // Animate the dishwasher's rotation slightly to simulate washing
+            dishwasher.rotation.y = (-Math.PI / 2) + Math.sin(dishwasher.userData.timer * 0.2) * 0.1;
+            if (dishwasher.userData.timer <= 0) {
+                console.log("DISHWASHER: Plate washed! Now to the counter.");
+                dishwasher.userData.state = 'WALK_COUNTER';  //put counter to know if there are plate to pickup
+            }
+    }
+}
+
+//function to TEST chef order routine
+function testChefOrder() {
+    penguins.forEach(pData => {
+        const p = pData.mesh;
+        if (p.userData.role === 'chef' && p.userData.state === 'IDLE') {
+            console.log("CHEF: Ho ricevuto un ordine! Vado a prendere gli ingredienti.");
+            p.userData.state = 'WALK_FRIDGE';
+        }
+    });
 }
