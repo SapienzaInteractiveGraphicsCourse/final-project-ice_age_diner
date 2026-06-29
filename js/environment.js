@@ -1,36 +1,14 @@
+let waterTime = 0;
 function loadEnvironment(scene, icebergsArray){
     const waterGeometry = new THREE.PlaneGeometry(500, 500);
     const waterMaterial = new THREE.MeshStandardMaterial({ color: 0x0077be, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
     const water = new THREE.Mesh(waterGeometry, waterMaterial);
     water.rotation.x = -Math.PI/2;
-    water.position.y = -2;
+    water.position.y = -2 + Math.sin(waterTime * 0.01) * 0.2;
+    water.frustumCulled = false; // Ensure the water is always rendered
     scene.add(water);
 
-    /*const loader = new THREE.GLTFLoader();
-    loader.load('models/outside/rock_moss_set_01_4k.gltf', (gltf) => {
-        gltf.scene.traverse((child) => {
-            if (child.isMesh) {
-                child.material = new THREE.MeshStandardMaterial({ 
-                    color: 0x808080, 
-                    roughness: 0.8 
-                });
-                const iceberg = child.clone();
-                iceberg.position.set(Math.random() * 100 - 50, -3, Math.random() * 100 - 50);
-                iceberg.scale.set(5, 5, 5);
-                scene.add(iceberg);
-                
-                icebergsArray.push({ 
-                    mesh: iceberg, 
-                    initialY: iceberg.position.y, 
-                    speed: Math.random() * 0.02 
-                });
-            }
-        });
-        console.log("Iceberg caricati con successo!"); 
-        }, undefined, (error) => {
-            console.error("ERRORE CARICAMENTO GLTF:", error);
-    });*/
-
+    createIcebergs(scene, icebergsArray, 10);
 }
 
 
@@ -122,4 +100,123 @@ function loadDoor(scene, path, x, y, z, rotation, scale = 10){
     }, undefined, (error) => {
         console.error(`Error while loading the door ${path}:`, error);
     });
+}
+
+function createIcebergs(scene, icebergsArray, count) {
+    const material = new THREE.MeshStandardMaterial({ 
+        color: 0xe0ffff, // light cyan color for ice
+        roughness: 0.2,
+        metalness: 0.1,
+        flatShading: true, // to give it a more faceted look
+        transparent: true,
+        opacity: 0.95
+    });
+
+    for (let i = 0; i < count; i++) {
+        // 1. Partiamo da una geometria di base
+        const geometry = new THREE.DodecahedronGeometry(5, 1);
+        const pos = geometry.attributes.position;
+        const vertex = new THREE.Vector3();
+        
+        // Mappa per salvare le deformazioni dei vertici coincidenti
+        const displacementMap = {};
+
+        // 2. Deformiamo matematicamente ogni singolo vertice
+        for (let v = 0; v < pos.count; v++) {
+            vertex.fromBufferAttribute(pos, v);
+            
+            // Portiamo il vertice a distanza fissa dal centro
+            vertex.normalize();
+            
+            // Creiamo una "chiave" unica per questa direzione per raggruppare i vertici condivisi
+            // Arrotondiamo per evitare i difetti di precisione dei decimali (es. 0.99999 vs 1.0)
+            const key = Math.round(vertex.x * 100) + '_' + Math.round(vertex.y * 100) + '_' + Math.round(vertex.z * 100);
+            
+            let deform;
+            if (displacementMap[key]) {
+                // Se questo angolo dell'iceberg è già stato deformato, copiamo i valori gemelli!
+                deform = displacementMap[key];
+            } else {
+                // Se è un angolo nuovo, calcoliamo una deformazione casuale e la salviamo
+                deform = {
+                    radius: 4 + Math.random() * 3,
+                    heightStretch: 1 + (Math.random() * 1.5)
+                };
+                displacementMap[key] = deform;
+            }
+            
+            // Moltiplichiamo per il raggio
+            vertex.multiplyScalar(deform.radius);
+            
+            // Se il punto è sopra l'acqua lo tiriamo in alto (per fare le punte)
+            // Se è sotto l'acqua lo schiacciamo un po'
+            if (vertex.y > 0) {
+                vertex.y *= deform.heightStretch;
+            } else {
+                vertex.y *= 0.5;
+            }
+
+            // Aggiorniamo la geometria con la nuova posizione del vertice
+            pos.setXYZ(v, vertex.x, vertex.y, vertex.z);
+        }
+        
+        // 3. Ricalcoliamo le normali per far funzionare bene la luce con il flatShading
+        geometry.computeVertexNormals();
+
+        const iceberg = new THREE.Mesh(geometry, material);
+        
+        // Random position around the scene, but not too close to the center (where the restaurant is)
+        const angle = Math.random() * Math.PI * 2;
+        const minDistance = 110; 
+        const maxDistance = 220; 
+        const distance = minDistance + Math.random() * (maxDistance - minDistance);
+        
+        iceberg.position.set(
+            Math.cos(angle) * distance,
+            -2, 
+            Math.sin(angle) * distance
+        );
+        
+        // Random scale for variety
+        const scale = 1 + Math.random() * 2;
+        iceberg.scale.set(scale, scale, scale);
+        
+        scene.add(iceberg);
+
+        // 50% the iceberg is moving, 50% is stationary
+        const isMoving = Math.random() > 0.5;
+        const speedX = isMoving ? (Math.random() * 0.04 - 0.02) : 0;
+
+        // data for the animation
+        icebergsArray.push({
+            mesh: iceberg,
+            initialY: -2,
+            bobSpeed: 0.01 + Math.random() * 0.02, 
+            //to make them move separatly
+            bobOffset: Math.random() * Math.PI * 2, 
+            driftX: speedX
+        });
+    }
+}
+
+
+function animateIcebergs(icebergsArray) {
+    waterTime += 1; 
+
+    for (let i = 0; i < icebergsArray.length; i++) {
+        let data = icebergsArray[i];
+        let icebergMesh = data.mesh;
+
+        //movement on y
+        icebergMesh.position.y = data.initialY + Math.sin((waterTime * data.bobSpeed) + data.bobOffset) * 1.5;
+
+        icebergMesh.position.x += data.driftX;
+
+        // Wrap around the scene if the iceberg drifts too far
+        if (icebergMesh.position.x > 200) {
+            icebergMesh.position.x = -200;
+        } else if (icebergMesh.position.x < -200) {
+            icebergMesh.position.x = 200;
+        }
+    }
 }

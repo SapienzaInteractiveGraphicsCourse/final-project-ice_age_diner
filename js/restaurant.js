@@ -1,5 +1,6 @@
 function buildRestaurant() {
     window.colliders = [];
+    window.icebergs = [];
 
     // Creation of the scene, camera, and renderer
     scene = new THREE.Scene();
@@ -341,8 +342,11 @@ function buildRestaurant() {
     // Spawning
     const waiter = spawnPenguin(-10, 0, -10);
     setupControls(waiter);
-    spawnPenguin(-20, 0, 5);
-    
+    const chef = spawnPenguin(-60, 0, 5);
+    setupControls(chef);
+    const dishwasher = spawnPenguin(-60, 0, -5);
+    setupControls(dishwasher);
+
     if (waiter){
         camera.position.set(waiter.position.x, waiter.position.y+10, waiter.position.z+20);
         if (window.gameControls){
@@ -360,11 +364,13 @@ function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, -5, Math.PI/2);
     loadFurniture(scene, 'models/furniture/kitchenCoffeeMachine.glb', -75, -5, Math.PI/2, 5.5);
 
-    animate(waiter, camera);
+    loadEnvironment(scene, window.icebergs);
+
+    animate(waiter, camera, window.icebergs);
 }
 
-function animate(waiter, camera){
-    requestAnimationFrame(() => animate(waiter, camera));
+function animate(waiter, camera, icebergs){
+    requestAnimationFrame(() => animate(waiter, camera, icebergs));
 
     updateMovement(waiter);
 
@@ -394,17 +400,11 @@ function animate(waiter, camera){
     }
 
     if (isPaused) return;
+
+    animateIcebergs(icebergs);
     
     if (window.gameControls) {
         window.gameControls.update();
-    }
-
-    if (window.backWindowsGroup) {
-        window.backWindowsGroup.visible = camera.position.z > -25;
-    }
-
-    if (window.frontWindowsGroup) {
-        window.frontWindowsGroup.visible = camera.position.z < 25;
     }
 
     if (typeof TWEEN !== 'undefined') {
@@ -459,7 +459,8 @@ function createWindowFrame(w, h, r, frameThick, depth, material) {
         opacity: 0.35,
         roughness: 0.1,
         metalness: 0.9,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
+        depthWrite: false
     });
     const glass = new THREE.Mesh(glassGeom, glassMaterial);
     group.add(glass);
