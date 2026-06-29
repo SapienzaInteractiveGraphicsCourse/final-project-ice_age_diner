@@ -1,8 +1,8 @@
-function loadEnvironment(scene, icebergsArray) {
+function loadEnvironment(scene, icebergsArray){
     const waterGeometry = new THREE.PlaneGeometry(500, 500);
     const waterMaterial = new THREE.MeshStandardMaterial({ color: 0x0077be, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
     const water = new THREE.Mesh(waterGeometry, waterMaterial);
-    water.rotation.x = -Math.PI / 2;
+    water.rotation.x = -Math.PI/2;
     water.position.y = -2;
     scene.add(water);
 
@@ -35,7 +35,7 @@ function loadEnvironment(scene, icebergsArray) {
 
 
 
-function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, openable = false) {
+function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, openable = false){
     const loader = new THREE.GLTFLoader();
 
     loader.load(path, (gltf) => {
@@ -50,10 +50,10 @@ function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, openable 
                 child.castShadow = true;
                 child.receiveShadow = true;
 
-                if (openable) {
+                if (openable){
                     const name = child.name.toLowerCase();
                     
-                    if (name.includes('door')) {
+                    if (name.includes('door')){
                         child.userData.isInteractable = true;
                         child.userData.isOpen = false;
                         
@@ -66,54 +66,53 @@ function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, openable 
         });
 
         scene.add(model);
-        console.log(`Mobile caricato: ${path}`);
+        console.log(`Furniture loaded: ${path}`);
     }, undefined, (error) => {
-        console.error(`Errore caricamento ${path}:`, error);
+        console.error(`Loading error ${path}:`, error);
     });
 }
 
 
-function loadDoor(scene, path, x, y, z, rotation, scale = 10) {
+function loadDoor(scene, path, x, y, z, rotation, scale = 10){
     const loader = new THREE.GLTFLoader();
 
     loader.load(path, (gltf) => {
         const doorModel = gltf.scene;
-        
-        // 1. Creiamo la cerniera invisibile
+
+        doorModel.updateMatrixWorld(true);
+
+        const rawBox = new THREE.Box3().setFromObject(doorModel);
+        const size = new THREE.Vector3();
+        const center = new THREE.Vector3();
+        rawBox.getSize(size);
+        rawBox.getCenter(center);
+
+        doorModel.position.set(-rawBox.min.x, -rawBox.min.y, -center.z); 
+
         const hingeGroup = new THREE.Group();
         hingeGroup.position.set(x, y, z);
         hingeGroup.rotation.y = rotation;
+        hingeGroup.translateX(-(size.x * scale) / 2);
         hingeGroup.scale.set(scale, scale, scale);
-        
+
         hingeGroup.userData.isOpen = false;
         hingeGroup.userData.originalRotation = hingeGroup.rotation.y;
-
-        // 2. Misuriamo la porta per allinearla
-        const box = new THREE.Box3().setFromObject(doorModel);
-        const width = box.max.x - box.min.x; 
-        
-        // Spostiamo la porta dentro la cerniera.
-        // Se la porta si apre dal lato sbagliato, basterà togliere il " - " qui sotto.
-        doorModel.position.x = -(width / 2);
 
         hingeGroup.add(doorModel);
         scene.add(hingeGroup);
 
-        // 3. Rendiamo cliccabili tutti i pezzi della porta
         doorModel.traverse((child) => {
-            if (child.isMesh) {
+            if (child.isMesh){
                 child.castShadow = true;
                 child.receiveShadow = true;
                 child.userData.isInteractable = true;
-                child.userData.doorType = 'single'; 
-                
-                // Diciamo al laser che deve ruotare la cerniera intera, non i singoli pezzi!
-                child.userData.targetToRotate = hingeGroup; 
+                child.userData.doorType = 'single';
+                child.userData.targetToRotate = hingeGroup;
             }
         });
-        
-        console.log(`Porta caricata: ${path}`);
+
+        console.log(`Door loaded and aligned: ${path}`);
     }, undefined, (error) => {
-        console.error(`Errore caricamento porta ${path}:`, error);
+        console.error(`Error while loading the door ${path}:`, error);
     });
 }

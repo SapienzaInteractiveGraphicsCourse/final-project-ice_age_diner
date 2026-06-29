@@ -1,9 +1,11 @@
 function buildRestaurant() {
+    window.colliders = [];
+
     // Creation of the scene, camera, and renderer
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x87ceeb);
 
-    camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
 
     // View to the room
     camera.position.set(0, 20, 35); 
@@ -11,7 +13,7 @@ function buildRestaurant() {
 
     if (audioListener) camera.add(audioListener);
 
-    // === RENDERER SHADOW SETUP ===
+    // Render shadow setup
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true; 
@@ -25,96 +27,118 @@ function buildRestaurant() {
     
     document.body.appendChild(renderer.domElement);
 
-    if (typeof setupInteractions === 'function') {
+    if (typeof setupInteractions === 'function'){
         setupInteractions(camera, scene);
-    } else {
+    } 
+    else{
         console.warn("error in file interactions.js");
     }
 
-    // Global variables for restaurant dimensions
-    const width = 120;  
-    const depth = 50; 
-    const height = 20;
+    // Variables for restaurant dimensions
+    const width = 160;  
+    const depth = 90; 
+    const height = 30;
     const thickness = 1;
 
     const divisorWallX = -30;
     const kitchenWidth = (width/2) + divisorWallX;
     const mainRoomWidth = (width/2) - divisorWallX;
     
-    const counterThickness = 0.3;
-    const counterWidth = 3; 
+    const counterThickness = 1;
+    const counterWidth = 8.0; 
     const counterDepth = 44;
 
-    const depthSepWalls = (depth - counterDepth) / 2;
-const textureLoader = new THREE.TextureLoader();
-    const iceFloorTexture = textureLoader.load('textures/Fabric081B_1K-JPG_Color.jpg');
-    const iceWallTexture = textureLoader.load('textures/Tiles019_1K-JPG_Color.jpg');
+    const depthSepWalls = (depth - counterDepth)/2;
+    const divisorWallThickness = 5;
+    const textureLoader = new THREE.TextureLoader();
     
-    // Independent texture instance for small wall elements to prevent stretching
-    const iceSmallWallTexture = textureLoader.load('textures/Tiles019_1K-JPG_Color.jpg');
-
-    // Applied clean cartoon-style wrapping values
+    const iceFloorTexture = textureLoader.load('textures/Fabric081B_1K-JPG_Color.jpg');
     iceFloorTexture.wrapS = THREE.RepeatWrapping;
     iceFloorTexture.wrapT = THREE.RepeatWrapping;
     iceFloorTexture.repeat.set(6, 5);
 
+    // One texture for every wall
+    const WALL_TILE = 10;
+    const iceWallTexture = textureLoader.load('textures/Tiles019_1K-JPG_Color.jpg');
     iceWallTexture.wrapS = THREE.RepeatWrapping;
     iceWallTexture.wrapT = THREE.RepeatWrapping;
-    iceWallTexture.repeat.set(4, 1);
-
-    // Adjusted repetition scale specifically tailored for small/low surfaces
-    iceSmallWallTexture.wrapS = THREE.RepeatWrapping;
-    iceSmallWallTexture.wrapT = THREE.RepeatWrapping;
-    iceSmallWallTexture.repeat.set(7, 0.3);
-
-    // === FLOOR SET TO RECEIVE SHADOWS WITH ADVANCED ICY GLOW EFFECT ===
-    const floorGeometry = new THREE.BoxGeometry(width + 0.5, thickness, depth + 0.5);
+    iceWallTexture.repeat.set(1, 1);
     
-    // FORCED HIGH GLOSS: Using MeshPhysicalMaterial for true icy reflectivity
+    const wallMaterial = new THREE.MeshStandardMaterial({ 
+        map: iceWallTexture, 
+        roughness: 0.2, 
+        metalness: 0.1 
+    });
+
+    function applyContinuousUVs(geom){
+        geom.computeVertexNormals(); 
+        const pos = geom.attributes.position;
+        const uv = geom.attributes.uv;
+        const norm = geom.attributes.normal;
+        
+        if (!uv || !pos || !norm) return;
+        
+        for (let i = 0; i < pos.count; i++){
+            const x = pos.getX(i);
+            const y = pos.getY(i);
+            const z = pos.getZ(i);
+            
+            const nx = Math.abs(norm.getX(i));
+            const ny = Math.abs(norm.getY(i));
+            
+            // Applica la proiezione sul piano corretto in base alla normale della faccia
+            if (nx > 0.5){ 
+                uv.setXY(i, z/WALL_TILE, y/WALL_TILE);
+            }
+            else if (ny > 0.5){ 
+                uv.setXY(i, x/WALL_TILE, z/WALL_TILE);
+            }
+            else{ 
+                uv.setXY(i, x/WALL_TILE, y/WALL_TILE);
+            }
+        }
+        uv.needsUpdate = true;
+    }
+
+    const floorGeometry = new THREE.BoxGeometry(width + 0.5, thickness, depth + 0.5);
     const floorMaterial = new THREE.MeshPhysicalMaterial({ 
         map: iceFloorTexture, 
-        roughness: 0.01,          // Near 0 makes it a perfect, crisp mirror
-        metalness: 0.1,           // Kept low to keep it looking like organic ice, not steel
-        clearcoat: 1.0,           // Maximum thick polished lacquer layer
-        clearcoatRoughness: 0.0,  // Perfectly smooth reflection coat
-        transmission: 0.3,        // Gives it a slight semi-translucent, glass-like depth
-        ior: 1.31,                // The real physical Index of Refraction of ice!
-        thickness: 2.0            // Simulates internal light refraction inside the ice slab
+        roughness: 0.1,
+        metalness: 0.1,
+        clearcoat: 0.3,
+        clearcoatRoughness: 0.2,
+        transmission: 0.3,
+        ior: 1.31,
+        thickness: 2.0
     }); 
     
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.position.y = -thickness / 2; 
+    floor.position.y = -thickness/2; 
     floor.receiveShadow = true; 
     scene.add(floor);
 
-    // Material setups for main walls and detail walls
-    const wallMaterial = new THREE.MeshStandardMaterial({ map: iceWallTexture, roughness: 0.2, metalness: 0.1 });
-    const detailWallMaterial = new THREE.MeshStandardMaterial({ map: iceSmallWallTexture, roughness: 0.2, metalness: 0.1 });
-
+    // Left wall
     const sideWallGeometry = new THREE.PlaneGeometry(depth + 2, height + 4);
-
+    applyContinuousUVs(sideWallGeometry);
     const leftWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
-    leftWall.rotation.y = Math.PI / 2;
-    leftWall.position.set(-width / 2, height / 2, 0);
+    leftWall.rotation.y = Math.PI/2;
+    leftWall.position.set(-width/2, height/2, 0);
     scene.add(leftWall);
 
+    // Right wall
     const overlapXRight = 1; 
     const overlapYRight = 2; 
     const rightWallShape = new THREE.Shape();
-    
-    // Draw wall perimeter
     rightWallShape.moveTo(-depth/2 - overlapXRight, -overlapYRight);
     rightWallShape.lineTo(depth/2 + overlapXRight, -overlapYRight);
     rightWallShape.lineTo(depth/2 + overlapXRight, height + overlapYRight);
     rightWallShape.lineTo(-depth/2 - overlapXRight, height + overlapYRight);
     rightWallShape.lineTo(-depth/2 - overlapXRight, -overlapYRight);
 
-    // Exact door bounds matching doorway asset
-    const doorW = 5;    
-    const doorH = 10.5; 
+    const doorW = 4.8;    
+    const doorH = 10.0; 
     const doorZ = 10;   
 
-    // Cut the doorway hole out of the wall shape
     const doorHole = new THREE.Path();
     doorHole.moveTo(doorZ - doorW/2, -overlapYRight);
     doorHole.lineTo(doorZ - doorW/2, doorH);
@@ -123,62 +147,61 @@ const textureLoader = new THREE.TextureLoader();
     rightWallShape.holes.push(doorHole);
 
     const rightWallGeom = new THREE.ShapeGeometry(rightWallShape);
-    
-    // Fix UV coordinates to prevent wall texture distortion
-    const posAttrRW = rightWallGeom.attributes.position;
-    const uvAttrRW = rightWallGeom.attributes.uv;
-    if (uvAttrRW) {
-        for (let i = 0; i < posAttrRW.count; i++) { 
-            const x = posAttrRW.getX(i);
-            const y = posAttrRW.getY(i);
-            uvAttrRW.setXY(i, (x + depth/2) / depth, y / height);
-        }
-        uvAttrRW.needsUpdate = true;
-    }
-
+    applyContinuousUVs(rightWallGeom);
     const rightWall = new THREE.Mesh(rightWallGeom, wallMaterial);
     rightWall.rotation.y = -Math.PI / 2;
     rightWall.position.set(width / 2, 0, 0); 
     scene.add(rightWall);
 
-    // Walls of the kitchen, only the part on the left of the divisor wall
+    // Kitchen wall
     const kitchenWallGeometry = new THREE.PlaneGeometry(kitchenWidth + 2, height + 4);
+    applyContinuousUVs(kitchenWallGeometry);
+
     const kitchenBackWall = new THREE.Mesh(kitchenWallGeometry, wallMaterial);
-    kitchenBackWall.position.set(-(width / 2) + (kitchenWidth / 2), height / 2, -depth / 2);
+    kitchenBackWall.position.set(-(width/2) + (kitchenWidth/2), height/2, -depth/2);
     scene.add(kitchenBackWall);
 
     const kitchenFrontWall = new THREE.Mesh(kitchenWallGeometry, wallMaterial);
     kitchenFrontWall.rotation.y = Math.PI;
-    kitchenFrontWall.position.set(-(width / 2) + (kitchenWidth / 2), height / 2, depth / 2);
+    kitchenFrontWall.position.set(-(width/2) + (kitchenWidth/2), height/2, depth/2);
     scene.add(kitchenFrontWall);
 
-    // Parts of the divisor wall
-    const backDivisor = new THREE.Mesh(new THREE.BoxGeometry(thickness, height, depthSepWalls), wallMaterial);
-    backDivisor.position.set(divisorWallX, height / 2, -(depth / 2) + (depthSepWalls / 2));
+    window.colliders.push(kitchenBackWall, kitchenFrontWall);
+
+    // Divisor walls
+    const divGeomVertical = new THREE.BoxGeometry(divisorWallThickness, height, depthSepWalls);
+    applyContinuousUVs(divGeomVertical);
+    
+    const backDivisor = new THREE.Mesh(divGeomVertical, wallMaterial);
+    backDivisor.position.set(divisorWallX + divisorWallThickness/2, height/2, -(depth/2) + (depthSepWalls/2));
     scene.add(backDivisor);
 
-    const frontDivisor = new THREE.Mesh(new THREE.BoxGeometry(thickness, height, depthSepWalls), wallMaterial);
-    frontDivisor.position.set(divisorWallX, height / 2, (depth / 2) - (depthSepWalls / 2));
+    const frontDivisor = new THREE.Mesh(divGeomVertical, wallMaterial);
+    frontDivisor.position.set(divisorWallX + divisorWallThickness/2, height/2, (depth/2) - (depthSepWalls/2));
     scene.add(frontDivisor);
     
-    // === APPLIED DETAIL MATERIAL ON LOW/HIGH DIVISORS TO PREVENT STRETCHING ===
-    const divisorLowWall = new THREE.Mesh(new THREE.BoxGeometry(thickness,  3.5, counterDepth), detailWallMaterial);
-    divisorLowWall.position.set(divisorWallX, 3.5 / 2, 0);
+    const divGeomHorizontal = new THREE.BoxGeometry(divisorWallThickness, 3.5, counterDepth);
+    applyContinuousUVs(divGeomHorizontal);
+
+    const divisorLowWall = new THREE.Mesh(divGeomHorizontal, wallMaterial);
+    divisorLowWall.position.set(divisorWallX + divisorWallThickness/2, 3.5/2, 0);
     scene.add(divisorLowWall);
 
-    const divisorHighWall = new THREE.Mesh(new THREE.BoxGeometry(thickness, 3.5, counterDepth), detailWallMaterial);
-    divisorHighWall.position.set(divisorWallX, height - (3.5 / 2), 0);
+    const divisorHighWall = new THREE.Mesh(divGeomHorizontal, wallMaterial);
+    divisorHighWall.position.set(divisorWallX + divisorWallThickness/2, height - (3.5/2), 0);
     scene.add(divisorHighWall);
 
-    // Counter with a brown material to simulate wood, positioned in front of the divisor wall
+    // Counter
     const counterMaterial = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.3, metalness: 0.5 });
     const counter = new THREE.Mesh(new THREE.BoxGeometry(counterWidth, counterThickness, counterDepth), counterMaterial);
-    counter.position.set(divisorWallX, 3.5 + (counterThickness / 2), 0);
+    counter.position.set(divisorWallX + 1.6*divisorWallThickness - counterWidth/2, 3.5 + (counterThickness/2), 0);
     scene.add(counter);
 
-    // Back wall of the main room with three windows, created using a shape with holes for the windows
-    const overlapX = 0; // To avoid gaps between walls
-    const overlapY = 2; // To avoid gaps between walls
+    window.colliders.push(backDivisor, frontDivisor, divisorLowWall, divisorHighWall, counter);
+
+    // Back and front main room walls
+    const overlapX = 0;
+    const overlapY = 2;
     const backWallShape = new THREE.Shape();
     backWallShape.moveTo(-mainRoomWidth/2 - overlapX, -overlapY);
     backWallShape.lineTo(mainRoomWidth/2 + overlapX, -overlapY);
@@ -186,16 +209,14 @@ const textureLoader = new THREE.TextureLoader();
     backWallShape.lineTo(-mainRoomWidth/2 - overlapX, height + overlapY);
     backWallShape.lineTo(-mainRoomWidth/2 - overlapX, -overlapY);
 
-    // Centers of the three windows on the back wall
-    const backWindowCenters = [-25, 0, 25]; 
+    const backWindowCenters = [-32.5, 0, 32.5]; 
     backWindowCenters.forEach(cx => {
         const hole = new THREE.Path();
-        const w = 16;    
-        const r = w / 2; 
-        const h = 7;     
-        const bottomY = 4; 
+        const w = 20;    
+        const r = w/2; 
+        const h = 10;     
+        const bottomY = 5;
         
-        // Create a hole for the window using a path with an arc for the top
         hole.moveTo(cx - r, bottomY);
         hole.lineTo(cx - r, bottomY + h);
         hole.absarc(cx, bottomY + h, r, Math.PI, 0, true); 
@@ -204,42 +225,23 @@ const textureLoader = new THREE.TextureLoader();
         backWallShape.holes.push(hole);
     });
 
-    // Create a 3D geometry from the shape and apply the wall material, then position it in the scene
     const backWallGeom = new THREE.ShapeGeometry(backWallShape);
+    applyContinuousUVs(backWallGeom);
 
-    // Fix for the texture coordinates mapping
-    const posAttributeBW = backWallGeom.attributes.position;
-    const uvAttributeBW = backWallGeom.attributes.uv;
-    if (uvAttributeBW) {
-        for (let i = 0; i < posAttributeBW.count; i++) { 
-            const x = posAttributeBW.getX(i);
-            const y = posAttributeBW.getY(i);
-            const z = posAttributeBW.getZ(i);
-            
-            if (Math.abs(z) < 0.01 || Math.abs(z - thickness) < 0.01) {
-                uvAttributeBW.setXY(i, (x + mainRoomWidth/2) / mainRoomWidth, y / height);
-            } else {
-                uvAttributeBW.setXY(i, z / thickness, y / height);
-            }
-         }
-         uvAttributeBW.needsUpdate = true;
-    }
-
-    // Create a mesh from the geometry and add it to the scene
     const backWallMesh = new THREE.Mesh(backWallGeom, wallMaterial);
-    backWallMesh.position.set(divisorWallX + (mainRoomWidth / 2), 0, -depth / 2);
+    backWallMesh.position.set(divisorWallX + (mainRoomWidth/2), 0, -depth/2);
     scene.add(backWallMesh);
 
     const frontWallMesh = new THREE.Mesh(backWallGeom, wallMaterial);
     frontWallMesh.rotation.y = Math.PI; 
-    frontWallMesh.position.set(divisorWallX + (mainRoomWidth / 2), 0, depth / 2);
+    frontWallMesh.position.set(divisorWallX + (mainRoomWidth/2), 0, depth/2);
     scene.add(frontWallMesh);
 
-    // Create the window frames for the back wall windows and add them to a group, then add the group to the scene
+    // Windows
     const backWindowsGroup = new THREE.Group();
     backWindowCenters.forEach(cx => {
-        const windowFrame = createWindowFrame(16, 7, 8, 0.5, 1.2, counterMaterial);
-        windowFrame.position.set(divisorWallX + (mainRoomWidth / 2) + cx, 4, -depth / 2);
+        const windowFrame = createWindowFrame(20, 10, 10, 0.5, 1.2, counterMaterial);
+        windowFrame.position.set(divisorWallX + (mainRoomWidth/2) + cx, 5, -depth/2);
         backWindowsGroup.add(windowFrame);
     });
     scene.add(backWindowsGroup);
@@ -248,16 +250,16 @@ const textureLoader = new THREE.TextureLoader();
 
     const frontWindowsGroup = new THREE.Group();
     backWindowCenters.forEach(cx => {
-        const windowFrame = createWindowFrame(16, 7, 8, 0.5, 1.2, counterMaterial);
+        const windowFrame = createWindowFrame(20, 10, 10, 0.5, 1.2, counterMaterial);
         windowFrame.rotation.y = Math.PI; 
-        windowFrame.position.set(divisorWallX + (mainRoomWidth / 2) - cx, 4, depth / 2);
+        windowFrame.position.set(divisorWallX + (mainRoomWidth/2) - cx, 5, depth/2);
         frontWindowsGroup.add(windowFrame);
     });
     scene.add(frontWindowsGroup);
     
     window.frontWindowsGroup = frontWindowsGroup;
 
-    // Ceiling created using a PlaneGeometry so it can be seen only from below
+    // Ceiling
     const ceilingGeometry = new THREE.PlaneGeometry(width + 1, depth + 1);
     const ceilingMaterial = new THREE.MeshStandardMaterial({ 
         map: iceFloorTexture, 
@@ -269,43 +271,45 @@ const textureLoader = new THREE.TextureLoader();
     ceiling.position.y = height; 
     scene.add(ceiling);
 
-    // === OPTIMIZED GRID SPOTLIGHT SYSTEM (Prevents GPU Shader Unit Crashes) ===
+    // Light
     const ambientLight = new THREE.AmbientLight(0xd0e3f0, 0.4); 
     scene.add(ambientLight);
 
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 0.2);
+    hemiLight.position.set(0, height, 0);
+    scene.add(hemiLight);
+
     const lampGeometry = new THREE.CylinderGeometry(0.4, 0.5, 0.3, 8); 
-    const lampMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const spotlightIntensity = 1.2; 
+    const lampMaterial = new THREE.MeshBasicMaterial({ color: 0xffeebb });
     
+    const spotlightIntensity = 0.25;
     const xDistance = 20;           
     const zDistance = 12;           
-    let shadowLightCount = 0; // Safe counter to cap live shadow maps under WebGL limit
+    let shadowLightCount = 0; 
 
     for (let x = -50; x <= 50; x += xDistance) {
         for (let z = -20; z <= 20; z += zDistance) {
-            // Render physical fixture model on ceiling
             const physicalLamp = new THREE.Mesh(lampGeometry, lampMaterial);
-            physicalLamp.position.set(x, 19.95, z); 
+            physicalLamp.position.set(x, height-0.05, z); 
             scene.add(physicalLamp);
 
-            // Render functional cone spotlight
-            const gridSpotlight = new THREE.SpotLight(0xffffff, spotlightIntensity);
-            gridSpotlight.position.set(x, 19.8, z); 
+            const gridSpotlight = new THREE.SpotLight(0xfff0dd, spotlightIntensity);
+            gridSpotlight.position.set(x, height-0.2, z); 
             gridSpotlight.target.position.set(x, 0, z);
             
-            gridSpotlight.angle = Math.PI / 2.2; 
-            gridSpotlight.penumbra = 1.0;        
-            gridSpotlight.distance = 30;         
-            gridSpotlight.decay = 1.2;           
+            gridSpotlight.angle = Math.PI/3; 
+            gridSpotlight.penumbra = 0.8;        
+            gridSpotlight.distance = 45;         
+            gridSpotlight.decay = 2.0;           
             
-            // Allocate shadow casting limits selectively to maintain hardware stability
             if (shadowLightCount < 4 && (x === -10 || x === 30) && z === 0) {
                 gridSpotlight.castShadow = true;
                 gridSpotlight.shadow.mapSize.width = 1024;
                 gridSpotlight.shadow.mapSize.height = 1024;
                 gridSpotlight.shadow.bias = -0.001;
                 shadowLightCount++;
-            } else {
+            }
+            else{
                 gridSpotlight.castShadow = false; 
             }
 
@@ -314,16 +318,16 @@ const textureLoader = new THREE.TextureLoader();
         }
     }
 
-    // Controls for the camera using OrbitControls, allowing rotation, zoom, and panning
+    // Camera controls
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.minPolarAngle = Math.PI / 2.2;
-    controls.maxPolarAngle = Math.PI / 2.2; 
-    controls.minDistance = 5; 
-    controls.maxDistance = 45; 
+    controls.minPolarAngle = Math.PI/4;
+    controls.maxPolarAngle = Math.PI/2.1; 
+    controls.minDistance = 10; 
+    controls.maxDistance = 35; 
     controls.target.set(0, 4, 0);
     controls.update();
 
-    controls.enablePan = true;
+    controls.enablePan = false;
     controls.screenSpacePanning = true;
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
@@ -331,40 +335,59 @@ const textureLoader = new THREE.TextureLoader();
     window.gameControls = controls;
     window.addEventListener('resize', onWindowResize, false);
 
+    // Spawning
     const waiter = spawnPenguin(-10, 0, -10);
     setupControls(waiter);
     spawnPenguin(-20, 0, 5);
+    
+    if (waiter){
+        camera.position.set(waiter.position.x, waiter.position.y+10, waiter.position.z+20);
+        if (window.gameControls){
+            window.gameControls.target.set(waiter.position.x, waiter.position.y+3, waiter.position.z);
+            window.gameControls.update();
+        }
+    }
 
-    loadDoor(scene, 'models/furniture/doorway.glb', width / 2, 0, 10, -Math.PI / 2, 10);
-    loadFurniture(scene, 'models/furniture/kitchenSink.glb', -54, -10, Math.PI / 2);
-    loadFurniture(scene, 'models/furniture/kitchenFridgeLarge.glb', -55, 20, Math.PI / 2, 0, 13, openable = true);
-    loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -54, 10, Math.PI / 2);
-    loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -54, 5, Math.PI / 2);
-    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -54, 0, Math.PI / 2);
-    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -54, -5, Math.PI / 2);
-    loadFurniture(scene, 'models/furniture/kitchenCoffeeMachine.glb', -55, -5, Math.PI / 2, 5.5);
+    loadDoor(scene, 'models/furniture/doorway.glb', width/2, 0, 10, -Math.PI/2, 10);
+    loadFurniture(scene, 'models/furniture/kitchenSink.glb', -54, -10, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenFridgeLarge.glb', -55, 20, Math.PI/2, 0, 13, openable = true);
+    loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -54, 10, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -54, 5, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -54, 0, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -54, -5, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenCoffeeMachine.glb', -55, -5, Math.PI/2, 5.5);
 
     animate(waiter, camera);
 }
 
-function animate(waiter, camera) {
+function animate(waiter, camera){
     requestAnimationFrame(() => animate(waiter, camera));
 
     updateMovement(waiter);
 
-    if (waiter && camera) {
-        let targetX = waiter.position.x;
-        const limiteSinistro = -60; 
-        const limiteDestro = 60;
+    if (waiter && camera && window.gameControls){
+        const width = 160;  
+        const depth = 90; 
+        const padding = 2;
 
-        if (targetX < limiteSinistro) targetX = limiteSinistro;
-        if (targetX > limiteDestro) targetX = limiteDestro;
+        if (waiter.position.x < -width/2 + padding) waiter.position.x = -width/2 + padding;
+        if (waiter.position.x > width/2 - padding) waiter.position.x = width/2 - padding;
+        if (waiter.position.z < -depth/2 + padding) waiter.position.z = -depth/2 + padding;
+        if (waiter.position.z > depth/2 - padding) waiter.position.z = depth/2 - padding;
 
-        // Follow target along the camera tracking path
-        camera.position.x = -targetX;
-        
-        // INVERTED LOOK-AT: Look in the opposite X direction of the waiter
-        camera.lookAt(-targetX, 5, 0); 
+        const currentTargetX = waiter.position.x;
+        const currentTargetY = waiter.position.y + 3;
+        const currentTargetZ = waiter.position.z;
+
+        const deltaX = currentTargetX - window.gameControls.target.x;
+        const deltaY = currentTargetY - window.gameControls.target.y;
+        const deltaZ = currentTargetZ - window.gameControls.target.z;
+
+        camera.position.x += deltaX;
+        camera.position.y += deltaY;
+        camera.position.z += deltaZ;
+
+        window.gameControls.target.set(currentTargetX, currentTargetY, currentTargetZ);
     }
 
     if (isPaused) return;
@@ -373,7 +396,6 @@ function animate(waiter, camera) {
         window.gameControls.update();
     }
 
-    // Window groups visibility management based on camera position Z-depth
     if (window.backWindowsGroup) {
         window.backWindowsGroup.visible = camera.position.z > -25;
     }
@@ -389,8 +411,8 @@ function animate(waiter, camera) {
     renderer.render(scene, camera);
 }
 
-function onWindowResize() {
-    const aspect = window.innerWidth / window.innerHeight;
+function onWindowResize(){
+    const aspect = window.innerWidth/window.innerHeight;
     camera.aspect = aspect;
     camera.updateProjectionMatrix(); 
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -451,7 +473,7 @@ function createWindowFrame(w, h, r, frameThick, depth, material) {
     group.add(hStickMid);
 
     const hStickLow = new THREE.Mesh(hStickGeom, material);
-    hStickLow.position.y = h / 2; 
+    hStickLow.position.y = h/2; 
     group.add(hStickLow);
 
     const rayLength = r - frameThick;
@@ -459,12 +481,12 @@ function createWindowFrame(w, h, r, frameThick, depth, material) {
     
     const ray1 = new THREE.Mesh(rayGeom, material);
     ray1.position.set(-rayLength/2 * Math.cos(Math.PI/4), h + rayLength/2 * Math.sin(Math.PI/4), 0);
-    ray1.rotation.z = 3 * Math.PI / 4;
+    ray1.rotation.z = 3 * Math.PI/4;
     group.add(ray1);
 
     const ray2 = new THREE.Mesh(rayGeom, material);
     ray2.position.set(rayLength/2 * Math.cos(Math.PI/4), h + rayLength/2 * Math.sin(Math.PI/4), 0);
-    ray2.rotation.z = Math.PI / 4;
+    ray2.rotation.z = Math.PI/4;
     group.add(ray2);
 
     return group;

@@ -109,17 +109,17 @@ function spawnPenguin(x, y, z){
     return penguin;
 }
 
-function startWalking(penguin) {
+function startWalking(penguin){
     if (penguin.userData.isWalking) return;
     penguin.userData.isWalking = true;
 
     const duration = 250; 
-    const swingAngle = Math.PI / 5; 
+    const swingAngle = Math.PI/5; 
 
     const leftFoot = penguin.userData.leftFoot;
     const rightFoot = penguin.userData.rightFoot;
 
-    // --- ANIMAZIONE PIEDI (Sempre attiva) ---
+    // Feet animation
     const leftFootFwd = new TWEEN.Tween(leftFoot.rotation).to({ x: swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
     const leftFootBwd = new TWEEN.Tween(leftFoot.rotation).to({ x: -swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
     const rightFootBwd = new TWEEN.Tween(rightFoot.rotation).to({ x: -swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
@@ -130,20 +130,28 @@ function startWalking(penguin) {
 
     penguin.userData.tweens = [leftFootFwd, rightFootBwd];
 
-    // --- ANIMAZIONE ALI (Solo se NON ha il piatto) ---
-    if (!penguin.userData.hasPlate) {
+    // Flipper animation: small front/back swing (not a shoulder dislocation!)
+    // Flippers swing forward and back alternately with the feet, in sync with walking rhythm.
+    if (!penguin.userData.hasPlate){
         const leftFlipper = penguin.userData.leftFlipper;
         const rightFlipper = penguin.userData.rightFlipper;
 
-        const leftFlipBwd = new TWEEN.Tween(leftFlipper.rotation).to({ x: swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
-        const leftFlipFwd = new TWEEN.Tween(leftFlipper.rotation).to({ x: -swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
-        const rightFlipFwd = new TWEEN.Tween(rightFlipper.rotation).to({ x: -swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
-        const rightFlipBwd = new TWEEN.Tween(rightFlipper.rotation).to({ x: swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+        // Swing forward (+x) and back (-x) — natural arm-swing axis
+        // Keep z-rotation (outward angle) constant; only rotate on x to simulate walking swing
+        const swingX = Math.PI/10; // small ±18° swing forward/back
 
-        leftFlipBwd.chain(leftFlipFwd); leftFlipFwd.chain(leftFlipBwd);
-        rightFlipFwd.chain(rightFlipBwd); rightFlipBwd.chain(rightFlipFwd);
+        const leftFlipFwd  = new TWEEN.Tween(leftFlipper.rotation).to({ x:  swingX }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+        const leftFlipBwd  = new TWEEN.Tween(leftFlipper.rotation).to({ x: -swingX }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+        const rightFlipBwd = new TWEEN.Tween(rightFlipper.rotation).to({ x: -swingX }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+        const rightFlipFwd = new TWEEN.Tween(rightFlipper.rotation).to({ x:  swingX }, duration).easing(TWEEN.Easing.Quadratic.InOut);
 
-        penguin.userData.tweens.push(leftFlipBwd, rightFlipFwd);
+        // Left goes forward while right goes back, then swap — opposite phase like real arms
+        leftFlipFwd.chain(leftFlipBwd);
+        leftFlipBwd.chain(leftFlipFwd);
+        rightFlipBwd.chain(rightFlipFwd);
+        rightFlipFwd.chain(rightFlipBwd);
+
+        penguin.userData.tweens.push(leftFlipFwd, rightFlipBwd);
     }
 
     penguin.userData.tweens.forEach(tween => tween.start());
@@ -153,17 +161,16 @@ function stopWalking(penguin) {
     if (!penguin.userData.isWalking) return;
     penguin.userData.isWalking = false;
 
-    if (penguin.userData.tweens) {
+    if (penguin.userData.tweens){
         penguin.userData.tweens.forEach(tween => tween.stop());
     }
 
     new TWEEN.Tween(penguin.userData.leftFoot.rotation).to({ x: 0 }, 200).start();
     new TWEEN.Tween(penguin.userData.rightFoot.rotation).to({ x: 0 }, 200).start();
 
-    if (!penguin.userData.hasPlate) {
-        new TWEEN.Tween(penguin.userData.leftFlipper.rotation).to({ x: 0, z: -Math.PI / 6 }, 200).start();
-        new TWEEN.Tween(penguin.userData.rightFlipper.rotation).to({ x: 0, z: Math.PI / 6 }, 200).start();
+    if (!penguin.userData.hasPlate){
+        // Return flippers to resting position (x swing back to 0, z stays as set in model)
+        new TWEEN.Tween(penguin.userData.leftFlipper.rotation).to({ x: 0 }, 200).start();
+        new TWEEN.Tween(penguin.userData.rightFlipper.rotation).to({ x: 0 }, 200).start();
     }
 }
-
-

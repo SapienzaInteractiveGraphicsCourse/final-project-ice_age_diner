@@ -1,61 +1,76 @@
-const keysPressed = { w: false, a: false, s: false, d: false };
+const keysPressed = {w: false, a: false, s: false, d: false};
 
-function setupControls(penguin) {
-    // when a key is pressed, we set the corresponding key in keysPressed to true
-    window.addEventListener('keydown', (event) => {
+function setupControls(penguin){
+    window.addEventListener("keydown", (event) => {
         const key = event.key.toLowerCase();
-        
-        if (key in keysPressed) {
-            keysPressed[key] = true;
-        }
-        
+        if (key in keysPressed) keysPressed[key] = true;
     });
 
-    // when a key is released, we set the corresponding key in keysPressed to false
-    window.addEventListener('keyup', (event) => {
+    window.addEventListener("keyup", (event) => {
         const key = event.key.toLowerCase();
-        
-        if (key in keysPressed) {
-            keysPressed[key] = false;
-        }
+        if (key in keysPressed) keysPressed[key] = false;
     });
 }
 
-function updateMovement(penguin) {
-    if (!penguin) return;
+// Checks if the next position of the penguin hits an object
+function checkCollisions(targetPos, radius){
+    if (!window.colliders) return false;
 
-    const moveSpeed = 0.12; // speed of the penguin's movement per frame
-    let moveX = 0;
-    let moveZ = 0;
+    // Create a bounding box around the penguin
+    const playerBox = new THREE.Box3();
+    playerBox.min.set(targetPos.x - radius, targetPos.y, targetPos.z - radius);
+    playerBox.max.set(targetPos.x + radius, targetPos.y +4, targetPos.z + radius);
 
-    // INPUT from keyboard
-    // 
-    // In Three.js: +X is right, -X is left, -Z is "forward/into the screen", +Z is "backward/out of the screen"
-    if (keysPressed.w) moveZ = -1; // Moves toward the top of the screen (-Z)
-    if (keysPressed.s) moveZ = 1;  // Moves toward the bottom of the screen (+Z)
-    if (keysPressed.a) moveX = -1; // Moves toward the left (-X)
-    if (keysPressed.d) moveX = 1;  // Moves toward the right (+X)
+    for (let obj of window.colliders){
+        if (!obj) continue;
 
-    // check if any movement is happening
-    if (moveX !== 0 || moveZ !== 0) {
-        
-        // NORMALIZATION of movement vector
-        // This ensures that diagonal movement isn't faster than straight movement.
-        const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
-        const normX = moveX / length;
-        const normZ = moveZ / length;
+        // Create a box for the object in the map
+        const objBox = new THREE.Box3().setFromObject(obj);
 
-        //rotation
-        const targetAngle = Math.atan2(normX, normZ);
-        penguin.rotation.y = targetAngle;
+        // Ignore empty objects
+        if (objBox.isEmpty()) continue;
 
-        // movement
-        penguin.position.x += normX * moveSpeed;
-        penguin.position.z += normZ * moveSpeed;
+        // If the boxes intersecate, there's a collision
+        if (playerBox.intersectsBox(objBox)){
+            return true;
+        }
+    }
+    return false;
+}
 
-        startWalking(penguin);
-    } else {
-        // stop walking if no keys are pressed
-        stopWalking(penguin);
+function updateMovement(penguin){
+    if (!penguin || typeof camera == "undefined") return;
+
+    const speed = 0.4;
+
+    const forward = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    forward.y = 0;
+    forward.normalize();
+
+    const right = new THREE.Vector3();
+    right.crossVectors(camera.up, forward).normalize();
+
+    const moveVector = new THREE.Vector3(0,0,0);
+
+    if (keysPressed["w"]) moveVector.add(forward.clone().multiplyScalar(speed));
+    if (keysPressed["s"]) moveVector.add(forward.clone().multiplyScalar(-speed));
+    if (keysPressed["a"]) moveVector.add(right.clone().multiplyScalar(speed));
+    if (keysPressed["d"]) moveVector.add(right.clone().multiplyScalar(-speed));
+
+    if (moveVector.lengthSq()>0){
+        const nextPosition = penguin.position.clone().add(moveVector);
+
+        // Move only if there's no collision
+        if (!checkCollisions(nextPosition, 1.5)){
+            penguin.position.copy(nextPosition);
+        }
+
+        penguin.rotation.y = Math.atan2(moveVector.x, moveVector.z);
+
+        if (typeof startWalking == "function") startWalking(penguin);
+    }
+    else{
+        if (typeof stopWalking == "function") stopWalking(penguin);  
     }
 }
