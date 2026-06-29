@@ -336,7 +336,7 @@ function buildRestaurant() {
     window.addEventListener('resize', onWindowResize, false);
 
     // Spawning
-    const waiter = spawnPenguin(-10, 0, -10);
+    const waiter = spawnPenguin(-40, 0, -10);
     setupControls(waiter);
     spawnPenguin(-20, 0, 5);
     
@@ -349,13 +349,13 @@ function buildRestaurant() {
     }
 
     loadDoor(scene, 'models/furniture/doorway.glb', width/2, 0, 10, -Math.PI/2, 10);
-    loadFurniture(scene, 'models/furniture/kitchenSink.glb', -54, -10, Math.PI/2);
-    loadFurniture(scene, 'models/furniture/kitchenFridgeLarge.glb', -55, 20, Math.PI/2, 0, 13, openable = true);
-    loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -54, 10, Math.PI/2);
-    loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -54, 5, Math.PI/2);
-    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -54, 0, Math.PI/2);
-    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -54, -5, Math.PI/2);
-    loadFurniture(scene, 'models/furniture/kitchenCoffeeMachine.glb', -55, -5, Math.PI/2, 5.5);
+    loadFurniture(scene, 'models/furniture/kitchenSink.glb', -74, -10, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenFridgeLarge.glb', -75, 20, Math.PI/2, 0, 13, openable = true);
+    loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -74, 10, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -74, 5, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, 0, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, -5, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenCoffeeMachine.glb', -75, -5, Math.PI/2, 5.5);
 
     animate(waiter, camera);
 }
