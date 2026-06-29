@@ -40,7 +40,7 @@ function buildRestaurant() {
     const height = 30;
     const thickness = 1;
 
-    const divisorWallX = -30;
+    const divisorWallX = -40;
     const kitchenWidth = (width/2) + divisorWallX;
     const mainRoomWidth = (width/2) - divisorWallX;
     
@@ -103,13 +103,13 @@ function buildRestaurant() {
     const floorGeometry = new THREE.BoxGeometry(width + 0.5, thickness, depth + 0.5);
     const floorMaterial = new THREE.MeshPhysicalMaterial({ 
         map: iceFloorTexture, 
-        roughness: 0.1,
-        metalness: 0.1,
-        clearcoat: 0.3,
-        clearcoatRoughness: 0.2,
-        transmission: 0.3,
+        roughness: 0.2,
+        metalness: 0.0,
+        clearcoat: 0.8,
+        clearcoatRoughness: 0.15
+        /*transmission: 0.3,
         ior: 1.31,
-        thickness: 2.0
+        thickness: 2.0*/
     }); 
     
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
@@ -117,6 +117,9 @@ function buildRestaurant() {
     floor.receiveShadow = true; 
     scene.add(floor);
 
+    //function for adding a reflective floor IT'S TO POWERFUL, NEED TO BE FIXED
+    //addReflectiveFloor(scene, width, depth);
+    
     // Left wall
     const sideWallGeometry = new THREE.PlaneGeometry(depth + 2, height + 4);
     applyContinuousUVs(sideWallGeometry);
@@ -336,7 +339,7 @@ function buildRestaurant() {
     window.addEventListener('resize', onWindowResize, false);
 
     // Spawning
-    const waiter = spawnPenguin(-40, 0, -10);
+    const waiter = spawnPenguin(-10, 0, -10);
     setupControls(waiter);
     spawnPenguin(-20, 0, 5);
     
@@ -490,4 +493,24 @@ function createWindowFrame(w, h, r, frameThick, depth, material) {
     group.add(ray2);
 
     return group;
+}
+
+function addReflectiveFloor(scene, width, depth) {
+    // 1. Creiamo il piano geometrico per il riflesso
+    const geometry = new THREE.PlaneGeometry(width, depth);
+
+    // 2. Usiamo la classe Reflector (dalla cartella jsm/objects/Reflector)
+    const groundMirror = new THREE.Reflector(geometry, {
+        clipBias: 0.003,
+        textureWidth: window.innerWidth * window.devicePixelRatio,
+        textureHeight: window.innerHeight * window.devicePixelRatio,
+        color: 0x555555, // Colore del riflesso (grigio per non saturare il bianco)
+        multisample: 4
+    });
+
+    groundMirror.rotation.x = -Math.PI / 2;
+    groundMirror.position.y = 0.01; // Appena sopra il piano base per evitare "z-fighting"
+    
+    scene.add(groundMirror);
+    return groundMirror;
 }

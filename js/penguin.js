@@ -85,11 +85,13 @@ function createPenguinModel(){
     rightFoot.rotation.y = Math.PI/10;
     penguinGroup.add(rightFoot);
 
-    penguinGroup.scale.set(2, 2, 2);
+    penguinGroup.scale.set(2.2, 2.2, 2.2);
     penguinGroup.userData.leftFlipper = leftFlipper;
     penguinGroup.userData.rightFlipper = rightFlipper;
     penguinGroup.userData.leftFoot = leftFoot;
     penguinGroup.userData.rightFoot = rightFoot;
+
+    
 
     return penguinGroup;
 }

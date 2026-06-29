@@ -66,6 +66,10 @@ function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, openable 
         });
 
         scene.add(model);
+
+        if (window.colliders){
+            window.colliders.push(model);
+        }
         console.log(`Furniture loaded: ${path}`);
     }, undefined, (error) => {
         console.error(`Loading error ${path}:`, error);
@@ -101,6 +105,9 @@ function loadDoor(scene, path, x, y, z, rotation, scale = 10){
         hingeGroup.add(doorModel);
         scene.add(hingeGroup);
 
+        if (window.colliders){
+            window.colliders.push(hingeGroup);
+        }
         doorModel.traverse((child) => {
             if (child.isMesh){
                 child.castShadow = true;

@@ -38,6 +38,29 @@ function checkCollisions(targetPos, radius){
     return false;
 }
 
+function checkPenguinCollision(movingPenguin, targetPos) {
+    const collisionRadius = 4.0; 
+
+    for (let i = 0; i < penguins.length; i++) {
+        const otherPenguin = penguins[i].mesh;
+
+        // if the other penguin is the same as the moving one, skip it
+        if (movingPenguin === otherPenguin) continue;
+
+        // compute the distance between the proposed position and the other penguin's position
+        const dx = targetPos.x - otherPenguin.position.x;
+        const dz = targetPos.z - otherPenguin.position.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+
+        // if the distance is less than the sum of the radii, there's a collision
+        if (distance < (collisionRadius * 2)) {
+            return true;
+        }
+    }
+    
+    return false; 
+}
+
 function updateMovement(penguin){
     if (!penguin || typeof camera == "undefined") return;
 
@@ -62,7 +85,7 @@ function updateMovement(penguin){
         const nextPosition = penguin.position.clone().add(moveVector);
 
         // Move only if there's no collision
-        if (!checkCollisions(nextPosition, 1.5)){
+        if (!checkCollisions(nextPosition, 2.2) && !checkPenguinCollision(penguin, nextPosition)){
             penguin.position.copy(nextPosition);
         }
 
