@@ -202,9 +202,15 @@ export function buildRestaurant() {
     scene.add(divisorHighWall);
 
     // Counter
-    const counterMaterial = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.3, metalness: 0.5 });
+    const counterMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x5B1706, roughness: 1.0, metalness: 0.0,             
+    });
+
     const counter = new THREE.Mesh(new THREE.BoxGeometry(counterWidth, counterThickness, counterDepth), counterMaterial);
     counter.position.set(divisorWallX + 1.6*divisorWallThickness - counterWidth/2, 3.5 + (counterThickness/2), 0);
+    
+    counter.castShadow = true;
+    counter.receiveShadow = true;
     scene.add(counter);
 
     state.colliders.push(backDivisor, frontDivisor, divisorLowWall, divisorHighWall, counter);
@@ -282,7 +288,7 @@ export function buildRestaurant() {
     scene.add(ceiling);
 
     // Light
-    const ambientLight = new THREE.AmbientLight(0xd0e3f0, 0.4);
+    const ambientLight = new THREE.AmbientLight(0xd0e3f0, 0.6);
     scene.add(ambientLight);
 
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 0.2);
@@ -292,34 +298,35 @@ export function buildRestaurant() {
     const lampGeometry = new THREE.CylinderGeometry(0.4, 0.5, 0.3, 8);
     const lampMaterial = new THREE.MeshBasicMaterial({ color: 0xffeebb });
 
-    const spotlightIntensity = 0.25;
-    const xDistance = 20;
-    const zDistance = 12;
+    const spotlightIntensity = 0.35; // Alzata leggermente l'intensità visto che sono più distanti
+    
+    const xDistance = 32;
+    const zDistance = 22;
     let shadowLightCount = 0;
 
-    for (let x = -50; x <= 50; x += xDistance) {
-        for (let z = -20; z <= 20; z += zDistance) {
+    for (let x = -70; x <= 70; x += xDistance) {
+        for (let z = -35; z <= 35; z += zDistance) {
             const physicalLamp = new THREE.Mesh(lampGeometry, lampMaterial);
-            physicalLamp.position.set(x, height-0.05, z);
+            physicalLamp.position.set(x, height - 0.05, z);
             scene.add(physicalLamp);
 
             const gridSpotlight = new THREE.SpotLight(0xfff0dd, spotlightIntensity);
-            gridSpotlight.position.set(x, height-0.2, z);
+            gridSpotlight.position.set(x, height - 0.2, z);
             gridSpotlight.target.position.set(x, 0, z);
 
-            gridSpotlight.angle = Math.PI/3;
+            gridSpotlight.angle = Math.PI / 2.5; // Allargato leggermente il cono di luce
             gridSpotlight.penumbra = 0.8;
-            gridSpotlight.distance = 45;
-            gridSpotlight.decay = 2.0;
+            gridSpotlight.distance = 55;         // Aumentata la portata per toccare terra visto che l'altezza ora è 30
+            gridSpotlight.decay = 1.8;           // Flusso di luce leggermente più morbido
 
-            if (shadowLightCount < 4 && (x === -10 || x === 30) && z === 0) {
+            // Mantiene il limite di 4 ombre posizionandole strategicamente nella sala grande
+            if (shadowLightCount < 4 && (x === -6 || x === 26) && (z === -13 || z === 9)) {
                 gridSpotlight.castShadow = true;
                 gridSpotlight.shadow.mapSize.width = 1024;
                 gridSpotlight.shadow.mapSize.height = 1024;
                 gridSpotlight.shadow.bias = -0.001;
                 shadowLightCount++;
-            }
-            else{
+            } else {
                 gridSpotlight.castShadow = false;
             }
 
@@ -327,6 +334,36 @@ export function buildRestaurant() {
             scene.add(gridSpotlight.target);
         }
     }
+
+    //under cabinets lights
+    const exactZPositions = [12.75, -3.75, -14.75, -31.25];
+    const miniLampGeom = new THREE.CylinderGeometry(0.15, 0.2, 0.15, 8);
+    const miniLampMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+    exactZPositions.forEach(zPos => {
+        const cabinetHeight = (zPos === -14.75) ? 17.5 : 15;
+        const lightY = cabinetHeight - 0.1; 
+        const lightX = -74; 
+
+        const miniLampMesh = new THREE.Mesh(miniLampGeom, miniLampMat);
+        miniLampMesh.position.set(lightX, lightY, zPos);
+        scene.add(miniLampMesh);
+
+        const underCabinetSpot = new THREE.SpotLight(0xfff8f0, 2.0); // Intensità aumentata a 2.0 per un effetto marcato
+        underCabinetSpot.position.set(lightX, lightY - 0.05, zPos);
+        
+        underCabinetSpot.target.position.set(lightX, 0, zPos);
+
+        //light cone
+        underCabinetSpot.angle = Math.PI / 6.5;  
+        underCabinetSpot.penumbra = 0.3;         
+        underCabinetSpot.distance = 20;          
+        underCabinetSpot.decay = 1.2;            
+        underCabinetSpot.castShadow = false; 
+
+        scene.add(underCabinetSpot);
+        scene.add(underCabinetSpot.target);
+    });
 
     // Camera controls
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -362,13 +399,48 @@ export function buildRestaurant() {
     }
 
     loadDoor(scene, 'models/furniture/doorway.glb', width/2, 0, 10, -Math.PI/2, 10);
-    loadFurniture(scene, 'models/furniture/kitchenSink.glb', -74, -10, Math.PI/2);
-    loadFurniture(scene, 'models/furniture/kitchenFridgeLarge.glb', -75, 20, Math.PI/2, 0, 13, true);
+    
+    //bottom, from left to right
+
+    loadFurniture(scene, 'models/furniture/kitchenFridgeLarge.glb', -75, 25, Math.PI/2, 0, 13, true);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, 15.5, Math.PI/2);
     loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -74, 10, Math.PI/2);
-    loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -74, 5, Math.PI/2);
-    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, 0, Math.PI/2);
-    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, -5, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -74, 4.5, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, -1, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, -6.5, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenSink.glb', -74, -12, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, -17.5, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, -23, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, -28.5, Math.PI/2);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, -34, Math.PI/2);
+    
+    loadFurniture(scene, 'models/furniture/bookcaseClosedWide.glb', -74, -40, 2*Math.PI);
+    loadFurniture(scene, 'models/furniture/bookcaseClosedWide.glb', -65, -40, 2*Math.PI);
+
+    //superior, from left to right
+
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, 15.5, Math.PI/2, 15);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, 10, Math.PI/2, 15);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, 4.5, Math.PI/2, 15);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, -1, Math.PI/2, 15);
+
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperLow.glb', -74, -6.5, Math.PI/2, 17.5);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperLow.glb', -74, -12, Math.PI/2, 17.5);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperLow.glb', -74, -17.5, Math.PI/2, 17.5);
+    
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, -23, Math.PI/2, 15);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, -28.5, Math.PI/2, 15);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, -34, Math.PI/2, 15);
+    
+    //decorations and little forniture
     loadFurniture(scene, 'models/furniture/kitchenCoffeeMachine.glb', -75, -5, Math.PI/2, 5.5);
+    loadFurniture(scene, 'models/furniture/hoodModern.glb', -74, 7.25, Math.PI/2, 12);
+    loadFurniture(scene, 'models/furniture/CuttingTable.glb', -77, -25, Math.PI/2, 4, 2);
+    loadFurniture(scene, 'models/furniture/Whiteboard.glb', -74, -14, 2*Math.PI, 8, 0.08);
+
+    //tables and chairs
+    loadFurniture(scene, 'models/furniture/RoundTable.glb', 5, -14, 2*Math.PI, 0, 5);
+    //5d1705
 
     loadEnvironment(scene, state.icebergs);
 
