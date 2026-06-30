@@ -439,11 +439,54 @@ export function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/Whiteboard.glb', -74, -14, 2*Math.PI, 8, 0.08);
 
     //tables and chairs
-    loadFurniture(scene, 'models/furniture/RoundTable.glb', 5, -14, 2*Math.PI, 0, 5);
-    //5d1705
+    //simmetric diamond configuration ===
+    const diamondLayout = [
+        {
+            // 1. NORTH
+            table: { x: 20, z: -28 },
+            chairs: [
+                // Let's correct the symmetry: +1.3 to the left chair, -1.3 to the right chair, 
+                // because the model has its center of mass at a vertex
+                { x: 14, z: -28 + 1.3, rot: Math.PI / 2 },  
+                { x: 26, z: -28 - 1.3, rot: -Math.PI / 2 }  
+            ]
+        },
+        {
+            // 2. WEST
+            table: { x: -8, z: 0 },
+            chairs: [
+                { x: -14, z: 0 + 1.3, rot: Math.PI / 2 },
+                { x: -2, z: 0 - 1.3, rot: -Math.PI / 2 }
+            ]
+        },
+        {
+            // 3. EST
+            table: { x: 48, z: 0 },
+            chairs: [
+                { x: 42, z: 0 + 1.3, rot: Math.PI / 2 },
+                { x: 54, z: 0 - 1.3, rot: -Math.PI / 2 }
+            ]
+        },
+        {
+            // 4. SOUTH
+            table: { x: 20, z: 28 },
+            chairs: [
+                { x: 14, z: 28 + 1.3, rot: Math.PI / 2 },
+                { x: 26, z: 28 - 1.3, rot: -Math.PI / 2 }
+            ]
+        }
+    ];
+
+    diamondLayout.forEach(group =>{
+        loadFurniture(scene, 'models/furniture/RoundTable.glb', group.table.x, group.table.z, 2 * Math.PI, 0, 5);
+
+        group.chairs.forEach(chairPos => {
+            loadFurniture(scene, 'models/furniture/chairModernCushion.glb', chairPos.x, chairPos.z, chairPos.rot, 0, 13);
+        });
+    });
 
     loadEnvironment(scene, state.icebergs);
-
+    
     animate(waiter, camera, state.icebergs);
 }
 
