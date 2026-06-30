@@ -13,6 +13,19 @@ export const KITCHEN_POS = {
     SINK: new THREE.Vector3(-65, 0, -10)
 };
 
+export const CUSTOMER_POSITIONS = {
+    SPAWN: new THREE.Vector3(100, 0, 10),
+    DOOR_OUTSIDE: new THREE.Vector3(85, 0, 10),
+    DOOR_INSIDE: new THREE.Vector3(74, 0, 10),
+}
+
+export const WAITING_POSITION =[
+    new THREE.Vector3(74, 0, 18),
+    new THREE.Vector3(74, 0, 24),
+    new THREE.Vector3(74, 0, 30),
+    new THREE.Vector3(74, 0, 36)
+]
+
 // Create the model of the penguin based on the role
 export function createPenguinModel(role, options = {}){
     const penguinGroup = new THREE.Group();
@@ -288,6 +301,43 @@ function getFridgeDoor(chef) {
     return foundDoor;
 }
 
+export function spawnCustomer(){
+    const occupiedPositions = penguins.filter(p => p.mesh.userData.role === 'customer').map(p => p.mesh.userData.positionIndex);
+    let availablePosition = -1;
+    for (let i = 0; i < WAITING_POSITION.length; i++) {
+        if (!occupiedPositions.includes(i)){
+            availablePosition = i;
+            break;    
+        }
+    }
+    if (availablePosition === -1) {
+        console.log("No available waiting position for customer!");
+        return;
+    }
+
+    const customer = spawnPenguin(CUSTOMER_POSITIONS.SPAWN, 'customer');
+
+    customer.userData.state = 'WALK_TO_DOOR';
+    customer.userData.positionIndex = availablePosition;
+    customer.userData.targetPosition = WAITING_POSITION[availablePosition];
+}
+
+function getMainDoor(customer) {
+    if (customer.userData.mainDoorRef) return customer.userData.mainDoorRef;
+
+    let foundDoor = null;
+    state.scene.traverse((child) => {
+        if (child.userData && child.userData.doorType === 'single') {
+            foundDoor = child.userData.targetToRotate; 
+        }
+    });
+
+    if (foundDoor) {
+        customer.userData.mainDoorRef = foundDoor;
+    }
+    return foundDoor;
+}
+
 function updateChefRoutine(chef){
     const resetFlippers = () => {
         chef.userData.leftFlipper.rotation.set(0, 0, -Math.PI / 6);
@@ -461,6 +511,64 @@ function updateDishwasherRoutine(dishwasher) {
                 console.log("DISHWASHER: Plate washed! Now to the counter.");
                 dishwasher.userData.state = 'WALK_COUNTER';  
             }
+    }
+}
+
+function updateCustomerRoutine(customer) {
+    switch(customer.userData.state) {
+        case 'IDLE':
+            break;
+        
+        case 'WALK_TO_DOOR':
+            if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_OUTSIDE)) {
+                customer.rotation.y = -Math.PI / 2;
+                const mainDoor = getMainDoor(customer);
+
+                if (mainDoor && !mainDoor.userData.isOpen) {
+                    mainDoor.userData.isOpen = true;
+
+                    let angleToOpen = door.userData.openAngle;
+                    if (angleToOpen === undefined) {
+                        angleToOpen = -Math.PI/2; 
+                    }
+                    const targetRotationY = door.userData.originalRotation + angleToOpen;
+                    
+                    animateInteractable(door, targetRotationY, door.userData.rotationAxis || 'y');
+                    
+                    customer.userData.timer = 50; 
+                    customer.userData.state = 'WAIT_FOR_DOOR_ANIMATION';
+                } else {
+                    customer.userData.state = 'WALK_INSIDE';
+                }
+            }
+            break;
+
+        case 'WAIT_FOR_DOOR':
+            customer.userData.timer--;
+            if (customer.userData.timer <= 0) {
+                customer.userData.state = 'WALK_INSIDE';
+            }
+            break;
+
+        case 'WALK_INSIDE':
+            if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_INSIDE)) {
+                const mainDoor = getMainDoor(customer);
+                if (mainDoor && mainDoor.userData.isOpen) {
+                    mainDoor.userData.isOpen = false;
+                    animateInteractable(mainDoor, mainDoor.userData.originalRotation, mainDoor.userData.rotationAxis || 'y');
+                }
+                customer.userData.state = 'WALK_TO_WAITING';
+            }
+            break;
+
+        case 'WALK_TO_WAITING':
+            if (moveTowards(customer, customer.userData.targetPosition)) {
+                customer.rotation.y = -Math.PI / 2;
+                customer.userData.state = 'WAIT_FOR_WAITER';
+            }
+        
+        case 'WAIT_FOR_WAITER':
+            break;
     }
 }
 
