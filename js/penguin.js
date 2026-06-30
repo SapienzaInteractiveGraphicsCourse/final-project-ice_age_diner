@@ -13,36 +13,46 @@ export const KITCHEN_POS = {
     SINK: new THREE.Vector3(-65, 0, -10)
 };
 
-//Creates the model of a penguin
-export function createPenguinModel(){
+// Create the model of the penguin based on the role
+export function createPenguinModel(role, options = {}){
     const penguinGroup = new THREE.Group();
 
-    //Define base colors
+    // Base materials
     const blackMat = new THREE.MeshStandardMaterial({color: 0x111111, roughness: 0.8});
     const whiteMat = new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 0.8});
     const orangeMat = new THREE.MeshStandardMaterial({color: 0xff8c00, roughness: 0.4});
+    
+    // Materials for the "dress code"
+    const yellowGlovesMat = new THREE.MeshStandardMaterial({color: 0xffd700, roughness: 0.6});
+    const redOutfitMat = new THREE.MeshStandardMaterial({color: 0xd32f2f, roughness: 0.7});
+    const pocketMat = new THREE.MeshStandardMaterial({color: 0xcccccc, roughness: 0.8});
 
-    //Body --> vertically stretched sphere
+    // Body
+    let bodyMat = blackMat;
+    if (role === 'customer' && options.shirtColor !== undefined) {
+        bodyMat = new THREE.MeshStandardMaterial({color: options.shirtColor, roughness: 0.7});
+    }
+
     const bodyGeo = new THREE.SphereGeometry(1, 32, 32);
-    const body = new THREE.Mesh(bodyGeo, blackMat);
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.scale.set(1.3, 1.4, 1.2);
     body.position.y = 1.5;
     penguinGroup.add(body);
 
-    //White belly
+    // White belly
     const bellyGeo = new THREE.SphereGeometry(0.8, 32, 32);
     const belly = new THREE.Mesh(bellyGeo, whiteMat);
     belly.scale.set(1.2, 1.35, 0.99);
     belly.position.set(0, 1.4, 0.47);
     penguinGroup.add(belly);
 
-    //Head
+    // Head
     const headGeo = new THREE.SphereGeometry(0.8, 16, 16);
     const head = new THREE.Mesh(headGeo, blackMat);
     head.position.y = 3.2;
     penguinGroup.add(head);
 
-    //Eyes and pupils
+    // Eyes and pupils
     const eyeGeo = new THREE.SphereGeometry(0.15, 16, 16);
     const pupilGeo = new THREE.SphereGeometry(0.1, 16, 16);
 
@@ -62,29 +72,30 @@ export function createPenguinModel(){
     rightEye.add(rightPupil);
     penguinGroup.add(rightEye);
 
-    //Beak
+    // Beak
     const beakGeo = new THREE.ConeGeometry(0.2, 0.6, 16);
     const beak = new THREE.Mesh(beakGeo, orangeMat);
     beak.rotation.x = Math.PI/2;
     beak.position.set(0, 3.1, 0.9);
     penguinGroup.add(beak);
 
-    //Flippers
+    // Flippers
+    const flipperMat = (role === 'dishwasher') ? yellowGlovesMat : blackMat;
     const flipperGeo = new THREE.SphereGeometry(0.3, 16, 16);
 
-    const leftFlipper = new THREE.Mesh(flipperGeo, blackMat);
+    const leftFlipper = new THREE.Mesh(flipperGeo, flipperMat);
     leftFlipper.scale.set(1, 2.5, 0.5);
     leftFlipper.position.set(-1.2, 1.8, 0);
     leftFlipper.rotation.z = -Math.PI/6;
     penguinGroup.add(leftFlipper);
 
-    const rightFlipper = new THREE.Mesh(flipperGeo, blackMat);
+    const rightFlipper = new THREE.Mesh(flipperGeo, flipperMat);
     rightFlipper.scale.set(1, 2.5, 0.5);
     rightFlipper.position.set(1.2, 1.8, 0);
     rightFlipper.rotation.z = Math.PI/6;
     penguinGroup.add(rightFlipper);
 
-    //Feet
+    // Feet
     const footGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.15, 16);
 
     const leftFoot = new THREE.Mesh(footGeo, orangeMat);
@@ -97,6 +108,80 @@ export function createPenguinModel(){
     rightFoot.rotation.y = Math.PI/10;
     penguinGroup.add(rightFoot);
 
+    // Chef outfit
+    if (role === 'chef') {
+        // Chef hat
+        const hatGroup = new THREE.Group();
+        
+        const hatBaseGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.4, 16);
+        const hatBase = new THREE.Mesh(hatBaseGeo, whiteMat);
+        hatBase.position.y = 3.9;
+        hatGroup.add(hatBase);
+
+        const hatTopGeo = new THREE.CylinderGeometry(0.65, 0.5, 0.5, 16);
+        const hatTop = new THREE.Mesh(hatTopGeo, whiteMat);
+        hatTop.position.y = 4.3;
+        hatGroup.add(hatTop);
+
+        penguinGroup.add(hatGroup);
+
+        // White apron
+        const apronGeo = new THREE.BoxGeometry(0.9, 1.1, 0.05);
+        const apron = new THREE.Mesh(apronGeo, whiteMat);
+        apron.position.set(0, 1.3, 1.38);
+        penguinGroup.add(apron);
+
+        const pocketGeo = new THREE.BoxGeometry(0.4, 0.25, 0.02);
+        const pocket = new THREE.Mesh(pocketGeo, pocketMat);
+        pocket.position.set(0, 1.1, 1.41);
+        penguinGroup.add(pocket);
+    }
+
+    // Dishwasher helper outfit
+    if (role === 'dishwasher') {
+        // bandana
+        const bandanaGeo = new THREE.TorusGeometry(0.78, 0.08, 8, 24);
+        const bandana = new THREE.Mesh(bandanaGeo, redOutfitMat);
+        bandana.position.set(0, 3.4, 0);
+        bandana.rotation.x = Math.PI / 2;
+        penguinGroup.add(bandana);
+
+        // knot of the bandana
+        const knotGeo = new THREE.ConeGeometry(0.08, 0.25, 4);
+        const knot1 = new THREE.Mesh(knotGeo, redOutfitMat);
+        knot1.position.set(-0.1, 3.4, -0.78);
+        knot1.rotation.z = Math.PI / 4;
+        penguinGroup.add(knot1);
+
+        const knot2 = new THREE.Mesh(knotGeo, redOutfitMat);
+        knot2.position.set(0.1, 3.4, -0.78);
+        knot2.rotation.z = -Math.PI / 4;
+        penguinGroup.add(knot2);
+    }
+
+    // Waiter outfit (the player)
+    if (role === 'waiter') {
+        const bowtieGroup = new THREE.Group();
+        
+        const centerGeo = new THREE.SphereGeometry(0.07, 8, 8);
+        const center = new THREE.Mesh(centerGeo, redOutfitMat);
+        bowtieGroup.add(center);
+
+        const wingGeo = new THREE.ConeGeometry(0.12, 0.22, 4);
+        const leftWing = new THREE.Mesh(wingGeo, redOutfitMat);
+        leftWing.position.x = -0.14;
+        leftWing.rotation.z = Math.PI / 2;
+        bowtieGroup.add(leftWing);
+
+        const rightWing = new THREE.Mesh(wingGeo, redOutfitMat);
+        rightWing.position.x = 0.14;
+        rightWing.rotation.z = -Math.PI / 2;
+        bowtieGroup.add(rightWing);
+
+        bowtieGroup.position.set(0, 2.5, 0.98);
+        penguinGroup.add(bowtieGroup);
+    }
+
     penguinGroup.scale.set(2.2, 2.2, 2.2);
     penguinGroup.userData.leftFlipper = leftFlipper;
     penguinGroup.userData.rightFlipper = rightFlipper;
@@ -107,12 +192,34 @@ export function createPenguinModel(){
 }
 
 export function spawnPenguin(position, role){
-    const penguin = createPenguinModel();
+    let options = {};
+
+    if (role === 'customer') {
+        const customerColors = [
+            0xff5733, // Orange
+            0x33ff57, // Green
+            0x3357ff, // Blue
+            0xf39c12, // Yellow
+            0x9b59b6, // Purple
+            0x1abc9c, // Turquoise
+            0xe74c3c, // Red
+            0xe84393, // Pink
+            0x00cec9  // Cyan
+        ];
+        options.shirtColor = customerColors[Math.floor(Math.random() * customerColors.length)];
+    }
+
+    const penguin = createPenguinModel(role, options);
     penguin.position.copy(position);
     penguin.userData.role = role;
     penguin.userData.state = 'IDLE';
     penguin.userData.timer = 0;
-    penguin.userData.speed = 0.4;
+    
+    if (role === 'chef') penguin.userData.speed = 0.22;
+    else if (role === 'dishwasher') penguin.userData.speed = 0.28;
+    else if (role === 'customer') penguin.userData.speed = 0.25;
+    else penguin.userData.speed = 0.4;
+
     penguin.userData.hasPlate = false;
 
     state.scene.add(penguin);
@@ -122,7 +229,7 @@ export function spawnPenguin(position, role){
         isMoving: false
     });
 
-    console.log("A new penguin has entered the diner!");
+    console.log(`A new ${role} penguin has entered the diner!`);
     return penguin;
 }
 
@@ -143,7 +250,7 @@ export function moveTowards(penguin, targetPos){
 
         startWalking(penguin);
         return false;
-    }else {
+    } else {
         stopWalking(penguin);
         return true;
     }
@@ -161,31 +268,88 @@ export function updateRoutines(){
     });
 }
 
-function updateChefRoutine(chef) {
-    switch(chef.userData.state) {
+function getFridgeDoor(chef) {
+    if (chef.userData.fridgeDoorRef) return chef.userData.fridgeDoorRef;
+
+    let foundDoor = null;
+    state.scene.traverse((child) => {
+        if (child.userData && child.userData.originalRotation !== undefined) {
+            const worldPos = new THREE.Vector3();
+            child.getWorldPosition(worldPos);
+            if (worldPos.distanceTo(KITCHEN_POS.FRIDGE) < 15) {
+                foundDoor = child;
+            }
+        }
+    });
+
+    if (foundDoor) {
+        chef.userData.fridgeDoorRef = foundDoor;
+    }
+    return foundDoor;
+}
+
+function updateChefRoutine(chef){
+    const resetFlippers = () => {
+        chef.userData.leftFlipper.rotation.set(0, 0, -Math.PI / 6);
+        chef.userData.rightFlipper.rotation.set(0, 0, Math.PI / 6);
+    };
+
+    switch(chef.userData.state){
         case 'IDLE':
             break;
 
         case 'WALK_FRIDGE':
-            if (moveTowards(chef, KITCHEN_POS.FRIDGE)) {
-                // moved to fridge, now perform action
+            if (moveTowards(chef, KITCHEN_POS.FRIDGE)){
                 chef.rotation.y = -Math.PI / 2;
                 chef.userData.state = 'ACTION_FRIDGE';
-                chef.userData.timer = 60; // 1 second to "grab" ingredients
+                chef.userData.timer = 80;
             }
             break;
 
         case 'ACTION_FRIDGE':
             chef.userData.timer--;
+            const doorFridge = getFridgeDoor(chef);
+            const axis = doorFridge ? (doorFridge.userData.rotationAxis || 'y') : 'y';
+            const origRot = doorFridge ? (doorFridge.userData.originalRotation || 0) : 0;
+            const openAngle = (doorFridge && doorFridge.userData.openAngle !== undefined) ? doorFridge.userData.openAngle : -Math.PI / 2;
+
+            if (chef.userData.timer > 60){
+                chef.userData.rightFlipper.rotation.set(-Math.PI / 2.5, Math.PI / 6, 0);
+                if (doorFridge) {
+                    const progress = (80 - chef.userData.timer) / 20;
+                    doorFridge.rotation[axis] = origRot + (openAngle * progress);
+                    doorFridge.userData.isOpen = true;
+                }
+            }
+            else if (chef.userData.timer > 20){
+                chef.userData.leftFlipper.rotation.x = -Math.PI / 4 + Math.sin(chef.userData.timer * 0.4) * 0.1;
+                chef.userData.rightFlipper.rotation.x = -Math.PI / 3 + Math.cos(chef.userData.timer * 0.4) * 0.1;
+                if (doorFridge) {
+                    doorFridge.rotation[axis] = origRot + openAngle;
+                }
+            }
+            else if (chef.userData.timer > 0){
+                chef.userData.rightFlipper.rotation.set(-Math.PI / 4, -Math.PI / 12, 0);
+                chef.userData.leftFlipper.rotation.set(0, 0, -Math.PI / 6);
+                if (doorFridge) {
+                    const progress = chef.userData.timer / 20;
+                    doorFridge.rotation[axis] = origRot + (openAngle * progress);
+                }
+            }
+
             if (chef.userData.timer <= 0) {
                 console.log("CHEF: ingredients grabbed! Now to the stove.");
+                if (doorFridge) {
+                    doorFridge.rotation[axis] = origRot;
+                    doorFridge.userData.isOpen = false;
+                }
+                resetFlippers();
                 chef.userData.state = 'WALK_STOVE';
             }
             break;
 
         case 'WALK_STOVE':
             if (moveTowards(chef, KITCHEN_POS.STOVE)) {
-                // stove reached, now perform cooking action
                 chef.rotation.y = -Math.PI / 2;
                 chef.userData.state = 'ACTION_STOVE';
                 chef.userData.timer = 300;
@@ -194,18 +358,38 @@ function updateChefRoutine(chef) {
 
         case 'ACTION_STOVE':
             chef.userData.timer--;
-            // Animate the chef's rotation slightly to simulate stirring or cooking
-            chef.rotation.y = (-Math.PI / 2) + Math.sin(chef.userData.timer * 0.2) * 0.1;
+            chef.userData.leftFlipper.rotation.set(-Math.PI / 2.2, 0, -Math.PI / 12 + Math.sin(chef.userData.timer * 0.2) * 0.15);
+            chef.userData.rightFlipper.rotation.set(-Math.PI / 2.2, 0, Math.PI / 12 + Math.cos(chef.userData.timer * 0.2) * 0.15);
 
             if (chef.userData.timer <= 0) {
-                console.log("CHEF: Dish ready! Taking it to the counter.");
+                console.log("CHEF: Cooking finished! Now picking up the plate.");
+                resetFlippers();
+                chef.userData.state = 'ACTION_PICK_PLATE';
+                chef.userData.timer = 50; 
+            }
+            break;
+
+        case 'ACTION_PICK_PLATE':
+            chef.userData.timer--;
+            chef.userData.leftFlipper.rotation.set(-Math.PI / 4, 0, -Math.PI / 12);
+            chef.userData.rightFlipper.rotation.set(-Math.PI / 4, 0, Math.PI / 12);
+            
+            if (chef.userData.timer <= 0) {
+                console.log("CHEF: Plate picked up! Walking to the counter.");
                 chef.userData.hasPlate = true;
                 chef.userData.state = 'WALK_COUNTER';
             }
             break;
 
         case 'WALK_COUNTER':
-            if (moveTowards(chef, KITCHEN_POS.COUNTER)) {
+            const reachedCounter = moveTowards(chef, KITCHEN_POS.COUNTER);
+            
+            if (chef.userData.hasPlate) {
+                chef.userData.leftFlipper.rotation.set(-Math.PI / 2.5, 0, -Math.PI / 16);
+                chef.userData.rightFlipper.rotation.set(-Math.PI / 2.5, 0, Math.PI / 16);
+            }
+
+            if (reachedCounter) {
                 chef.rotation.y = Math.PI / 2;
                 chef.userData.state = 'ACTION_COUNTER';
                 chef.userData.timer = 60;
@@ -214,12 +398,20 @@ function updateChefRoutine(chef) {
 
         case 'ACTION_COUNTER':
             chef.userData.timer--;
+            
+            if (chef.userData.timer > 20) {
+                const progress = (60 - chef.userData.timer) / 40;
+                const targetAngle = -Math.PI / 2.5 + (Math.PI / 4 * progress);
+                chef.userData.leftFlipper.rotation.set(targetAngle, 0, -Math.PI / 16);
+                chef.userData.rightFlipper.rotation.set(targetAngle, 0, Math.PI / 16);
+            }
+            else{
+                resetFlippers();
+            }
+
             if (chef.userData.timer <= 0) {
                 console.log("CHEF: Order delivered on the counter!");
                 chef.userData.hasPlate = false;
-
-                // TO BE ADDED PLATE ON COUNTER LOGIC HERE
-
                 chef.userData.state = 'WALK_IDLE';
             }
             break;
@@ -248,7 +440,6 @@ function updateDishwasherRoutine(dishwasher) {
 
         case 'ACTION_COUNTER':
             dishwasher.userData.timer--;
-            //LOGIC TO PICK UP DIRTY PLATE FROM COUNTER HERE
             if (dishwasher.userData.timer <= 0) {
                 console.log("DISHWASHER: Dirty plate picked up! Now to the sink.");
                 dishwasher.userData.state = 'WALK_SINK';
@@ -265,16 +456,14 @@ function updateDishwasherRoutine(dishwasher) {
 
         case 'ACTION_SINK':
             dishwasher.userData.timer--;
-            // Animate the dishwasher's rotation slightly to simulate washing
             dishwasher.rotation.y = (-Math.PI / 2) + Math.sin(dishwasher.userData.timer * 0.2) * 0.1;
             if (dishwasher.userData.timer <= 0) {
                 console.log("DISHWASHER: Plate washed! Now to the counter.");
-                dishwasher.userData.state = 'WALK_COUNTER';  //put counter to know if there are plate to pickup
+                dishwasher.userData.state = 'WALK_COUNTER';  
             }
     }
 }
 
-//function to TEST chef order routine
 export function testChefOrder() {
     penguins.forEach(pData => {
         const p = pData.mesh;
@@ -284,3 +473,4 @@ export function testChefOrder() {
         }
     });
 }
+window.testChefOrder = testChefOrder;

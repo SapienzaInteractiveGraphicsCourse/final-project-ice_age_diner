@@ -1,4 +1,4 @@
-import { animateDoorRotation } from './animations.js';
+import { animateInteractable } from './animations.js';
 
 let raycaster;
 let mouse;
@@ -38,30 +38,26 @@ function onMouseClick(event){
 
         if (clickedObj){
             console.log("interaction with:", clickedObj.name);
-
-            // For single doors created with loadDoor(), rotate the hingeGroup (parent pivot),
-            // not the individual mesh — otherwise the door snaps/disappears.
             const rotationTarget = clickedObj.userData.targetToRotate || clickedObj;
-            const rotationAmount = Math.PI/2;
-            let targetRotationY = rotationTarget.userData.originalRotation;
+            let targetAngle = rotationTarget.userData.originalRotation;
+
+            let angleToOpen = rotationTarget.userData.openAngle;
+            if (angleToOpen === undefined){
+                const defaultAmount = Math.PI/2;
+                angleToOpen = (clickedObj.userData.doorType === 'left') ? defaultAmount : -defaultAmount;
+            }
 
             if (!rotationTarget.userData.isOpen){
-                // rotation for opening the door
-                if (clickedObj.userData.doorType === 'left'){
-                    targetRotationY = rotationTarget.userData.originalRotation + rotationAmount;
-                }
-                else{
-                    targetRotationY = rotationTarget.userData.originalRotation - rotationAmount;
-                }
+                targetAngle = rotationTarget.userData.originalRotation + angleToOpen;
                 rotationTarget.userData.isOpen = true;
             }
             else{
-                // rotation for closing the door
-                targetRotationY = rotationTarget.userData.originalRotation;
+                targetAngle = rotationTarget.userData.originalRotation;
                 rotationTarget.userData.isOpen = false;
             }
 
-            animateDoorRotation(rotationTarget, targetRotationY);
+            const axis = rotationTarget.userData.rotationAxis || 'y';
+            animateInteractable(rotationTarget, targetAngle, axis);
         }
     }
 }

@@ -64,16 +64,17 @@ export function stopWalking(penguin) {
     }
 }
 
-export function animateDoorRotation(rotationTarget, targetRotationY){
-    if (typeof TWEEN !== 'undefined'){
-        new TWEEN.Tween(rotationTarget.rotation)
-            .to({ y: targetRotationY }, 800) // 800 milliseconds for the rotation
-            .easing(TWEEN.Easing.Quadratic.Out) // easing function for a smooth effect
-            .start();
-    }
-    else{
-        rotationTarget.rotation.y = targetRotationY;
-    }
+export function animateInteractable(target, targetAngle, axis = 'y') {
+    const duration = 500;
+    const currentRotation = { angle: target.rotation[axis] };
+
+    new TWEEN.Tween(currentRotation)
+        .to({ angle: targetAngle }, duration)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onUpdate(() => {
+            target.rotation[axis] = currentRotation.angle;
+        })
+        .start();
 }
 
 let waterTime = 0;

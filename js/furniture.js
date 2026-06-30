@@ -18,14 +18,25 @@ export function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, op
 
                 if (openable){
                     const name = child.name.toLowerCase();
+                    if (name.includes('door') || name.includes('handle')){
+                        //child.userData.isInteractable = true;
 
-                    if (name.includes('door')){
-                        child.userData.isInteractable = true;
-                        child.userData.isOpen = false;
+                        let doorGroup = child;
+                        while (doorGroup.parent && doorGroup.parent.name.toLowerCase().includes('door')) {
+                            doorGroup = doorGroup.parent;
+                        }
+                        child.userData.targetToRotate = doorGroup;
 
-                        child.userData.doorType = name.includes('left') ? 'left' : 'right';
-
-                        child.userData.originalRotation = child.rotation.y;
+                        if (doorGroup.userData.isOpen === undefined) {
+                            doorGroup.userData.isOpen = false;
+                            doorGroup.userData.originalRotation = doorGroup.rotation.y;
+                            doorGroup.userData.rotationAxis = 'y'; 
+                             
+                            const groupName = doorGroup.name.toLowerCase();
+                            if (groupName.includes("left")) doorGroup.userData.openAngle = -Math.PI/2;
+                            else if (groupName.includes('right')) doorGroup.userData.openAngle = Math.PI/2;
+                            else doorGroup.userData.openAngle = Math.PI/2;
+                        }
                     }
                 }
             }

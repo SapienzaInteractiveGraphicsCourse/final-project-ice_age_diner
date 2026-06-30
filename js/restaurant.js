@@ -94,7 +94,6 @@ export function buildRestaurant() {
             const nx = Math.abs(norm.getX(i));
             const ny = Math.abs(norm.getY(i));
 
-            // Applica la proiezione sul piano corretto in base alla normale della faccia
             if (nx > 0.5){
                 uv.setXY(i, z/WALL_TILE, y/WALL_TILE);
             }
@@ -350,9 +349,9 @@ export function buildRestaurant() {
     const waiter = spawnPenguin(KITCHEN_POS.IDLE_WAITER, 'waiter');
     setupControls(waiter);
     const chef = spawnPenguin(KITCHEN_POS.IDLE_CHEF, 'chef');
-    setupControls(chef);
+    //setupControls(chef);
     const dishwasher = spawnPenguin(KITCHEN_POS.IDLE_DISHWASHER, 'dishwasher');
-    setupControls(dishwasher);
+    //setupControls(dishwasher);
 
     if (waiter){
         camera.position.set(waiter.position.x, waiter.position.y+10, waiter.position.z+20);
