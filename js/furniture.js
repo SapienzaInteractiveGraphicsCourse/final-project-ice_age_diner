@@ -1,7 +1,7 @@
 // Loading and creation of furniture
 import { state } from './state.js';
 
-export function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, openable = false){
+export function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, openable = false, interactable_chair = false) {
     const loader = new THREE.GLTFLoader();
 
     loader.load(path, (gltf) => {
@@ -10,6 +10,11 @@ export function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, op
         model.position.set(x, y, z);
         model.rotation.y = rotation;
         model.scale.set(scale, scale, scale);
+        if (interactable_chair) {
+                model.userData.isInteractable = true;
+                model.userData.interactionType = 'chair';
+                model.userData.isOccupied = false;  
+        }
 
         model.traverse((child) => {
             if (child.isMesh) {

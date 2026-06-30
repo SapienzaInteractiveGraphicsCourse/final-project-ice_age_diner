@@ -145,8 +145,8 @@ export function buildRestaurant() {
     rightWallShape.lineTo(-depth/2 - overlapXRight, height + overlapYRight);
     rightWallShape.lineTo(-depth/2 - overlapXRight, -overlapYRight);
 
-    const doorW = 4.8;
-    const doorH = 10.0;
+    const doorW = 7;
+    const doorH = 15.0;
     const doorZ = 10;
 
     const doorHole = new THREE.Path();
@@ -398,7 +398,7 @@ export function buildRestaurant() {
         }
     }
 
-    loadDoor(scene, 'models/furniture/doorway.glb', width/2, 0, 10, -Math.PI/2, 10);
+    loadDoor(scene, 'models/furniture/doorway.glb', width/2, 0, 10, -Math.PI/2, 15);
     
     //bottom, from left to right
 
@@ -481,7 +481,7 @@ export function buildRestaurant() {
         loadFurniture(scene, 'models/furniture/RoundTable.glb', group.table.x, group.table.z, 2 * Math.PI, 0, 5);
 
         group.chairs.forEach(chairPos => {
-            loadFurniture(scene, 'models/furniture/chairModernCushion.glb', chairPos.x, chairPos.z, chairPos.rot, 0, 13);
+            loadFurniture(scene, 'models/furniture/chairModernCushion.glb', chairPos.x, chairPos.z, chairPos.rot, 0, 13, false, true);
         });
     });
 

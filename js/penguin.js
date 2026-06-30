@@ -1,7 +1,8 @@
 import { state } from './state.js';
-import { startWalking, stopWalking } from './animations.js';
+import { startWalking, stopWalking, animateInteractable } from './animations.js';
 
 export const penguins = [];
+export let lastSpawnTime = 0;
 
 export const KITCHEN_POS = {
     FRIDGE: new THREE.Vector3(-65, 0, 15),
@@ -14,8 +15,8 @@ export const KITCHEN_POS = {
 };
 
 export const CUSTOMER_POSITIONS = {
-    SPAWN: new THREE.Vector3(100, 0, 10),
-    DOOR_OUTSIDE: new THREE.Vector3(85, 0, 10),
+    SPAWN: new THREE.Vector3(90, 0, 10),
+    DOOR_OUTSIDE: new THREE.Vector3(84, 0, 10),
     DOOR_INSIDE: new THREE.Vector3(74, 0, 10),
 }
 
@@ -227,7 +228,10 @@ export function spawnPenguin(position, role){
     penguin.userData.role = role;
     penguin.userData.state = 'IDLE';
     penguin.userData.timer = 0;
+    penguin.userData.isInteractable = false;
     
+    if (role === 'customer') penguin.userData.seat = null;
+
     if (role === 'chef') penguin.userData.speed = 0.22;
     else if (role === 'dishwasher') penguin.userData.speed = 0.28;
     else if (role === 'customer') penguin.userData.speed = 0.25;
@@ -270,6 +274,8 @@ export function moveTowards(penguin, targetPos){
 }
 
 export function updateRoutines(){
+    updateCustomerSpawn();
+
     penguins.forEach(penData => {
         const penguin = penData.mesh;
         if (penguin.userData.role === 'chef'){
@@ -277,6 +283,9 @@ export function updateRoutines(){
         }
         else if (penguin.userData.role === 'dishwasher'){
             updateDishwasherRoutine(penguin);
+        }
+        else if (penguin.userData.role === 'customer'){
+            updateCustomerRoutine(penguin);
         }
     });
 }
@@ -336,6 +345,18 @@ function getMainDoor(customer) {
         customer.userData.mainDoorRef = foundDoor;
     }
     return foundDoor;
+}
+
+function updateCustomerSpawn() {
+    const currentTime = Date.now();
+    if (currentTime - lastSpawnTime >= 10000) {
+        const customerCount = penguins.filter(p => p.mesh.userData.role === 'customer').length;
+        if (customerCount < WAITING_POSITION.length) {
+            spawnCustomer();
+            lastSpawnTime = currentTime;
+        }
+        
+    }
 }
 
 function updateChefRoutine(chef){
@@ -516,8 +537,8 @@ function updateDishwasherRoutine(dishwasher) {
 
 function updateCustomerRoutine(customer) {
     switch(customer.userData.state) {
-        case 'IDLE':
-            break;
+        /*case 'IDLE':
+            break;*/
         
         case 'WALK_TO_DOOR':
             if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_OUTSIDE)) {
@@ -527,13 +548,13 @@ function updateCustomerRoutine(customer) {
                 if (mainDoor && !mainDoor.userData.isOpen) {
                     mainDoor.userData.isOpen = true;
 
-                    let angleToOpen = door.userData.openAngle;
+                    let angleToOpen = mainDoor.userData.openAngle;
                     if (angleToOpen === undefined) {
                         angleToOpen = -Math.PI/2; 
                     }
-                    const targetRotationY = door.userData.originalRotation + angleToOpen;
+                    const targetRotationY = mainDoor.userData.originalRotation + angleToOpen;
                     
-                    animateInteractable(door, targetRotationY, door.userData.rotationAxis || 'y');
+                    animateInteractable(mainDoor, targetRotationY, mainDoor.userData.rotationAxis || 'y');
                     
                     customer.userData.timer = 50; 
                     customer.userData.state = 'WAIT_FOR_DOOR_ANIMATION';
@@ -543,7 +564,7 @@ function updateCustomerRoutine(customer) {
             }
             break;
 
-        case 'WAIT_FOR_DOOR':
+        case 'WAIT_FOR_DOOR_ANIMATION':
             customer.userData.timer--;
             if (customer.userData.timer <= 0) {
                 customer.userData.state = 'WALK_INSIDE';
@@ -566,9 +587,42 @@ function updateCustomerRoutine(customer) {
                 customer.rotation.y = -Math.PI / 2;
                 customer.userData.state = 'WAIT_FOR_WAITER';
             }
+            break;
         
         case 'WAIT_FOR_WAITER':
+            if (!customer.userData.isInteractable) {
+                customer.userData.isInteractable = true;
+                customer.userData.interactionType = 'customer';
+                customer.userData.timer = 0;
+            }
             break;
+
+        case 'FOLLOW_WAITER':
+            const waiter = penguins.find(p => p.mesh.userData.role === 'waiter').mesh;
+            const distanceToWaiter = customer.position.distanceTo(waiter.position);
+            if (distanceToWaiter > 10) {
+                moveTowards(customer, waiter.position);
+            }else{
+                stopWalking(customer);
+                const lookPos = new THREE.Vector3(waiter.position.x, customer.position.y, waiter.position.z);
+                customer.lookAt(lookPos);
+            }
+            break;
+        
+        case 'WALK_TO_SEAT':
+            const chair = customer.userData.seat;
+            if (moveTowards(customer, chair.position)) {
+                customer.rotation.y = chair.rotation.y + Math.PI;
+                customer.userData.state = 'SEATED';
+            }
+            break;
+
+        case 'SEATED':
+            const chairOccuppied = customer.userData.seat;
+            chairOccuppied.userData.isOccupied = true;
+            chairOccuppied.userData.isInteractable = false;
+            break;
+
     }
 }
 

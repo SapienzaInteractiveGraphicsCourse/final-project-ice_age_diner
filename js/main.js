@@ -42,6 +42,7 @@ document.addEventListener("DOMContentLoaded", function (){
 
             buildRestaurant();
             gameStarted = true;
+
         }
         console.log("Game started successfully!");
 
