@@ -1,9 +1,9 @@
-//global variables
-var scene, camera, renderer
-var gameStarted = false;
-var audioListener, menuSound, gameSound;
-var audioInitialized = false;
-var isPaused = false;
+import { state } from './state.js';
+import { buildRestaurant } from './restaurant.js';
+
+let gameStarted = false;
+let menuSound, gameSound;
+let audioInitialized = false;
 
 document.addEventListener("DOMContentLoaded", function (){
     //Menu buttons
@@ -48,8 +48,8 @@ document.addEventListener("DOMContentLoaded", function (){
         function togglePause(){
             if (!gameStarted) return;
 
-            isPaused = !isPaused;
-            if (isPaused){
+            state.isPaused = !state.isPaused;
+            if (state.isPaused){
                 pauseMenu.classList.remove("hidden-panel");
             }
             else{
@@ -106,11 +106,11 @@ document.addEventListener("DOMContentLoaded", function (){
 function initAudio(){
     if (audioInitialized) return;
 
-    audioListener = new THREE.AudioListener();
-    if (camera) camera.add(audioListener);
+    state.audioListener = new THREE.AudioListener();
+    if (state.camera) state.camera.add(state.audioListener);
 
-    menuSound = new THREE.Audio(audioListener);
-    gameSound = new THREE.Audio(audioListener);
+    menuSound = new THREE.Audio(state.audioListener);
+    gameSound = new THREE.Audio(state.audioListener);
 
     const audioLoader = new THREE.AudioLoader();
     const currentVolume = document.getElementById("volume-slider").value/100;
@@ -130,6 +130,6 @@ function initAudio(){
 
         if (gameStarted && !gameSound.isPlaying) gameSound.play();
     });
-    
+
     audioInitialized = true;
 }

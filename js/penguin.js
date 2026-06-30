@@ -1,18 +1,20 @@
-//Array that will keep track of all the penguins
-const penguins = []
+import { state } from './state.js';
+import { startWalking, stopWalking } from './animations.js';
 
-const KITCHEN_POS = {
-    FRIDGE: new THREE.Vector3(-65, 0, 15),   
-    STOVE: new THREE.Vector3(-65, 0, 5),     
-    COUNTER: new THREE.Vector3(-42, 0, 0),   
-    IDLE_CHEF: new THREE.Vector3(-55, 0, 5), 
+export const penguins = [];
+
+export const KITCHEN_POS = {
+    FRIDGE: new THREE.Vector3(-65, 0, 15),
+    STOVE: new THREE.Vector3(-65, 0, 5),
+    COUNTER: new THREE.Vector3(-42, 0, 0),
+    IDLE_CHEF: new THREE.Vector3(-55, 0, 5),
     IDLE_WAITER: new THREE.Vector3(-10, 0, 10),
     IDLE_DISHWASHER: new THREE.Vector3(-55, 0, 15),
-    SINK: new THREE.Vector3(-65, 0, -10)     
+    SINK: new THREE.Vector3(-65, 0, -10)
 };
 
 //Creates the model of a penguin
-function createPenguinModel(){
+export function createPenguinModel(){
     const penguinGroup = new THREE.Group();
 
     //Define base colors
@@ -101,21 +103,19 @@ function createPenguinModel(){
     penguinGroup.userData.leftFoot = leftFoot;
     penguinGroup.userData.rightFoot = rightFoot;
 
-    
-
     return penguinGroup;
 }
 
-function spawnPenguin(position, role){
+export function spawnPenguin(position, role){
     const penguin = createPenguinModel();
     penguin.position.copy(position);
     penguin.userData.role = role;
-    penguin.userData.state = 'IDLE'; 
+    penguin.userData.state = 'IDLE';
     penguin.userData.timer = 0;
     penguin.userData.speed = 0.4;
     penguin.userData.hasPlate = false;
 
-    scene.add(penguin);
+    state.scene.add(penguin);
 
     penguins.push({
         mesh: penguin,
@@ -126,73 +126,7 @@ function spawnPenguin(position, role){
     return penguin;
 }
 
-function startWalking(penguin){
-    if (penguin.userData.isWalking) return;
-    penguin.userData.isWalking = true;
-
-    const duration = 250; 
-    const swingAngle = Math.PI/5; 
-
-    const leftFoot = penguin.userData.leftFoot;
-    const rightFoot = penguin.userData.rightFoot;
-
-    // Feet animation
-    const leftFootFwd = new TWEEN.Tween(leftFoot.rotation).to({ x: swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
-    const leftFootBwd = new TWEEN.Tween(leftFoot.rotation).to({ x: -swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
-    const rightFootBwd = new TWEEN.Tween(rightFoot.rotation).to({ x: -swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
-    const rightFootFwd = new TWEEN.Tween(rightFoot.rotation).to({ x: swingAngle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
-
-    leftFootFwd.chain(leftFootBwd); leftFootBwd.chain(leftFootFwd);
-    rightFootBwd.chain(rightFootFwd); rightFootFwd.chain(rightFootBwd);
-
-    penguin.userData.tweens = [leftFootFwd, rightFootBwd];
-
-    // Flipper animation: small front/back swing (not a shoulder dislocation!)
-    // Flippers swing forward and back alternately with the feet, in sync with walking rhythm.
-    if (!penguin.userData.hasPlate){
-        const leftFlipper = penguin.userData.leftFlipper;
-        const rightFlipper = penguin.userData.rightFlipper;
-
-        // Swing forward (+x) and back (-x) — natural arm-swing axis
-        // Keep z-rotation (outward angle) constant; only rotate on x to simulate walking swing
-        const swingX = Math.PI/10; // small ±18° swing forward/back
-
-        const leftFlipFwd  = new TWEEN.Tween(leftFlipper.rotation).to({ x:  swingX }, duration).easing(TWEEN.Easing.Quadratic.InOut);
-        const leftFlipBwd  = new TWEEN.Tween(leftFlipper.rotation).to({ x: -swingX }, duration).easing(TWEEN.Easing.Quadratic.InOut);
-        const rightFlipBwd = new TWEEN.Tween(rightFlipper.rotation).to({ x: -swingX }, duration).easing(TWEEN.Easing.Quadratic.InOut);
-        const rightFlipFwd = new TWEEN.Tween(rightFlipper.rotation).to({ x:  swingX }, duration).easing(TWEEN.Easing.Quadratic.InOut);
-
-        // Left goes forward while right goes back, then swap — opposite phase like real arms
-        leftFlipFwd.chain(leftFlipBwd);
-        leftFlipBwd.chain(leftFlipFwd);
-        rightFlipBwd.chain(rightFlipFwd);
-        rightFlipFwd.chain(rightFlipBwd);
-
-        penguin.userData.tweens.push(leftFlipFwd, rightFlipBwd);
-    }
-
-    penguin.userData.tweens.forEach(tween => tween.start());
-}
-
-function stopWalking(penguin) {
-    if (!penguin.userData.isWalking) return;
-    penguin.userData.isWalking = false;
-
-    if (penguin.userData.tweens){
-        penguin.userData.tweens.forEach(tween => tween.stop());
-    }
-
-    new TWEEN.Tween(penguin.userData.leftFoot.rotation).to({ x: 0 }, 200).start();
-    new TWEEN.Tween(penguin.userData.rightFoot.rotation).to({ x: 0 }, 200).start();
-
-    if (!penguin.userData.hasPlate){
-        // Return flippers to resting position (x swing back to 0, z stays as set in model)
-        new TWEEN.Tween(penguin.userData.leftFlipper.rotation).to({ x: 0 }, 200).start();
-        new TWEEN.Tween(penguin.userData.rightFlipper.rotation).to({ x: 0 }, 200).start();
-    }
-}
-
-function moveTowards(penguin, targetPos){
+export function moveTowards(penguin, targetPos){
     if (!penguin) return;
 
     const dx = targetPos.x - penguin.position.x;
@@ -207,15 +141,15 @@ function moveTowards(penguin, targetPos){
         penguin.position.z += dirZ * penguin.userData.speed;
         penguin.rotation.y = Math.atan2(dirX, dirZ);
 
-        if (typeof startWalking === "function") startWalking(penguin);
-            return false;
+        startWalking(penguin);
+        return false;
     }else {
-        if (typeof stopWalking === "function") stopWalking(penguin);
-        return true; 
+        stopWalking(penguin);
+        return true;
     }
 }
 
-function updateRoutines(){
+export function updateRoutines(){
     penguins.forEach(penData => {
         const penguin = penData.mesh;
         if (penguin.userData.role === 'chef'){
@@ -227,7 +161,6 @@ function updateRoutines(){
     });
 }
 
-
 function updateChefRoutine(chef) {
     switch(chef.userData.state) {
         case 'IDLE':
@@ -236,7 +169,7 @@ function updateChefRoutine(chef) {
         case 'WALK_FRIDGE':
             if (moveTowards(chef, KITCHEN_POS.FRIDGE)) {
                 // moved to fridge, now perform action
-                chef.rotation.y = -Math.PI / 2; 
+                chef.rotation.y = -Math.PI / 2;
                 chef.userData.state = 'ACTION_FRIDGE';
                 chef.userData.timer = 60; // 1 second to "grab" ingredients
             }
@@ -255,7 +188,7 @@ function updateChefRoutine(chef) {
                 // stove reached, now perform cooking action
                 chef.rotation.y = -Math.PI / 2;
                 chef.userData.state = 'ACTION_STOVE';
-                chef.userData.timer = 300; 
+                chef.userData.timer = 300;
             }
             break;
 
@@ -263,10 +196,10 @@ function updateChefRoutine(chef) {
             chef.userData.timer--;
             // Animate the chef's rotation slightly to simulate stirring or cooking
             chef.rotation.y = (-Math.PI / 2) + Math.sin(chef.userData.timer * 0.2) * 0.1;
-            
+
             if (chef.userData.timer <= 0) {
                 console.log("CHEF: Dish ready! Taking it to the counter.");
-                chef.userData.hasPlate = true; 
+                chef.userData.hasPlate = true;
                 chef.userData.state = 'WALK_COUNTER';
             }
             break;
@@ -275,7 +208,7 @@ function updateChefRoutine(chef) {
             if (moveTowards(chef, KITCHEN_POS.COUNTER)) {
                 chef.rotation.y = Math.PI / 2;
                 chef.userData.state = 'ACTION_COUNTER';
-                chef.userData.timer = 60; 
+                chef.userData.timer = 60;
             }
             break;
 
@@ -284,16 +217,16 @@ function updateChefRoutine(chef) {
             if (chef.userData.timer <= 0) {
                 console.log("CHEF: Order delivered on the counter!");
                 chef.userData.hasPlate = false;
-                
+
                 // TO BE ADDED PLATE ON COUNTER LOGIC HERE
-                
+
                 chef.userData.state = 'WALK_IDLE';
             }
             break;
 
         case 'WALK_IDLE':
             if (moveTowards(chef, KITCHEN_POS.IDLE_CHEF)) {
-                chef.rotation.y = Math.PI; 
+                chef.rotation.y = Math.PI;
                 chef.userData.state = 'IDLE';
             }
             break;
@@ -307,9 +240,9 @@ function updateDishwasherRoutine(dishwasher) {
 
         case 'WALK_COUNTER':
             if (moveTowards(dishwasher, KITCHEN_POS.COUNTER)) {
-                dishwasher.rotation.y = Math.PI / 2; 
+                dishwasher.rotation.y = Math.PI / 2;
                 dishwasher.userData.state = 'ACTION_COUNTER';
-                dishwasher.userData.timer = 60; 
+                dishwasher.userData.timer = 60;
             }
             break;
 
@@ -321,12 +254,12 @@ function updateDishwasherRoutine(dishwasher) {
                 dishwasher.userData.state = 'WALK_SINK';
             }
             break;
-        
+
         case 'WALK_SINK':
             if (moveTowards(dishwasher, KITCHEN_POS.SINK)) {
-                dishwasher.rotation.y = -Math.PI / 2; 
+                dishwasher.rotation.y = -Math.PI / 2;
                 dishwasher.userData.state = 'ACTION_SINK';
-                dishwasher.userData.timer = 300; 
+                dishwasher.userData.timer = 300;
             }
             break;
 
@@ -342,7 +275,7 @@ function updateDishwasherRoutine(dishwasher) {
 }
 
 //function to TEST chef order routine
-function testChefOrder() {
+export function testChefOrder() {
     penguins.forEach(pData => {
         const p = pData.mesh;
         if (p.userData.role === 'chef' && p.userData.state === 'IDLE') {

@@ -1,6 +1,10 @@
+import { state } from './state.js';
+import { penguins } from './penguin.js';
+import { startWalking, stopWalking } from './animations.js';
+
 const keysPressed = {w: false, a: false, s: false, d: false};
 
-function setupControls(penguin){
+export function setupControls(penguin){
     window.addEventListener("keydown", (event) => {
         const key = event.key.toLowerCase();
         if (key in keysPressed) keysPressed[key] = true;
@@ -13,15 +17,15 @@ function setupControls(penguin){
 }
 
 // Checks if the next position of the penguin hits an object
-function checkCollisions(targetPos, radius){
-    if (!window.colliders) return false;
+export function checkCollisions(targetPos, radius){
+    if (!state.colliders) return false;
 
     // Create a bounding box around the penguin
     const playerBox = new THREE.Box3();
     playerBox.min.set(targetPos.x - radius, targetPos.y, targetPos.z - radius);
     playerBox.max.set(targetPos.x + radius, targetPos.y +4, targetPos.z + radius);
 
-    for (let obj of window.colliders){
+    for (let obj of state.colliders){
         if (!obj) continue;
 
         // Create a box for the object in the map
@@ -38,8 +42,8 @@ function checkCollisions(targetPos, radius){
     return false;
 }
 
-function checkPenguinCollision(movingPenguin, targetPos) {
-    const collisionRadius = 4.0; 
+export function checkPenguinCollision(movingPenguin, targetPos) {
+    const collisionRadius = 4.0;
 
     for (let i = 0; i < penguins.length; i++) {
         const otherPenguin = penguins[i].mesh;
@@ -57,13 +61,14 @@ function checkPenguinCollision(movingPenguin, targetPos) {
             return true;
         }
     }
-    
-    return false; 
+
+    return false;
 }
 
-function updateMovement(penguin){
-    if (!penguin || typeof camera == "undefined") return;
+export function updateMovement(penguin){
+    if (!penguin || !state.camera) return;
 
+    const camera = state.camera;
     const speed = 0.4;
 
     const forward = new THREE.Vector3();
@@ -91,9 +96,9 @@ function updateMovement(penguin){
 
         penguin.rotation.y = Math.atan2(moveVector.x, moveVector.z);
 
-        if (typeof startWalking == "function") startWalking(penguin);
+        startWalking(penguin);
     }
     else{
-        if (typeof stopWalking == "function") stopWalking(penguin);  
+        stopWalking(penguin);
     }
 }

@@ -1,20 +1,22 @@
+import { animateDoorRotation } from './animations.js';
+
 let raycaster;
 let mouse;
 let interactionCamera;
 let interactionScene;
 
 // function to setup the raycasting and mouse click interactions
-function setupInteractions(camera, scene){
+export function setupInteractions(camera, scene){
     raycaster = new THREE.Raycaster();
     mouse = new THREE.Vector2();
-    
+
     // Store the camera and scene for later use in the click event
     interactionCamera = camera;
     interactionScene = scene;
 
     // listener for mouse click events
     window.addEventListener('click', onMouseClick, false);
-    
+
     console.log("interaction setup complete.");
 }
 
@@ -33,7 +35,7 @@ function onMouseClick(event){
     if (intersects.length > 0){
         //only if it's interactable
         const clickedObj = intersects.find(hit => hit.object.userData.isInteractable)?.object;
-        
+
         if (clickedObj){
             console.log("interaction with:", clickedObj.name);
 
@@ -47,28 +49,19 @@ function onMouseClick(event){
                 // rotation for opening the door
                 if (clickedObj.userData.doorType === 'left'){
                     targetRotationY = rotationTarget.userData.originalRotation + rotationAmount;
-                } 
+                }
                 else{
                     targetRotationY = rotationTarget.userData.originalRotation - rotationAmount;
                 }
                 rotationTarget.userData.isOpen = true;
-            } 
+            }
             else{
                 // rotation for closing the door
                 targetRotationY = rotationTarget.userData.originalRotation;
                 rotationTarget.userData.isOpen = false;
             }
-            
-            // animation using Tween.js for smooth rotation
-            if (typeof TWEEN !== 'undefined'){
-                new TWEEN.Tween(rotationTarget.rotation)
-                    .to({ y: targetRotationY }, 800) // 800 milliseconds for the rotation
-                    .easing(TWEEN.Easing.Quadratic.Out) // easing function for a smooth effect
-                    .start();
-            }
-            else{
-                rotationTarget.rotation.y = targetRotationY;
-            }
+
+            animateDoorRotation(rotationTarget, targetRotationY);
         }
     }
 }
