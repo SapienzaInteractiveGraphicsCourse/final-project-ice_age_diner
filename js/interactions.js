@@ -1,5 +1,5 @@
 import { animateInteractable } from './animations.js';
-import {penguins} from './penguin.js';
+import { penguins, waitingQueue } from './penguin.js';
 import { state } from './state.js';
 
 let raycaster;
@@ -58,6 +58,10 @@ function onMouseClick(event){
 
             if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'WAIT_FOR_WAITER'){
                 console.log("Customer interaction: calling waiter for customer.");
+
+                const queueIdx = waitingQueue.indexOf(clickedObj);
+                if (queueIdx !== -1) waitingQueue.splice(queueIdx, 1);
+
                 clickedObj.userData.state = 'FOLLOW_WAITER';
                 clickedObj.userData.isInteractable = false;
             }
@@ -79,7 +83,8 @@ function onMouseClick(event){
                     waiter.userData.hasPlate = true;
                     waiter.userData.plate = clickedObj;
                     clickedObj.userData.isInteractable = false;
-                }else {
+                }
+                else{
                     console.log("Waiter already has a plate. Cannot pick up another one.");
                 }
             }
@@ -122,8 +127,9 @@ function onMouseClick(event){
             else{
                 console.log("interaction with:", clickedObj.name);
                 const rotationTarget = clickedObj.userData.targetToRotate || clickedObj;
-                let targetAngle = rotationTarget.userData.originalRotation;
+                if (rotationTarget.userData.originalRotation === undefined) return;
 
+                let targetAngle = rotationTarget.userData.originalRotation;
                 let angleToOpen = rotationTarget.userData.openAngle;
                 if (angleToOpen === undefined){
                     const defaultAmount = Math.PI/2;

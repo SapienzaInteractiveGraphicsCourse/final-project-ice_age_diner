@@ -42,22 +42,22 @@ export function checkCollisions(targetPos, radius){
     return false;
 }
 
-export function checkPenguinCollision(movingPenguin, targetPos) {
+export function checkPenguinCollision(penguin, targetPos) {
     const collisionRadius = 4.0;
 
-    for (let i = 0; i < penguins.length; i++) {
-        const otherPenguin = penguins[i].mesh;
+    for (let i=0; i<penguins.length; i++){
+        const other = penguins[i].mesh;
+        if (other === penguin) continue;
 
-        // if the other penguin is the same as the moving one, skip it
-        if (movingPenguin === otherPenguin) continue;
+        const currDx = other.position.x - penguin.position.x;
+        const currDz = other.position.z - penguin.position.z;
+        const currentDist = Math.sqrt(currDx*currDx + currDz*currDz);
 
-        // compute the distance between the proposed position and the other penguin's position
-        const dx = targetPos.x - otherPenguin.position.x;
-        const dz = targetPos.z - otherPenguin.position.z;
-        const distance = Math.sqrt(dx * dx + dz * dz);
+        const nextDx = other.position.x - targetPos.x;
+        const nextDz = other.position.z - targetPos.z;
+        const nextDist = Math.sqrt(nextDx*nextDx + nextDz*nextDz);
 
-        // if the distance is less than the sum of the radii, there's a collision
-        if (distance < (collisionRadius * 2)) {
+        if (nextDist<collisionRadius && nextDist<currentDist){
             return true;
         }
     }
