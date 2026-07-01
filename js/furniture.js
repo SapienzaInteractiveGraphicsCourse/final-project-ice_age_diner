@@ -177,6 +177,83 @@ export function createWindowFrame(w, h, r, frameThick, depth, material) {
     return group;
 }
 
+export function loadFoodModels() {
+    const loader = new THREE.GLTFLoader();
+
+    // Carichiamo il piatto vuoto
+    loader.load('models/cibi/plate.glb', (gltf) => {
+        const model = gltf.scene;
+        
+        // Attiviamo le ombre per il piatto base
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        
+        // Lo salviamo nello state, MA NON FACCIAMO scene.add(model)!
+        state.models.plate = model; 
+    });
+
+    // Carichiamo l'hamburger
+    loader.load('models/cibi/burger-cheese-double.glb', (gltf) => {
+        const model = gltf.scene;
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        state.models.hamburger = model;
+    });
+
+    // Fai lo stesso per la pizza, hotdog, ecc...
+    loader.load('models/cibi/pizza.glb', (gltf) => {
+        const model = gltf.scene;
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        state.models.pizza = model;
+    });
+
+    loader.load('models/cibi/hot-dog.glb', (gltf) => {
+        const model = gltf.scene;
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        state.models.hotdog = model;
+    });
+
+    loader.load('models/cibi/fish.glb', (gltf) => {
+        const model = gltf.scene;
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        state.models.fish = model;
+    });
+
+    loader.load('models/cibi/taco.glb', (gltf) => {
+        const model = gltf.scene;
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        state.models.taco = model;
+    });
+}
+
 /*export function addReflectiveFloor(scene, width, depth) {
     const geometry = new THREE.PlaneGeometry(width, depth);
 

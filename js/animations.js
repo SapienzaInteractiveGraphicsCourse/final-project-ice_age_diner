@@ -1,4 +1,5 @@
 import { moveTowards } from "./penguin.js";
+import { state } from './state.js';
 
 export function startWalking(penguin){
     if (penguin.userData.isWalking) return;
@@ -203,6 +204,39 @@ export function updateBubble(customer, text) {
         customer.userData.bubble.material.map.dispose(); // Pulisce la vecchia memoria
         customer.userData.bubble.material.map = createBubbleTexture(text);
     }
+}
+
+export function createPlate(foodName){
+    const plateGroup = new THREE.Group();
+
+    if (state.models.plate) {
+        // Cloniamo l'OGGETTO 3D, non il percorso!
+        const plateClone = state.models.plate.clone();
+        plateGroup.add(plateClone);
+    }
+
+    let foodModel = null;
+    if (foodName === 'hamburger' && state.models.hamburger){
+        foodModel = state.models.hamburger;
+    }else if (foodName === 'pizza' && state.models.pizza){
+        foodModel = state.models.pizza;
+    }else if (foodName === 'hotdog' && state.models.hotdog){
+        foodModel = state.models.hotdog;
+    }else if (foodName === 'taco' && state.models.taco){
+        foodModel = state.models.taco;
+    }else if (foodName === 'fish' && state.models.fish){
+        foodModel = state.models.fish;
+    }
+    if (foodModel){
+        const foodClone = foodModel.clone();
+        foodClone.position.y = 0.02;
+        plateGroup.add(foodClone);
+    }else{
+        console.warn(`Food model for "${foodName}" not found.`);
+    }
+
+    plateGroup.scale.set(1.5, 1.5, 1.5);
+    return plateGroup;
 }
 
 export function updateTweens(){

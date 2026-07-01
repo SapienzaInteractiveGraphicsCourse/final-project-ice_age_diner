@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { buildRestaurant } from './restaurant.js';
+import { loadFoodModels } from './furniture.js';
 
 let gameStarted = false;
 let menuSound, gameSound;
@@ -26,6 +27,7 @@ document.addEventListener("DOMContentLoaded", function (){
     document.addEventListener("click", initAudio, {once:true});
 
     btnStart.addEventListener("click", function (){
+        loadFoodModels();
         startMenu.classList.add("hidden");
         //gameUI.classList.add("visible");
         inGameSettingsBtn.classList.remove("hidden-panel");

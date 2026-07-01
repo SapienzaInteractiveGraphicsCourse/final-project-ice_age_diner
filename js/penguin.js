@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { startWalking, stopWalking, animateInteractable, seatPenguin, updateBubble } from './animations.js';
+import { startWalking, stopWalking, animateInteractable, seatPenguin, updateBubble, createPlate } from './animations.js';
 
 export const penguins = [];
 export let lastSpawnTime = 0;
@@ -374,7 +374,7 @@ function updateChefRoutine(chef){
 
     switch(chef.userData.state){
         case 'IDLE':
-            if (state.orders.length > 0) {
+            if (state.orders.length > 0 && state.orders.some(order => order.status === 'pending')) {
                 console.log("CHEF: New order received! Heading to the fridge.");
                 const nextOrder = state.orders.find(order => order.status === 'pending');
                 if (nextOrder) {
@@ -463,6 +463,10 @@ function updateChefRoutine(chef){
             
             if (chef.userData.timer <= 0) {
                 console.log("CHEF: Plate picked up! Walking to the counter.");
+                const newplate = createPlate(chef.userData.currentOrder.food);
+                // newplate.scale.set(0.5, 0.5, 0.5); 
+                newplate.position.set(0, 4, 3);
+                chef.add(newplate);
                 chef.userData.hasPlate = true;
                 chef.userData.state = 'WALK_COUNTER';
             }
@@ -498,7 +502,16 @@ function updateChefRoutine(chef){
 
             if (chef.userData.timer <= 0) {
                 console.log("CHEF: Order delivered on the counter!");
-                chef.userData.hasPlate = false;
+                if (chef.userData.hasPlate && chef.children.find(child => child.name === 'plate')) {
+                    chef.userData.hasPlate = false;
+                    const CompletedOrder = chef.children.find(child => child.name === 'plate')
+                    chef.remove(completedOrder);
+                    state.scene.add(completedOrder);
+                    completedOrder.position.set(KITCHEN_POS.COUNTER.x + (Math.random() * 4) - 2, KITCHEN_POS.COUNTER.y + 1.5, KITCHEN_POS.COUNTER.z);
+                    completedOrder.rotation.set(0, 0, 0);
+                    chef.userData.currentOrder.status = 'ready';
+                }
+                
 
                 if (state.orders.length > 0 && state.orders.some(order => order.status === 'pending')) {
                     console.log("CHEF: New order received! Heading to the fridge.");
@@ -663,7 +676,7 @@ function updateCustomerRoutine(customer) {
             customer.userData.timer--;
             if (customer.userData.timer <= 0) {
                 console.log("CUSTOMER: I'm ready to order!");
-                customer.userData.order = 'pizza';
+                customer.userData.order = state.menu[Math.floor(Math.random() * state.menu.length)];
                 customer.userData.isInteractable = true;
                 customer.userData.timer = 30000;
                 customer.userData.state = 'READY_TO_ORDER';
