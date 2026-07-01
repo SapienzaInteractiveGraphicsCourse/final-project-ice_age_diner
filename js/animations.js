@@ -166,6 +166,45 @@ export function seatPenguin(penguin, chair){
     }
 }
 
+function createBubbleTexture(text) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128; 
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    
+    // Disegna la nuvola bianca
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(64, 64, 55, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Disegna il testo
+    ctx.fillStyle = 'black';
+    ctx.font = 'bold 40px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 64, 64);
+    
+    return new THREE.CanvasTexture(canvas);
+}
+
+// Aggiorna o crea lo sprite del fumetto
+export function updateBubble(customer, text) {
+    if (!customer.userData.bubble) {
+        // Se non esiste, lo crea
+        const material = new THREE.SpriteMaterial({ map: createBubbleTexture(text) });
+        const sprite = new THREE.Sprite(material);
+        sprite.position.set(0, 7, 0); // Posizionalo sopra la testa (regola il 7 se serve)
+        sprite.scale.set(3, 3, 3);    // Grandezza del fumetto
+        customer.add(sprite);
+        customer.userData.bubble = sprite;
+    } else {
+        // Se esiste, aggiorna solo la texture
+        customer.userData.bubble.material.map.dispose(); // Pulisce la vecchia memoria
+        customer.userData.bubble.material.map = createBubbleTexture(text);
+    }
+}
+
 export function updateTweens(){
     if (typeof TWEEN !== 'undefined') {
         TWEEN.update();

@@ -1,5 +1,6 @@
 import { animateInteractable } from './animations.js';
 import {penguins} from './penguin.js';
+import { state } from './state.js';
 
 let raycaster;
 let mouse;
@@ -56,6 +57,15 @@ function onMouseClick(event){
                 console.log("Customer interaction: calling waiter for customer.");
                 clickedObj.userData.state = 'FOLLOW_WAITER';
                 clickedObj.userData.isInteractable = false;
+            }
+            else if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'READY_TO_ORDER'){
+                console.log("Customer interaction: ready to order.");
+                const orderFood = clickedObj.userData.order;
+                state.orders.push({customer: clickedObj, food: orderFood, status: 'pending'});
+                //UPDATE HTML INTERFACE TO SHOW ORDER ON THE RIGHT
+                clickedObj.userData.state = 'WAIT_FOR_FOOD';
+                clickedObj.remove(clickedObj.userData.bubble);
+                return;
             }
             else if (clickedObj.userData.interactionType === 'chair' && !clickedObj.userData.isOccupied ){
 

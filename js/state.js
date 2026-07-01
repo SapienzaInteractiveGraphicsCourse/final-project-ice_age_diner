@@ -11,5 +11,6 @@ export const state = {
 
     colliders: [],
     icebergs: [],
-    orders: []
+    orders: [],
+    menu: []
 };

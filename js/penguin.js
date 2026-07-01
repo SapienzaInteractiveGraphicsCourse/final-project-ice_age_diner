@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { startWalking, stopWalking, animateInteractable, seatPenguin } from './animations.js';
+import { startWalking, stopWalking, animateInteractable, seatPenguin, updateBubble } from './animations.js';
 
 export const penguins = [];
 export let lastSpawnTime = 0;
@@ -230,7 +230,14 @@ export function spawnPenguin(position, role){
     penguin.userData.timer = 0;
     penguin.userData.isInteractable = false;
     
-    if (role === 'customer') penguin.userData.seat = null;
+    if (role === 'customer') {
+        penguin.userData.seat = null;
+        penguin.userData.order = null;
+    }
+
+    if (role === 'chef') {
+        penguin.userData.currentOrder = null;
+    }
 
     if (role === 'chef') penguin.userData.speed = 0.22;
     else if (role === 'dishwasher') penguin.userData.speed = 0.28;
@@ -367,6 +374,15 @@ function updateChefRoutine(chef){
 
     switch(chef.userData.state){
         case 'IDLE':
+            if (state.orders.length > 0) {
+                console.log("CHEF: New order received! Heading to the fridge.");
+                const nextOrder = state.orders.find(order => order.status === 'pending');
+                if (nextOrder) {
+                    nextOrder.status = 'cooking';
+                    chef.userData.currentOrder = nextOrder;
+                    chef.userData.state = 'WALK_FRIDGE';
+                }
+            }
             break;
 
         case 'WALK_FRIDGE':
@@ -483,7 +499,21 @@ function updateChefRoutine(chef){
             if (chef.userData.timer <= 0) {
                 console.log("CHEF: Order delivered on the counter!");
                 chef.userData.hasPlate = false;
-                chef.userData.state = 'WALK_IDLE';
+
+                if (state.orders.length > 0 && state.orders.some(order => order.status === 'pending')) {
+                    console.log("CHEF: New order received! Heading to the fridge.");
+                    const nextOrder = state.orders.find(order => order.status === 'pending');
+                    if (nextOrder) {
+                        nextOrder.status = 'cooking';
+                        chef.userData.currentOrder = nextOrder;
+                        chef.userData.state = 'WALK_FRIDGE';
+                    }
+                }
+                else {
+                    console.log("CHEF: No more orders. Returning to idle position.");
+                    chef.userData.state = 'WALK_IDLE';
+                }
+                
             }
             break;
 
@@ -623,6 +653,61 @@ function updateCustomerRoutine(customer) {
             const chairOccuppied = customer.userData.seat;
             chairOccuppied.userData.isOccupied = true;
             chairOccuppied.userData.isInteractable = false;
+
+            customer.userData.state = 'THINKING';
+            customer.userData.timer = 500;
+            updateBubble(customer, '...');
+            break;
+
+        case 'THINKING':
+            customer.userData.timer--;
+            if (customer.userData.timer <= 0) {
+                console.log("CUSTOMER: I'm ready to order!");
+                customer.userData.order = 'pizza';
+                customer.userData.isInteractable = true;
+                customer.userData.timer = 30000;
+                customer.userData.state = 'READY_TO_ORDER';
+                updateBubble(customer, '!');
+            }
+            break;
+
+        case 'READY_TO_ORDER':
+            customer.userData.timer--;
+            if (customer.userData.timer <= 10000) {
+                console.log("CUSTOMER: I've been waiting too long! I'm angry!");
+                customer.userData.state = 'ANGRY';
+                updateBubble(customer, '!!!');
+            }
+            break;
+
+        case 'WAIT_FOR_FOOD':
+            customer.userData.timer--;
+            if (customer.userData.timer <= 10000) {
+                console.log("CUSTOMER: I've been waiting too long! I'm angry!");
+                customer.userData.state = 'ANGRY';
+                updateBubble(customer, '!!!');
+            }
+            break;
+
+        case 'EATING':
+            break;
+
+        case 'ANGRY':
+            //ADD ANGRY ANIMATION
+            customer.userData.timer--;
+            if (customer.userData.timer <= 0) {
+                console.log("CUSTOMER: I've been waiting too long! I'm leaving!");
+                customer.userData.state = 'LEAVING';
+                updateBubble(customer, '!!!');
+            }
+
+            break;
+
+        case 'LEAVING':
+            if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_INSIDE)) {
+                customer.rotation.y = -Math.PI / 2;
+                const mainDoor = getMainDoor(customer);
+            }
             break;
 
     }
