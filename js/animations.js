@@ -1,3 +1,5 @@
+import { moveTowards } from "./penguin.js";
+
 export function startWalking(penguin){
     if (penguin.userData.isWalking) return;
     penguin.userData.isWalking = true;
@@ -147,6 +149,20 @@ export function animateIcebergs(icebergsArray) {
                 }
             }
         }
+    }
+}
+export function seatPenguin(penguin, chair){
+
+    penguin.rotation.y = chair.rotation.y;
+
+    if (typeof TWEEN !== 'undefined') {
+        new TWEEN.Tween(penguin.position).to({y:3},400).easing(TWEEN.Easing.Quadratic.Out).start();
+        new TWEEN.Tween(penguin.userData.leftFoot.rotation).to({x: -Math.PI/2.5}, 400).easing(TWEEN.Easing.Quadratic.Out).start();
+        new TWEEN.Tween(penguin.userData.rightFoot.rotation).to({x: -Math.PI/2.5}, 400).easing(TWEEN.Easing.Quadratic.Out).start();
+    }else{
+        penguin.position.y = 3;
+        penguin.userData.leftFoot.rotation.x = -Math.PI/2.5;
+        penguin.userData.rightFoot.rotation.x = -Math.PI/2.5;
     }
 }
 

@@ -10,5 +10,6 @@ export const state = {
     audioListener: null,
 
     colliders: [],
-    icebergs: []
+    icebergs: [],
+    orders: []
 };

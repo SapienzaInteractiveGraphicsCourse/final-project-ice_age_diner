@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { startWalking, stopWalking, animateInteractable } from './animations.js';
+import { startWalking, stopWalking, animateInteractable, seatPenguin } from './animations.js';
 
 export const penguins = [];
 export let lastSpawnTime = 0;
@@ -611,9 +611,11 @@ function updateCustomerRoutine(customer) {
         
         case 'WALK_TO_SEAT':
             const chair = customer.userData.seat;
-            if (moveTowards(customer, chair.position)) {
-                customer.rotation.y = chair.rotation.y + Math.PI;
-                customer.userData.state = 'SEATED';
+            if (chair) {
+                if (moveTowards(customer, chair.position)) {
+                    seatPenguin(customer, chair);
+                    customer.userData.state = 'SEATED';
+                }
             }
             break;
 
