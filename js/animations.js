@@ -173,13 +173,11 @@ function createBubbleTexture(text) {
     canvas.height = 128;
     const ctx = canvas.getContext('2d');
     
-    // Disegna la nuvola bianca
     ctx.fillStyle = 'white';
     ctx.beginPath();
     ctx.arc(64, 64, 55, 0, Math.PI*2);
     ctx.fill();
     
-    // Disegna il testo
     ctx.fillStyle = 'black';
     ctx.font = 'bold 40px Arial';
     ctx.textAlign = 'center';
@@ -189,19 +187,17 @@ function createBubbleTexture(text) {
     return new THREE.CanvasTexture(canvas);
 }
 
-// Aggiorna o crea lo sprite del fumetto
 export function updateBubble(customer, text) {
     if (!customer.userData.bubble) {
-        // Se non esiste, lo crea
         const material = new THREE.SpriteMaterial({ map: createBubbleTexture(text) });
         const sprite = new THREE.Sprite(material);
-        sprite.position.set(0, 7, 0); // Posizionalo sopra la testa (regola il 7 se serve)
-        sprite.scale.set(3, 3, 3);    // Grandezza del fumetto
+        sprite.position.set(0, 7, 0); // above the penguin's head
+        sprite.scale.set(3, 3, 3);    
         customer.add(sprite);
         customer.userData.bubble = sprite;
     } else {
-        // Se esiste, aggiorna solo la texture
-        customer.userData.bubble.material.map.dispose(); // Pulisce la vecchia memoria
+        // if the bubble already exists, update its texture
+        customer.userData.bubble.material.map.dispose(); 
         customer.userData.bubble.material.map = createBubbleTexture(text);
     }
 }
@@ -210,7 +206,6 @@ export function createPlate(foodName){
     const plateGroup = new THREE.Group();
 
     if (state.models.plate) {
-        // Cloniamo l'OGGETTO 3D, non il percorso!
         const plateClone = state.models.plate.clone();
         plateGroup.add(plateClone);
     }

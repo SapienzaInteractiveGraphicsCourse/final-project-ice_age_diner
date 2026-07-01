@@ -180,7 +180,6 @@ export function createWindowFrame(w, h, r, frameThick, depth, material) {
 export function loadFoodModels() {
     const loader = new THREE.GLTFLoader();
 
-    // Carichiamo il piatto vuoto
     loader.load('models/cibi/plate.glb', (gltf) => {
         const model = gltf.scene;
         
@@ -192,11 +191,9 @@ export function loadFoodModels() {
             }
         });
         
-        // Lo salviamo nello state, MA NON FACCIAMO scene.add(model)!
         state.models.plate = model; 
     });
 
-    // Carichiamo l'hamburger
     loader.load('models/cibi/burger-cheese-double.glb', (gltf) => {
         const model = gltf.scene;
         model.traverse((child) => {
@@ -208,7 +205,6 @@ export function loadFoodModels() {
         state.models.hamburger = model;
     });
 
-    // Fai lo stesso per la pizza, hotdog, ecc...
     loader.load('models/cibi/pizza.glb', (gltf) => {
         const model = gltf.scene;
         model.traverse((child) => {
