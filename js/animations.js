@@ -68,7 +68,7 @@ export function stopWalking(penguin) {
 }
 
 export function animateInteractable(target, targetAngle, axis = 'y') {
-    const duration = 500;
+    const duration = 1500;
     const currentRotation = { angle: target.rotation[axis] };
 
     new TWEEN.Tween(currentRotation)

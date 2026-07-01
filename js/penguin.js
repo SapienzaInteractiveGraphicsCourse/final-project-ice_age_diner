@@ -20,22 +20,21 @@ export const CUSTOMER_POSITIONS = {
     SPAWN: new THREE.Vector3(90, 0, 10),
     DOOR_OUTSIDE: new THREE.Vector3(84, 0, 10), 
     DOOR_INSIDE: new THREE.Vector3(74, 0, 10),
+    DOOR_INSIDE_LEAVE: new THREE.Vector3(65, 0, 10),
 };
 
 const QUEUE_START_X = 74;
 const QUEUE_START_Z = 36;
 const QUEUE_SPACING = 6;
-// Corsia centrale libera da tavoli per camminare in linea retta
-const AISLE_X = 35; 
+// central line for aisle
+const AISLE_Z = 10; 
 
 export const WAITING_POSITION = [];
 
 for (let i=0; i<4; i++) {
     WAITING_POSITION.push(new THREE.Vector3(QUEUE_START_X, 0, QUEUE_START_Z - (i * QUEUE_SPACING)));
 }
-for (let i=4; i<20; i++) {
-    WAITING_POSITION.push(new THREE.Vector3(74 + ((i - 5) * QUEUE_SPACING), 0, 10));
-}
+
 
 export function createPenguinModel(role, options = {}){
     const penguinGroup = new THREE.Group();
@@ -343,7 +342,7 @@ export function spawnCustomer(){
     const currentIdx = waitingQueue.indexOf(customer);
     customer.userData.positionIndex = currentIdx;
 
-    if (currentIdx < 5) {
+    if (currentIdx <4) {
         customer.userData.state = 'WALK_TO_DOOR';
         customer.userData.targetPosition = CUSTOMER_POSITIONS.DOOR_OUTSIDE;
     } else {
@@ -620,7 +619,6 @@ function updateCustomerRoutine(customer) {
                 customer.rotation.y = -Math.PI / 2;
                 const mainDoor = getMainDoor(customer);
                 if (mainDoor && mainDoor.userData.isOpen) {
-                    // Impostato a 60 frame l'attesa così aspetta bene che la porta si apra
                     customer.userData.timer = 60; 
                     customer.userData.state = 'WAIT_FOR_DOOR_ANIMATION';
                 }
@@ -690,28 +688,22 @@ function updateCustomerRoutine(customer) {
             }
             break;
 
-        case 'FOLLOW_WAITER':
-            const waiter = penguins.find(p => p.mesh.userData.role === 'waiter').mesh;
-            const distanceToWaiter = customer.position.distanceTo(waiter.position);
-            if (distanceToWaiter > 10) {
-                moveTowards(customer, waiter.position);
-            }
-            else{
-                stopWalking(customer);
-                const lookPos = new THREE.Vector3(waiter.position.x, customer.position.y, waiter.position.z);
-                customer.lookAt(lookPos);
-            }
+        case 'WAIT_FOR_SEAT_ASSIGNMENT':
+            stopWalking(customer);
             break;
         
         case 'WALK_TO_SEAT':
             const chair = customer.userData.seat;
             if (chair) {
-                // Sistema a Waypoints per evitare collisioni usando la corsia (AISLE_X)
                 if (!customer.userData.seatWaypoints) {
+                    const backDir = new THREE.Vector3(1, 0, 0).applyQuaternion(chair.quaternion).normalize();
+                    const safeSpot = chair.position.clone().add(backDir.multiplyScalar(6)); 
+
                     customer.userData.seatWaypoints = [
-                        new THREE.Vector3(AISLE_X, 0, customer.position.z), // Esce dalla coda fino alla corsia
-                        new THREE.Vector3(AISLE_X, 0, chair.position.z),    // Cammina lungo la corsia 
-                        chair.position                                      // Gira per sedersi
+                        new THREE.Vector3(customer.position.x, 0, AISLE_Z), //central line
+                        new THREE.Vector3(safeSpot.x, 0, AISLE_Z),          
+                        safeSpot,                                           
+                        chair.position                                     
                     ];
                     customer.userData.currentWaypointIdx = 0;
                 }
@@ -794,25 +786,44 @@ function updateCustomerRoutine(customer) {
 
         case 'LEAVING':
             if (customer.userData.subState === undefined) {
-                customer.userData.subState = 'WALK_TO_AISLE';
+                const chair = customer.userData.seat;
+                if (chair) {
+                    const sideDir = new THREE.Vector3(1, 0, 0).applyQuaternion(chair.quaternion).normalize();
+                    customer.userData.leaveSafeSpot = chair.position.clone().add(sideDir.multiplyScalar(6));
+                } else {
+                    customer.userData.leaveSafeSpot = customer.position.clone();
+                }
+
+                customer.userData.leaveSafeSpot.y = 0;
+                customer.position.y = 0;
+                customer.userData.subState = 'BACK_AWAY_FROM_TABLE';
             }
 
-            if (customer.userData.subState === 'WALK_TO_AISLE') {
-                // Va verso la corsia centrale libera (AISLE_X)
-                const aislePos = new THREE.Vector3(AISLE_X, 0, customer.position.z);
+            if (customer.userData.subState === 'BACK_AWAY_FROM_TABLE') {
+                if (moveTowards(customer, customer.userData.leaveSafeSpot)) {
+                    if (customer.userData.seat) {
+                        customer.userData.seat.userData.isOccupied = false;
+                        customer.userData.seat.userData.isInteractable = true;
+                        customer.userData.seat = null;
+                    }
+                    customer.userData.subState = 'WALK_TO_AISLE';
+                }
+            }
+            else if (customer.userData.subState === 'WALK_TO_AISLE') {
+                const AISLE_Z = CUSTOMER_POSITIONS.DOOR_INSIDE_LEAVE.z;
+                const aislePos = new THREE.Vector3(customer.position.x, 0, AISLE_Z);
                 if (moveTowards(customer, aislePos)) {
                     customer.userData.subState = 'WALK_DOWN_AISLE';
                 }
             }
             else if (customer.userData.subState === 'WALK_DOWN_AISLE') {
-                // Cammina dritto sulla corsia fino all'altezza della porta
-                const doorAislePos = new THREE.Vector3(AISLE_X, 0, CUSTOMER_POSITIONS.DOOR_INSIDE.z);
+                const doorAislePos = new THREE.Vector3(CUSTOMER_POSITIONS.DOOR_INSIDE_LEAVE.x, 0, CUSTOMER_POSITIONS.DOOR_INSIDE_LEAVE.z);
                 if (moveTowards(customer, doorAislePos)) {
                     customer.userData.subState = 'WALK_TO_DOOR_INSIDE';
                 }
             }
             else if (customer.userData.subState === 'WALK_TO_DOOR_INSIDE') {
-                if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_INSIDE)) {
+                if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_INSIDE_LEAVE)) {
                     customer.userData.timer = 50; 
                     customer.userData.subState = 'WAIT_FOR_DOOR';
                 }

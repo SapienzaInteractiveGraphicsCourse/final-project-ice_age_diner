@@ -62,7 +62,7 @@ function onMouseClick(event){
                 const queueIdx = waitingQueue.indexOf(clickedObj);
                 if (queueIdx !== -1) waitingQueue.splice(queueIdx, 1);
 
-                clickedObj.userData.state = 'FOLLOW_WAITER';
+                clickedObj.userData.state = 'WAITING_FOR_SEAT_ASSIGNMENT';
                 clickedObj.userData.isInteractable = false;
             }
             else if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'READY_TO_ORDER'){
@@ -111,7 +111,7 @@ function onMouseClick(event){
             }
             else if (clickedObj.userData.interactionType === 'chair' && !clickedObj.userData.isOccupied ){
 
-                const followingPenguinData = penguins.find(p =>p.mesh && p.mesh.userData.state === 'FOLLOW_WAITER');
+                const followingPenguinData = penguins.find(p =>p.mesh && p.mesh.userData.state === 'WAITING_FOR_SEAT_ASSIGNMENT');
 
                 if (followingPenguinData && followingPenguinData.mesh){
                     const followingPenguin = followingPenguinData.mesh;
