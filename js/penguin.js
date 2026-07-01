@@ -239,6 +239,10 @@ export function spawnPenguin(position, role){
         penguin.userData.currentOrder = null;
     }
 
+    if (role === 'waiter' || role === 'dishwasher' || role === "customer") {
+        penguin.userData.plate = null;
+    }
+
     if (role === 'chef') penguin.userData.speed = 0.22;
     else if (role === 'dishwasher') penguin.userData.speed = 0.28;
     else if (role === 'customer') penguin.userData.speed = 0.25;
@@ -464,6 +468,7 @@ function updateChefRoutine(chef){
             if (chef.userData.timer <= 0) {
                 console.log("CHEF: Plate picked up! Walking to the counter.");
                 const newplate = createPlate(chef.userData.currentOrder.food);
+                newplate.name = 'plate';
                 // newplate.scale.set(0.5, 0.5, 0.5); 
                 newplate.position.set(0, 4, 3);
                 chef.add(newplate);
@@ -504,10 +509,11 @@ function updateChefRoutine(chef){
                 console.log("CHEF: Order delivered on the counter!");
                 if (chef.userData.hasPlate && chef.children.find(child => child.name === 'plate')) {
                     chef.userData.hasPlate = false;
-                    const CompletedOrder = chef.children.find(child => child.name === 'plate')
+                    const completedOrder = chef.children.find(child => child.name === 'plate')
                     chef.remove(completedOrder);
+                    completedOrder.userData.isInteractable = true;
                     state.scene.add(completedOrder);
-                    completedOrder.position.set(KITCHEN_POS.COUNTER.x + (Math.random() * 4) - 2, KITCHEN_POS.COUNTER.y + 1.5, KITCHEN_POS.COUNTER.z);
+                    completedOrder.position.set(KITCHEN_POS.COUNTER.x +8, KITCHEN_POS.COUNTER.y + 4.6, KITCHEN_POS.COUNTER.z );
                     completedOrder.rotation.set(0, 0, 0);
                     chef.userData.currentOrder.status = 'ready';
                 }
@@ -703,6 +709,21 @@ function updateCustomerRoutine(customer) {
             break;
 
         case 'EATING':
+            customer.userData.timer--;
+            customer.userData.isInteractable = false;
+            if (customer.userData.timer <= 0) {
+                const plate = customer.userData.plate;
+                if (plate) {
+                    while (plate.children.length > 1) {
+                        const foodItem = plate.children[1];
+                        plate.remove(foodItem);
+                    }
+                }
+                plate.userData.isInteractable = true;
+                console.log("CUSTOMER: eated food")
+                customer.userData.state = 'LEAVING';
+            }
+            
             break;
 
         case 'ANGRY':

@@ -191,7 +191,7 @@ export function updateBubble(customer, text) {
     if (!customer.userData.bubble) {
         const material = new THREE.SpriteMaterial({ map: createBubbleTexture(text) });
         const sprite = new THREE.Sprite(material);
-        sprite.position.set(0, 7, 0); // above the penguin's head
+        sprite.position.set(0, 6, 0); // above the penguin's head
         sprite.scale.set(3, 3, 3);    
         customer.add(sprite);
         customer.userData.bubble = sprite;
@@ -230,7 +230,9 @@ export function createPlate(foodName){
         console.warn(`Food model for "${foodName}" not found.`);
     }
 
-    plateGroup.scale.set(1.5, 1.5, 1.5);
+    plateGroup.userData.isInteractable = false;
+    plateGroup.userData.interactionType = 'plate';
+    plateGroup.scale.set(4,4,4);
     return plateGroup;
 }
 

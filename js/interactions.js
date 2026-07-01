@@ -53,6 +53,9 @@ function onMouseClick(event){
 
         if (clickedObj){
 
+            const waiterData = penguins.find(p => p.mesh.userData.role === 'waiter');
+            const waiter = waiterData ? waiterData.mesh : null;
+
             if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'WAIT_FOR_WAITER'){
                 console.log("Customer interaction: calling waiter for customer.");
                 clickedObj.userData.state = 'FOLLOW_WAITER';
@@ -66,6 +69,40 @@ function onMouseClick(event){
                 clickedObj.userData.state = 'WAIT_FOR_FOOD';
                 clickedObj.remove(clickedObj.userData.bubble);
                 return;
+            }
+            else if (clickedObj.userData.interactionType === 'plate' && clickedObj.userData.isInteractable  ){ 
+                if (waiter.userData.hasPlate === false){
+                    console.log("Plate interaction: picking up the plate.");
+                    interactionScene.remove(clickedObj);
+                    waiter.add(clickedObj);
+                    clickedObj.position.set(0, 4, 3);
+                    waiter.userData.hasPlate = true;
+                    waiter.userData.plate = clickedObj;
+                    clickedObj.userData.isInteractable = false;
+                }else {
+                    console.log("Waiter already has a plate. Cannot pick up another one.");
+                }
+            }
+            else if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'WAIT_FOR_FOOD'){
+                if (waiter.userData.hasPlate){
+                    console.log("Customer interaction: delivering food to customer.");
+                    const plate = waiter.userData.plate;
+                    waiter.remove(plate);
+                    interactionScene.add(plate);
+                    plate.scale.set(3, 3, 3);
+                    const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), clickedObj.rotation.y);
+                    plate.position.set(clickedObj.position.x + (forward.x * 4.5), 5.2, clickedObj.position.z + (forward.z * 4.5));
+                    plate.rotation.set(0, 0, 0);
+                    waiter.userData.hasPlate = false;
+                    waiter.userData.plate = null;
+                    clickedObj.userData.plate = plate;
+                    clickedObj.userData.timer = 300;
+                    if (clickedObj.userData.bubble) {
+                        clickedObj.remove(clickedObj.userData.bubble);
+                        clickedObj.userData.bubble = null;
+                    }
+                    clickedObj.userData.state = 'EATING';
+                }
             }
             else if (clickedObj.userData.interactionType === 'chair' && !clickedObj.userData.isOccupied ){
 
