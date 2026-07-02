@@ -363,7 +363,17 @@ function getFridgeDoor(chef) {
 }
 
 export function spawnCustomer(){
-    if ((waitingQueue.length >= WAITING_POSITION.length) || state.someone_is_leaving) {
+    const penguinWaiting = penguins.filter(p => {
+    const optionState = p.mesh.userData.state;
+    return optionState === 'WAIT_FOR_WAITER' || optionState === 'WAIT_FOR_SEAT_ASSIGNMENT' || optionState === 'WALK_TO_WAITING';
+    }).length;
+    console.log("--- STATO ATTUALE DI TUTTI I PINGUINI ---");
+    penguins.forEach((p, index) => {
+        console.log(`Pinguino [${index}] - Ruolo: ${p.mesh.userData.role} - Stato: ${p.mesh.userData.state}`);
+    });
+console.log("----------------------------------------");
+    console.log(`Current waiting customers: ${penguinWaiting}`);
+    if ((penguinWaiting >= 3) || state.someone_is_leaving) {
         console.log("No available waiting position for customer!");
         return;
     }
@@ -759,13 +769,11 @@ function updateCustomerRoutine(customer) {
             const chair = customer.userData.seat;
             if (chair) {
                 if (!customer.userData.seatWaypoints) {
-                    // Usiamo gli stessi identici assi di direzione della manovra di uscita (LEAVING)
                     const backDir = new THREE.Vector3(0, 0, -1).applyQuaternion(chair.quaternion).normalize();
                     const sideDir = new THREE.Vector3(1, 0, 0).applyQuaternion(chair.quaternion).normalize();
 
-                    // Calcoliamo i punti speculari per entrare correttamente di lato
-                    const stepSide = chair.position.clone().add(sideDir.multiplyScalar(4)); // Punto di fianco alla sedia
-                    const stepBack = stepSide.clone().add(backDir.multiplyScalar(6));       // Punto nello spazio aperto dietro/lato
+                    const stepSide = chair.position.clone().add(sideDir.multiplyScalar(4)); 
+                    const stepBack = stepSide.clone().add(backDir.multiplyScalar(6));       
 
                     const waypoints = [];
 
@@ -775,8 +783,6 @@ function updateCustomerRoutine(customer) {
 
                     const aisleEntryX = waypoints.length ? QUEUE_EXIT_X : customer.position.x;
 
-                    // Costruiamo la traiettoria ad "L" sicura in ingresso:
-                    // Corridoio -> Allineamento con lo spazio aperto -> Spazio aperto -> Fianco sedia -> Sedia
                     waypoints.push(
                         new THREE.Vector3(aisleEntryX, 0, AISLE_Z), 
                         new THREE.Vector3(stepBack.x, 0, AISLE_Z),          
@@ -890,17 +896,14 @@ function updateCustomerRoutine(customer) {
 
         case 'LEAVING':
             if (customer.userData.subState === undefined) {
+                state.someone_is_leaving = true;
                 const chair = customer.userData.seat;
                 if (chair){
-                    // MANOVRA AD 'L' PER USCIRE DALLA SEDIA SENZA TRAPASSARE LO SCHIENALE
-                    // 1. Asse Z locale della sedia = Direzione LATERALE (per sfilarsi dal cuscino)
                     const sideDir = new THREE.Vector3(1, 0, 0).applyQuaternion(chair.quaternion).normalize();
-                    // 2. Asse -X locale della sedia = Direzione POSTERIORE (per allontanarsi dal tavolo)
                     const backDir = new THREE.Vector3(0, 0, -1).applyQuaternion(chair.quaternion).normalize();
                     
-                    // Crea due "waypoint" (tappe) per l'uscita
-                    const stepSide = customer.position.clone().add(sideDir.multiplyScalar(4)); // Scivola di lato
-                    const stepBack = stepSide.clone().add(backDir.multiplyScalar(6));          // Poi va indietro
+                    const stepSide = customer.position.clone().add(sideDir.multiplyScalar(4)); 
+                    const stepBack = stepSide.clone().add(backDir.multiplyScalar(6));          
                     
                     customer.userData.leaveWaypoints = [stepSide, stepBack];
                     customer.userData.leaveWpIdx = 0;
@@ -910,11 +913,9 @@ function updateCustomerRoutine(customer) {
                     customer.userData.leaveWpIdx = 0;
                 }
 
-                // Abbassa il pinguino a livello del pavimento
                 customer.userData.leaveWaypoints[0].y = 0;
                 customer.position.y = 0;
 
-                // Raddrizza le zampette che erano piegate
                 if (typeof TWEEN !== 'undefined') {
                     new TWEEN.Tween(customer.userData.leftFoot.rotation).to({ x: 0 }, 200).start();
                     new TWEEN.Tween(customer.userData.rightFoot.rotation).to({ x: 0 }, 200).start();
@@ -926,22 +927,17 @@ function updateCustomerRoutine(customer) {
             }
 
             if (customer.userData.subState === 'BACK_AWAY_FROM_TABLE'){
-                // Recupera il punto di destinazione corrente (prima stepSide, poi stepBack)
                 const currentTarget = customer.userData.leaveWaypoints[customer.userData.leaveWpIdx];
 
-                // Muove il pinguino verso il waypoint corrente
                 if (moveTowards(customer, currentTarget, true)) { 
-                    // Una volta raggiunto il punto corrente, passa al waypoint successivo
                     customer.userData.leaveWpIdx++;
 
-                    // Controlla se ha terminato tutti i passaggi della manovra di uscita
                     if (customer.userData.leaveWpIdx >= customer.userData.leaveWaypoints.length) {
                         if (customer.userData.seat) {
                             customer.userData.seat.userData.isOccupied = false;
                             customer.userData.seat.userData.isInteractable = true;
                             customer.userData.seat = null;
                         }
-                        // Solo ora che è completamente fuori dal tavolo passa alla fase successiva
                         customer.userData.subState = 'WALK_TO_AISLE';
                     }
                 }
