@@ -16,35 +16,25 @@ export function setupControls(penguin){
     });
 }
 
-// Checks if the next position of the penguin hits an object
-export function checkCollisions(targetPos, radius){
-    if (!state.colliders) return false;
+export function checkCollision(penguin, targetPos, radius = 2.2){
+    // Collision with furniture
+    if (state.colliders && state.colliders.length){
+        const targetBox = new THREE.Box3();
+        targetBox.min.set(targetPos.x - radius, targetPos.y, targetPos.z - radius);
+        targetBox.max.set(targetPos.x + radius, targetPos.y + 4, targetPos.z + radius);
 
-    // Create a bounding box around the penguin
-    const playerBox = new THREE.Box3();
-    playerBox.min.set(targetPos.x - radius, targetPos.y, targetPos.z - radius);
-    playerBox.max.set(targetPos.x + radius, targetPos.y +4, targetPos.z + radius);
+        for (let obj of state.colliders){
+            if (!obj) continue;
 
-    for (let obj of state.colliders){
-        if (!obj) continue;
+            const objBox = new THREE.Box3().setFromObject(obj);
+            if (objBox.isEmpty()) continue;
 
-        // Create a box for the object in the map
-        const objBox = new THREE.Box3().setFromObject(obj);
-
-        // Ignore empty objects
-        if (objBox.isEmpty()) continue;
-
-        // If the boxes intersecate, there's a collision
-        if (playerBox.intersectsBox(objBox)){
-            return true;
+            if (targetBox.intersectsBox(objBox)) return true;
         }
     }
-    return false;
-}
 
-export function checkPenguinCollision(penguin, targetPos) {
-    const collisionRadius = 4.0;
-
+    // Collision between penguins
+    const penguinRadius = 4.0;
     for (let i=0; i<penguins.length; i++){
         const other = penguins[i].mesh;
         if (other === penguin) continue;
@@ -57,7 +47,7 @@ export function checkPenguinCollision(penguin, targetPos) {
         const nextDz = other.position.z - targetPos.z;
         const nextDist = Math.sqrt(nextDx*nextDx + nextDz*nextDz);
 
-        if (nextDist<collisionRadius && nextDist<currentDist){
+        if (nextDist<penguinRadius && nextDist<currentDist){
             return true;
         }
     }
@@ -90,7 +80,7 @@ export function updateMovement(penguin){
         const nextPosition = penguin.position.clone().add(moveVector);
 
         // Move only if there's no collision
-        if (!checkCollisions(nextPosition, 2.2) && !checkPenguinCollision(penguin, nextPosition)){
+        if (!checkCollision(penguin, nextPosition, 2.2)){
             penguin.position.copy(nextPosition);
         }
 

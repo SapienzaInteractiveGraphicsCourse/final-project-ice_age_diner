@@ -30,7 +30,6 @@ function onMouseClick(event){
 
     // update the raycaster with the camera and mouse position
     raycaster.setFromCamera(mouse, interactionCamera);
-
     // search for intersections
     const intersects = raycaster.intersectObjects(interactionScene.children, true);
 
@@ -38,7 +37,6 @@ function onMouseClick(event){
 
         let clickedObj = null;
         //only if it's interactable
-
         for (let i = 0; i < intersects.length; i++){
             let obj = intersects[i].object;
             while (obj) {
@@ -94,9 +92,9 @@ function onMouseClick(event){
                     const plate = waiter.userData.plate;
                     waiter.remove(plate);
                     interactionScene.add(plate);
-                    plate.scale.set(3, 3, 3);
+                    plate.scale.set(0.3, 0.3, 0.3);
                     const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), clickedObj.rotation.y);
-                    plate.position.set(clickedObj.position.x + (forward.x * 4.5), 5.2, clickedObj.position.z + (forward.z * 4.5));
+                    plate.position.set(clickedObj.position.x + (forward.x*4.5), 4.0, clickedObj.position.z + (forward.z*4.5));
                     plate.rotation.set(0, 0, 0);
                     waiter.userData.hasPlate = false;
                     waiter.userData.plate = null;
@@ -119,7 +117,8 @@ function onMouseClick(event){
                     followingPenguin.userData.targetPosition = clickedObj.position.clone();
                     clickedObj.userData.isOccupied = true;
                     followingPenguin.userData.seat = clickedObj;
-                }else{
+                }
+                else{
                     console.log("No penguin is currently following the waiter to sit down.");
                 }
 

@@ -152,16 +152,22 @@ export function animateIcebergs(icebergsArray) {
         }
     }
 }
+
 export function seatPenguin(penguin, chair){
 
     penguin.rotation.y = chair.rotation.y;
+    const localOffset = new THREE.Vector3(1.5, 0, 0); 
+    localOffset.applyQuaternion(chair.quaternion);
+    const targetX = chair.position.x + localOffset.x;
+    const targetZ = chair.position.z + localOffset.z;
 
     if (typeof TWEEN !== 'undefined') {
-        new TWEEN.Tween(penguin.position).to({y:3},400).easing(TWEEN.Easing.Quadratic.Out).start();
+        new TWEEN.Tween(penguin.position).to({ x: targetX, y: 3, z: targetZ }, 400).easing(TWEEN.Easing.Quadratic.Out).start();
         new TWEEN.Tween(penguin.userData.leftFoot.rotation).to({x: -Math.PI/2.5}, 400).easing(TWEEN.Easing.Quadratic.Out).start();
         new TWEEN.Tween(penguin.userData.rightFoot.rotation).to({x: -Math.PI/2.5}, 400).easing(TWEEN.Easing.Quadratic.Out).start();
-    }else{
-        penguin.position.y = 3;
+    }
+    else{
+        penguin.position.set(targetX, 3, targetZ);
         penguin.userData.leftFoot.rotation.x = -Math.PI/2.5;
         penguin.userData.rightFoot.rotation.x = -Math.PI/2.5;
     }
@@ -188,14 +194,15 @@ function createBubbleTexture(text) {
 }
 
 export function updateBubble(customer, text) {
-    if (!customer.userData.bubble) {
+    if (!customer.userData.bubble){
         const material = new THREE.SpriteMaterial({ map: createBubbleTexture(text) });
         const sprite = new THREE.Sprite(material);
         sprite.position.set(0, 6, 0); // above the penguin's head
         sprite.scale.set(3, 3, 3);    
         customer.add(sprite);
         customer.userData.bubble = sprite;
-    } else {
+    }
+    else{
         // if the bubble already exists, update its texture
         customer.userData.bubble.material.map.dispose(); 
         customer.userData.bubble.material.map = createBubbleTexture(text);
@@ -205,7 +212,7 @@ export function updateBubble(customer, text) {
 export function createPlate(foodName){
     const plateGroup = new THREE.Group();
 
-    if (state.models.plate) {
+    if (state.models.plate){
         const plateClone = state.models.plate.clone();
         plateGroup.add(plateClone);
     }
@@ -213,20 +220,25 @@ export function createPlate(foodName){
     let foodModel = null;
     if (foodName === 'hamburger' && state.models.hamburger){
         foodModel = state.models.hamburger;
-    }else if (foodName === 'pizza' && state.models.pizza){
+    }
+    else if (foodName === 'pizza' && state.models.pizza){
         foodModel = state.models.pizza;
-    }else if (foodName === 'hotdog' && state.models.hotdog){
+    }
+    else if (foodName === 'hotdog' && state.models.hotdog){
         foodModel = state.models.hotdog;
-    }else if (foodName === 'taco' && state.models.taco){
+    }
+    else if (foodName === 'taco' && state.models.taco){
         foodModel = state.models.taco;
-    }else if (foodName === 'fish' && state.models.fish){
+    }
+    else if (foodName === 'fish' && state.models.fish){
         foodModel = state.models.fish;
     }
     if (foodModel){
         const foodClone = foodModel.clone();
         foodClone.position.y = 0.02;
         plateGroup.add(foodClone);
-    }else{
+    }
+    else{
         console.warn(`Food model for "${foodName}" not found.`);
     }
 

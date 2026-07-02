@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { startWalking, stopWalking, animateInteractable, seatPenguin, updateBubble, createPlate } from './animations.js';
-import { checkPenguinCollision } from './controlWaiter.js';
+import { checkCollision } from './controlWaiter.js';
 
 export const penguins = [];
 export const waitingQueue = [];
@@ -26,6 +26,7 @@ export const CUSTOMER_POSITIONS = {
 const QUEUE_START_X = 74;
 const QUEUE_START_Z = 36;
 const QUEUE_SPACING = 6;
+const QUEUE_EXIT_X = 65;
 // central line for aisle
 const AISLE_Z = 10; 
 
@@ -257,7 +258,7 @@ export function spawnPenguin(position, role){
     return penguin;
 }
 
-export function moveTowards(penguin, targetPos){
+export function moveTowards(penguin, targetPos, ignoreCollision=false){
     if (!penguin) return;
 
     const dx = targetPos.x - penguin.position.x;
@@ -270,6 +271,12 @@ export function moveTowards(penguin, targetPos){
 
         const nextX = penguin.position.x + dirX*penguin.userData.speed;
         const nextZ = penguin.position.z + dirZ*penguin.userData.speed;
+        const nextPos = new THREE.Vector3(nextX, penguin.position.y, nextZ);
+
+        if (!ignoreCollision && checkCollision(penguin, nextPos)){
+            stopWalking(penguin);
+            return false;
+        }
 
         penguin.position.x = nextX;
         penguin.position.z = nextZ;
@@ -282,6 +289,17 @@ export function moveTowards(penguin, targetPos){
         stopWalking(penguin);
         return true;
     }
+}
+
+function getQueueWaypoints(customer, target){
+    const nearAisleX = Math.abs(customer.position.x - QUEUE_START_X) < 0.5;
+    if (nearAisleX){
+        return [target];
+    }
+    return [
+        new THREE.Vector3(QUEUE_START_X, 0, customer.position.z),
+        target
+    ];
 }
 
 export function removeFromQueue(customer){
@@ -646,23 +664,39 @@ function updateCustomerRoutine(customer) {
             }
             break;
 
-        case 'WALK_TO_WAITING':
+        case 'WALK_TO_WAITING': {
             const currentIdx = waitingQueue.indexOf(customer);
             if (currentIdx !== -1){
                 const spotIdx = Math.min(currentIdx, WAITING_POSITION.length-1);
                 
                 if (spotIdx < 5 && !customer.userData.hasEnteredInside) {
                     customer.userData.state = 'WALK_TO_DOOR';
+                    customer.userData.queueWaypoints = null;
                     break;
                 }
                 customer.userData.targetPosition = WAITING_POSITION[spotIdx];
             }
 
-            if (moveTowards(customer, customer.userData.targetPosition)){
+            if (!customer.userData.queueWaypoints){
+                customer.userData.queueWaypoints = getQueueWaypoints(customer, customer.userData.targetPosition);
+                customer.userData.queueWaypointIdx = 0;
+            }
+
+            const waypoints = customer.userData.queueWaypoints;
+            const wIdx = customer.userData.queueWaypointIdx;
+
+            if (wIdx < waypoints.length){
+                if (moveTowards(customer, waypoints[wIdx])){
+                    customer.userData.queueWaypointIdx++;
+                }
+            }
+            else{
                 customer.rotation.y = -Math.PI/2;
                 customer.userData.state = 'WAIT_FOR_WAITER';
+                customer.userData.queueWaypoints = null;
             }
             break;
+        }
         
         case 'WAIT_FOR_WAITER':
             if (!customer.userData.isInteractable) {
@@ -677,13 +711,28 @@ function updateCustomerRoutine(customer) {
                 const currentAssignedSpot = WAITING_POSITION[spotIdx];
 
                 if (customer.position.distanceTo(currentAssignedSpot) > 0.5){
-                    customer.userData.targetPosition = currentAssignedSpot;
+                    const isSpotClear = !penguins.some(p =>
+                        p.mesh !== customer &&
+                        p.mesh.position.distanceTo(currentAssignedSpot)<4.0
+                    );
                     
-                    if (spotIdx < 5 && !customer.userData.hasEnteredInside) {
-                        customer.userData.state = 'WALK_TO_DOOR';
-                    } else {
-                        customer.userData.state = 'WALK_TO_WAITING';
+                    if (isSpotClear){
+                        customer.userData.targetPosition = currentAssignedSpot;
+                        if (spotIdx<5 && !customer.userData.hasEnteredInside){
+                            customer.userData.state = 'WALK_TO_DOOR';
+                        }
+                        else{
+                            customer.userData.queueWaypoints = getQueueWaypoints(customer, currentAssignedSpot);
+                            customer.userData.queueWaypointIdx = 0;
+                            customer.userData.state = 'WALK_TO_WAITING';
+                        }
                     }
+                    else{
+                        stopWalking(customer);
+                    }
+                }
+                else{
+                    stopWalking(customer);
                 }
             }
             break;
@@ -696,15 +745,25 @@ function updateCustomerRoutine(customer) {
             const chair = customer.userData.seat;
             if (chair) {
                 if (!customer.userData.seatWaypoints) {
-                    const backDir = new THREE.Vector3(1, 0, 0).applyQuaternion(chair.quaternion).normalize();
+                    const backDir = new THREE.Vector3(0, 0, -1).applyQuaternion(chair.quaternion).normalize();
                     const safeSpot = chair.position.clone().add(backDir.multiplyScalar(6)); 
 
-                    customer.userData.seatWaypoints = [
-                        new THREE.Vector3(customer.position.x, 0, AISLE_Z), //central line
+                    const waypoints = [];
+
+                    if (Math.abs(customer.position.x - QUEUE_START_X) < 1){
+                        waypoints.push(new THREE.Vector3(QUEUE_EXIT_X, 0, customer.position.z));
+                    }
+
+                    const aisleEntryX = waypoints.length ? QUEUE_EXIT_X : customer.position.x;
+
+                    waypoints.push(
+                        new THREE.Vector3(aisleEntryX, 0, AISLE_Z), 
                         new THREE.Vector3(safeSpot.x, 0, AISLE_Z),          
                         safeSpot,                                           
                         chair.position                                     
-                    ];
+                    );
+
+                    customer.userData.seatWaypoints = waypoints;
                     customer.userData.currentWaypointIdx = 0;
                 }
 
@@ -712,10 +771,32 @@ function updateCustomerRoutine(customer) {
                 const idx = customer.userData.currentWaypointIdx;
 
                 if (idx < waypoints.length) {
-                    if (moveTowards(customer, waypoints[idx])) {
-                        customer.userData.currentWaypointIdx++;
+                    const targetPos = waypoints[idx];
+                    const isLastWaypoint = (idx === waypoints.length - 1);
+
+                    if (isLastWaypoint){
+                        const dx = targetPos.x - customer.position.x;
+                        const dz = targetPos.z - customer.position.z;
+                        const dist = Math.sqrt(dx * dx + dz * dz);
+
+                        if (dist > 0.5){
+                            customer.position.x += (dx / dist) * customer.userData.speed;
+                            customer.position.z += (dz / dist) * customer.userData.speed;
+                            customer.rotation.y = Math.atan2(dx / dist, dz / dist);
+                            startWalking(customer);
+                        }
+                        else{
+                            customer.userData.currentWaypointIdx++;
+                        }
                     }
-                } else {
+                    else{
+                        if (moveTowards(customer, targetPos)) {
+                            customer.userData.currentWaypointIdx++;
+                        }
+                    }
+                }
+                else{
+                    stopWalking(customer);
                     seatPenguin(customer, chair);
                     customer.userData.seatWaypoints = null;
                     customer.userData.state = 'SEATED';
@@ -787,10 +868,11 @@ function updateCustomerRoutine(customer) {
         case 'LEAVING':
             if (customer.userData.subState === undefined) {
                 const chair = customer.userData.seat;
-                if (chair) {
+                if (chair){
                     const sideDir = new THREE.Vector3(1, 0, 0).applyQuaternion(chair.quaternion).normalize();
                     customer.userData.leaveSafeSpot = chair.position.clone().add(sideDir.multiplyScalar(6));
-                } else {
+                } 
+                else{
                     customer.userData.leaveSafeSpot = customer.position.clone();
                 }
 
@@ -799,8 +881,8 @@ function updateCustomerRoutine(customer) {
                 customer.userData.subState = 'BACK_AWAY_FROM_TABLE';
             }
 
-            if (customer.userData.subState === 'BACK_AWAY_FROM_TABLE') {
-                if (moveTowards(customer, customer.userData.leaveSafeSpot)) {
+            if (customer.userData.subState === 'BACK_AWAY_FROM_TABLE'){
+                if (moveTowards(customer, customer.userData.leaveSafeSpot, true)) { 
                     if (customer.userData.seat) {
                         customer.userData.seat.userData.isOccupied = false;
                         customer.userData.seat.userData.isInteractable = true;

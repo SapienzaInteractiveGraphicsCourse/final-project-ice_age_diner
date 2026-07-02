@@ -314,19 +314,19 @@ export function buildRestaurant() {
             gridSpotlight.position.set(x, height - 0.2, z);
             gridSpotlight.target.position.set(x, 0, z);
 
-            gridSpotlight.angle = Math.PI / 2.5; // Allargato leggermente il cono di luce
+            gridSpotlight.angle = Math.PI / 2.5;
             gridSpotlight.penumbra = 0.8;
-            gridSpotlight.distance = 55;         // Aumentata la portata per toccare terra visto che l'altezza ora è 30
-            gridSpotlight.decay = 1.8;           // Flusso di luce leggermente più morbido
+            gridSpotlight.distance = 55;
+            gridSpotlight.decay = 1.8; 
 
-            // Mantiene il limite di 4 ombre posizionandole strategicamente nella sala grande
             if (shadowLightCount < 4 && (x === -6 || x === 26) && (z === -13 || z === 9)) {
                 gridSpotlight.castShadow = true;
                 gridSpotlight.shadow.mapSize.width = 1024;
                 gridSpotlight.shadow.mapSize.height = 1024;
                 gridSpotlight.shadow.bias = -0.001;
                 shadowLightCount++;
-            } else {
+            }
+            else{
                 gridSpotlight.castShadow = false;
             }
 
@@ -401,7 +401,6 @@ export function buildRestaurant() {
     loadDoor(scene, 'models/furniture/doorway.glb', width/2, 0, 10, -Math.PI/2, 15);
     
     //bottom, from left to right
-
     loadFurniture(scene, 'models/furniture/kitchenFridgeLarge.glb', -75, 25, Math.PI/2, 0, 13, true);
     loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, 15.5, Math.PI/2);
     loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -74, 10, Math.PI/2);
@@ -418,7 +417,6 @@ export function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/bookcaseClosedWide.glb', -65, -40, 2*Math.PI);
 
     //superior, from left to right
-
     loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, 15.5, Math.PI/2, 15);
     loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, 10, Math.PI/2, 15);
     loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, 4.5, Math.PI/2, 15);
@@ -439,54 +437,50 @@ export function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/Whiteboard.glb', -74, -14, 2*Math.PI, 8, 0.08);
 
     //tables and chairs
-    //simmetric diamond configuration ===
     const diamondLayout = [
         {
             // 1. NORTH
             table: { x: 20, z: -28 },
             chairs: [
-                // Let's correct the symmetry: +1.3 to the left chair, -1.3 to the right chair, 
-                // because the model has its center of mass at a vertex
-                { x: 14, z: -28 + 1.3, rot: Math.PI / 2 },  
-                { x: 26, z: -28 - 1.3, rot: -Math.PI / 2 }  
+                { x: 13, z: -28 + 1.5, rot: Math.PI/2 },  
+                { x: 27, z: -28 - 1.5, rot: -Math.PI/2 }  
             ]
         },
         {
             // 2. WEST
             table: { x: -8, z: 0 },
             chairs: [
-                { x: -14, z: 0 + 1.3, rot: Math.PI / 2 },
-                { x: -2, z: 0 - 1.3, rot: -Math.PI / 2 }
+                { x: -15, z: 0 + 1.5, rot: Math.PI/2 },
+                { x: -1, z: 0 - 1.5, rot: -Math.PI/2 }
             ]
         },
         {
             // 3. EST
             table: { x: 48, z: 0 },
             chairs: [
-                { x: 42, z: 0 + 1.3, rot: Math.PI / 2 },
-                { x: 54, z: 0 - 1.3, rot: -Math.PI / 2 }
+                { x: 41, z: 0 + 1.5, rot: Math.PI/2 },
+                { x: 55, z: 0 - 1.5, rot: -Math.PI/2 }
             ]
         },
         {
             // 4. SOUTH
             table: { x: 20, z: 28 },
             chairs: [
-                { x: 14, z: 28 + 1.3, rot: Math.PI / 2 },
-                { x: 26, z: 28 - 1.3, rot: -Math.PI / 2 }
+                { x: 13, z: 28 + 1.5, rot: Math.PI/2 },
+                { x: 27, z: 28 - 1.5, rot: -Math.PI/2 }
             ]
         }
     ];
 
     diamondLayout.forEach(group =>{
-        loadFurniture(scene, 'models/furniture/RoundTable.glb', group.table.x, group.table.z, 2 * Math.PI, 0, 5);
+        loadFurniture(scene, 'models/furniture/RoundTable.glb', group.table.x, group.table.z, 2*Math.PI, 0, 5.5);
 
         group.chairs.forEach(chairPos => {
-            loadFurniture(scene, 'models/furniture/chairModernCushion.glb', chairPos.x, chairPos.z, chairPos.rot, 0, 13, false, true);
+            loadFurniture(scene, 'models/furniture/chairModernCushion.glb', chairPos.x, chairPos.z, chairPos.rot, 0, 14, false, true);
         });
     });
 
     loadEnvironment(scene, state.icebergs);
-    
     animate(waiter, camera, state.icebergs);
 }
 
@@ -529,7 +523,6 @@ function animate(waiter, camera, icebergs){
     }
 
     updateTweens();
-
     updateRoutines(); // Update penguin routines
     state.renderer.render(state.scene, camera);
 }
