@@ -234,6 +234,7 @@ export function spawnPenguin(position, role){
 
     if (role === 'chef') {
         penguin.userData.currentOrder = null;
+        penguin.userData.flipperTweenStarted = false;
     }
 
     if (role === 'waiter' || role === 'dishwasher' || role === "customer") {
@@ -548,12 +549,28 @@ function updateChefRoutine(chef){
             chef.userData.leftFlipper.rotation.set(-Math.PI / 4, 0, -Math.PI / 12);
             chef.userData.rightFlipper.rotation.set(-Math.PI / 4, 0, Math.PI / 12);
             
+            if (!chef.userData.flipperTweenStarted){
+                chef.userData.flipperTweenStarted = true;
+
+                new TWEEN.Tween(chef.userData.leftFlipper.rotation)
+                    .to({ x: -Math.PI / 4, y: 0, z: -Math.PI / 12 }, 300) // 300ms di transizione
+                    .easing(TWEEN.Easing.Quadratic.Out)
+                    .start();
+
+                // Anima l'ala destra verso la posizione del piatto
+                new TWEEN.Tween(chef.userData.rightFlipper.rotation)
+                    .to({ x: -Math.PI / 4, y: 0, z: Math.PI / 12 }, 300)
+                    .easing(TWEEN.Easing.Quadratic.Out)
+                    .start();
+            }
             if (chef.userData.timer <= 0) {
                 const newplate = createPlate(chef.userData.currentOrder.food);
                 newplate.name = 'plate';
-                newplate.position.set(0, 4, 3);
+                newplate.position.set(1.5, 1.8, 1.5);
                 chef.add(newplate);
+                newplate.scale.set(2, 2, 2);
                 chef.userData.hasPlate = true;
+                chef.userData.flipperTweenStarted = false;
                 chef.userData.state = 'WALK_COUNTER';
             }
             break;
@@ -574,17 +591,42 @@ function updateChefRoutine(chef){
             break;
 
         case 'ACTION_COUNTER':
+            if (!chef.userData.counterTweenStarted) {
+                chef.userData.counterTweenStarted = true;
+
+                // Calcoliamo l'angolo finale che prima calcolavi alla fine del progresso (progress = 1)
+                // -Math.PI / 2.5 + Math.PI / 4 = circa -Math.PI / 6.66
+                const finalReleaseAngle = -Math.PI / 2.5 + (Math.PI / 4);
+
+                // Anima l'ala sinistra in avanti/giù verso la posa di rilascio
+                new TWEEN.Tween(chef.userData.leftFlipper.rotation)
+                    .to({ x: finalReleaseAngle, y: 0, z: -Math.PI / 16 }, 400) // Dura 400ms (pari a circa 24 frame)
+                    .easing(TWEEN.Easing.Quadratic.Out)
+                    .start();
+
+                // Anima l'ala destra
+                new TWEEN.Tween(chef.userData.rightFlipper.rotation)
+                    .to({ x: finalReleaseAngle, y: 0, z: Math.PI / 16 }, 400)
+                    .easing(TWEEN.Easing.Quadratic.Out)
+                    .start();
+
+                // 2. Programma il ritorno a riposo (le vecchie righe dell'else con resetFlippers)
+                // Usiamo un ritardo (.delay) per farlo partire esattamente quando il timer scende sotto i 20 frame.
+                // Se il timer iniziale è 60, dopo 40 frame (circa 660ms) dobbiamo resettare.
+                new TWEEN.Tween(chef.userData.leftFlipper.rotation)
+                    .to({ x: 0, y: 0, z: 0 }, 300)
+                    .easing(TWEEN.Easing.Quadratic.Out)
+                    .delay(660) 
+                    .start();
+
+                new TWEEN.Tween(chef.userData.rightFlipper.rotation)
+                    .to({ x: 0, y: 0, z: Math.PI/6 }, 300)
+                    .easing(TWEEN.Easing.Quadratic.Out)
+                    .delay(660)
+                    .start();
+            }
+
             chef.userData.timer--;
-            
-            if (chef.userData.timer > 20) {
-                const progress = (60 - chef.userData.timer) / 40;
-                const targetAngle = -Math.PI / 2.5 + (Math.PI / 4 * progress);
-                chef.userData.leftFlipper.rotation.set(targetAngle, 0, -Math.PI / 16);
-                chef.userData.rightFlipper.rotation.set(targetAngle, 0, Math.PI / 16);
-            }
-            else{
-                resetFlippers();
-            }
 
             if (chef.userData.timer <= 0) {
                 if (chef.userData.hasPlate && chef.children.find(child => child.name === 'plate')) {
@@ -595,6 +637,7 @@ function updateChefRoutine(chef){
                     state.scene.add(completedOrder);
                     completedOrder.position.set(KITCHEN_POS.COUNTER.x +8, KITCHEN_POS.COUNTER.y + 4.6, KITCHEN_POS.COUNTER.z );
                     completedOrder.rotation.set(0, 0, 0);
+                    completedOrder.scale.set(4,4,4);
                     chef.userData.currentOrder.status = 'ready';
                 }
                 

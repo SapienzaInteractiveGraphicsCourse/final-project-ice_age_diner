@@ -57,13 +57,13 @@ export function stopWalking(penguin) {
         penguin.userData.tweens.forEach(tween => tween.stop());
     }
 
-    new TWEEN.Tween(penguin.userData.leftFoot.rotation).to({ x: 0 }, 200).start();
-    new TWEEN.Tween(penguin.userData.rightFoot.rotation).to({ x: 0 }, 200).start();
+    new TWEEN.Tween(penguin.userData.leftFoot.rotation).to({ x: 0 }, 200).easing(TWEEN.Easing.Quadratic.Out).start();
+    new TWEEN.Tween(penguin.userData.rightFoot.rotation).to({ x: 0 }, 200).easing(TWEEN.Easing.Quadratic.Out).start();
 
     if (!penguin.userData.hasPlate){
         // Return flippers to resting position (x swing back to 0, z stays as set in model)
-        new TWEEN.Tween(penguin.userData.leftFlipper.rotation).to({ x: 0 }, 200).start();
-        new TWEEN.Tween(penguin.userData.rightFlipper.rotation).to({ x: 0 }, 200).start();
+        new TWEEN.Tween(penguin.userData.leftFlipper.rotation).to({ x: 0 }, 200).easing(TWEEN.Easing.Quadratic.Out).start();
+        new TWEEN.Tween(penguin.userData.rightFlipper.rotation).to({ x: 0 }, 200).easing(TWEEN.Easing.Quadratic.Out).start();
     }
 }
 
@@ -211,6 +211,7 @@ export function updateBubble(customer, text) {
 
 export function createPlate(foodName){
     const plateGroup = new THREE.Group();
+    plateGroup.name = 'heldPlate';
 
     if (state.models.plate){
         const plateClone = state.models.plate.clone();
@@ -244,7 +245,7 @@ export function createPlate(foodName){
 
     plateGroup.userData.isInteractable = false;
     plateGroup.userData.interactionType = 'plate';
-    plateGroup.scale.set(4,4,4);
+    plateGroup.scale.set(2,2,2);
     return plateGroup;
 }
 

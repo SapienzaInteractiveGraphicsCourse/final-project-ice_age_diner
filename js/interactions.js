@@ -77,7 +77,9 @@ function onMouseClick(event){
                     console.log("Plate interaction: picking up the plate.");
                     interactionScene.remove(clickedObj);
                     waiter.add(clickedObj);
-                    clickedObj.position.set(0, 4, 3);
+                    clickedObj.position.set(2.4, 4, 0.2);
+                    clickedObj.scale.set(2,2,2);
+                    waiter.userData.rightFlipper.rotation.z = -Math.PI/1.5;
                     waiter.userData.hasPlate = true;
                     waiter.userData.plate = clickedObj;
                     clickedObj.userData.isInteractable = false;
@@ -92,6 +94,7 @@ function onMouseClick(event){
                     const plate = waiter.userData.plate;
                     waiter.remove(plate);
                     interactionScene.add(plate);
+                    waiter.userData.rightFlipper.rotation.z = Math.PI/6;
                     plate.scale.set(5, 5, 5);
                     const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), clickedObj.rotation.y);
                     plate.position.set(clickedObj.position.x + (forward.x*6), 5.5, clickedObj.position.z + (forward.z*6));
