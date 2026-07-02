@@ -425,20 +425,24 @@ function updateMainDoorState() {
     const mainDoor = getMainDoor(customerData.mesh);
     if (!mainDoor) return;
 
-    const shouldBeOpen = penguins.some(p => {
-        const mesh = p.mesh;
-        if (mesh.userData.role !== 'customer') return false;
-        const s = mesh.userData.state;
-        const idx = waitingQueue.indexOf(mesh);
-        
-        return (
-            s === 'WAIT_FOR_DOOR_ANIMATION' || 
-            s === 'WALK_INSIDE' ||
-            (s === 'WALK_TO_DOOR' && mesh.position.distanceTo(CUSTOMER_POSITIONS.DOOR_OUTSIDE) < 5) ||
-            (s === 'LEAVING' && (mesh.userData.subState === 'WAIT_FOR_DOOR' || mesh.userData.subState === 'WALK_TO_DOOR_INSIDE')) ||
-            (idx >= 5) 
-        );
-    });
+    let shouldBeOpen = state.someone_is_leaving;
+
+    if (!shouldBeOpen) {
+        shouldBeOpen = penguins.some(p => {
+            const mesh = p.mesh;
+            if (mesh.userData.role !== 'customer') return false;
+            const s = mesh.userData.state;
+            const idx = waitingQueue.indexOf(mesh);
+            
+            return (
+                s === 'WAIT_FOR_DOOR_ANIMATION' || 
+                s === 'WALK_INSIDE' ||
+                (s === 'WALK_TO_DOOR' && mesh.position.distanceTo(CUSTOMER_POSITIONS.DOOR_OUTSIDE) < 5) ||
+                //(s === 'LEAVING' && (mesh.userData.subState === 'WAIT_FOR_DOOR' || mesh.userData.subState === 'WALK_TO_DOOR_INSIDE' || mesh.userData.subState === ' WALK_TO_DOOR_OUTSIDE' || mesh.userData.subState === 'WALK_TO_DESPAWN')) ||
+                (idx >= 5) 
+            );
+        });
+    }
 
     if (shouldBeOpen && !mainDoor.userData.isOpen) {
         mainDoor.userData.isOpen = true;
@@ -942,6 +946,7 @@ function updateCustomerRoutine(customer) {
                     }
                 }
             }
+            //move towards the central aisle
             else if (customer.userData.subState === 'WALK_TO_AISLE') {
                 const AISLE_Z = CUSTOMER_POSITIONS.DOOR_INSIDE_LEAVE.z;
                 const aislePos = new THREE.Vector3(customer.position.x, 0, AISLE_Z);
@@ -949,6 +954,7 @@ function updateCustomerRoutine(customer) {
                     customer.userData.subState = 'WALK_DOWN_AISLE';
                 }
             }
+            //back to the door
             else if (customer.userData.subState === 'WALK_DOWN_AISLE') {
                 const doorAislePos = new THREE.Vector3(CUSTOMER_POSITIONS.DOOR_INSIDE_LEAVE.x, 0, CUSTOMER_POSITIONS.DOOR_INSIDE_LEAVE.z);
                 if (moveTowards(customer, doorAislePos)) {
@@ -959,6 +965,7 @@ function updateCustomerRoutine(customer) {
                 if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_INSIDE_LEAVE)) {
                     customer.userData.timer = 50; 
                     customer.userData.subState = 'WAIT_FOR_DOOR';
+                    animateInteractable(state.door, Math.PI / 2, 'y');
                 }
             }
             else if (customer.userData.subState === 'WAIT_FOR_DOOR') {
@@ -977,6 +984,7 @@ function updateCustomerRoutine(customer) {
                     state.scene.remove(customer);
                     const pIdx = penguins.findIndex(p => p.mesh === customer);
                     if (pIdx > -1) penguins.splice(pIdx, 1);
+                    state.someone_is_leaving = false;
                 }
             }
             break;
