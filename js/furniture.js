@@ -180,7 +180,7 @@ export function createWindowFrame(w, h, r, frameThick, depth, material) {
 export function loadFoodModels() {
     const loader = new THREE.GLTFLoader();
 
-    loader.load('models/cibi/plate.glb', (gltf) => {
+    loader.load('models/food/plate.glb', (gltf) => {
         const model = gltf.scene;
         
         // Attiviamo le ombre per il piatto base
@@ -194,7 +194,7 @@ export function loadFoodModels() {
         state.models.plate = model; 
     });
 
-    loader.load('models/cibi/burger-cheese-double.glb', (gltf) => {
+    loader.load('models/food/burger-cheese-double.glb', (gltf) => {
         const model = gltf.scene;
         model.traverse((child) => {
             if (child.isMesh) {
@@ -205,7 +205,7 @@ export function loadFoodModels() {
         state.models.hamburger = model;
     });
 
-    loader.load('models/cibi/pizza.glb', (gltf) => {
+    loader.load('models/food/pizza.glb', (gltf) => {
         const model = gltf.scene;
         model.traverse((child) => {
             if (child.isMesh) {
@@ -216,7 +216,7 @@ export function loadFoodModels() {
         state.models.pizza = model;
     });
 
-    loader.load('models/cibi/hot-dog.glb', (gltf) => {
+    loader.load('models/food/hot-dog.glb', (gltf) => {
         const model = gltf.scene;
         model.traverse((child) => {
             if (child.isMesh) {
@@ -227,7 +227,7 @@ export function loadFoodModels() {
         state.models.hotdog = model;
     });
 
-    loader.load('models/cibi/fish.glb', (gltf) => {
+    loader.load('models/food/fish.glb', (gltf) => {
         const model = gltf.scene;
         model.traverse((child) => {
             if (child.isMesh) {
@@ -238,7 +238,7 @@ export function loadFoodModels() {
         state.models.fish = model;
     });
 
-    loader.load('models/cibi/taco.glb', (gltf) => {
+    loader.load('models/food/taco.glb', (gltf) => {
         const model = gltf.scene;
         model.traverse((child) => {
             if (child.isMesh) {
