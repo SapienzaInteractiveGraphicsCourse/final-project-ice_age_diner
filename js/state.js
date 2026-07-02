@@ -9,6 +9,8 @@ export const state = {
 
     audioListener: null,
 
+    someone_is_leaving : false,
+
     colliders: [],
     icebergs: [],
     orders: [],

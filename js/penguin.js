@@ -271,22 +271,36 @@ export function moveTowards(penguin, targetPos, ignoreCollision=false){
 
         const nextX = penguin.position.x + dirX*penguin.userData.speed;
         const nextZ = penguin.position.z + dirZ*penguin.userData.speed;
-        const nextPos = new THREE.Vector3(nextX, penguin.position.y, nextZ);
+        
+        let isColliding = false;
 
-        if (!ignoreCollision && checkCollision(penguin, nextPos)){
-            stopWalking(penguin);
+        if (!ignoreCollision) {
+            // I pinguini gestiti dal computer (NPC) controllano le collisioni SOLO con il cameriere!
+            // In questo modo i loro percorsi intelligenti aggirano i tavoli senza bloccarsi nelle scatole invisibili.
+            const waiterData = penguins.find(p => p.mesh && p.mesh.userData.role === 'waiter');
+            if (waiterData && penguin.userData.role !== 'waiter') {
+                const waiter = waiterData.mesh;
+                const distToWaiter = Math.sqrt(Math.pow(nextX - waiter.position.x, 2) + Math.pow(nextZ - waiter.position.z, 2));
+                if (distToWaiter < 4.5) { // Raggio della "pancia" per evitare compenetrazioni
+                    isColliding = true;
+                }
+            }
+        }
+
+        if (isColliding){
+            if(typeof stopWalking !== 'undefined') stopWalking(penguin);
             return false;
         }
 
         penguin.position.x = nextX;
         penguin.position.z = nextZ;
         penguin.rotation.y = Math.atan2(dirX, dirZ);
-        startWalking(penguin);
+        if(typeof startWalking !== 'undefined') startWalking(penguin);
 
         return false;
     }
     else{
-        stopWalking(penguin);
+        if(typeof stopWalking !== 'undefined') stopWalking(penguin);
         return true;
     }
 }
@@ -349,7 +363,7 @@ function getFridgeDoor(chef) {
 }
 
 export function spawnCustomer(){
-    if (waitingQueue.length >= WAITING_POSITION.length) {
+    if ((waitingQueue.length >= WAITING_POSITION.length) || state.someone_is_leaving) {
         console.log("No available waiting position for customer!");
         return;
     }
@@ -745,8 +759,13 @@ function updateCustomerRoutine(customer) {
             const chair = customer.userData.seat;
             if (chair) {
                 if (!customer.userData.seatWaypoints) {
+                    // Usiamo gli stessi identici assi di direzione della manovra di uscita (LEAVING)
                     const backDir = new THREE.Vector3(0, 0, -1).applyQuaternion(chair.quaternion).normalize();
-                    const safeSpot = chair.position.clone().add(backDir.multiplyScalar(6)); 
+                    const sideDir = new THREE.Vector3(1, 0, 0).applyQuaternion(chair.quaternion).normalize();
+
+                    // Calcoliamo i punti speculari per entrare correttamente di lato
+                    const stepSide = chair.position.clone().add(sideDir.multiplyScalar(4)); // Punto di fianco alla sedia
+                    const stepBack = stepSide.clone().add(backDir.multiplyScalar(6));       // Punto nello spazio aperto dietro/lato
 
                     const waypoints = [];
 
@@ -756,10 +775,13 @@ function updateCustomerRoutine(customer) {
 
                     const aisleEntryX = waypoints.length ? QUEUE_EXIT_X : customer.position.x;
 
+                    // Costruiamo la traiettoria ad "L" sicura in ingresso:
+                    // Corridoio -> Allineamento con lo spazio aperto -> Spazio aperto -> Fianco sedia -> Sedia
                     waypoints.push(
                         new THREE.Vector3(aisleEntryX, 0, AISLE_Z), 
-                        new THREE.Vector3(safeSpot.x, 0, AISLE_Z),          
-                        safeSpot,                                           
+                        new THREE.Vector3(stepBack.x, 0, AISLE_Z),          
+                        stepBack,                                           
+                        stepSide,                                           
                         chair.position                                     
                     );
 
@@ -851,8 +873,9 @@ function updateCustomerRoutine(customer) {
                         const foodItem = plate.children[1];
                         plate.remove(foodItem);
                     }
+                    plate.userData.isInteractable = true;
                 }
-                plate.userData.isInteractable = true;
+                
                 customer.userData.state = 'LEAVING';
             }
             break;
@@ -869,26 +892,58 @@ function updateCustomerRoutine(customer) {
             if (customer.userData.subState === undefined) {
                 const chair = customer.userData.seat;
                 if (chair){
+                    // MANOVRA AD 'L' PER USCIRE DALLA SEDIA SENZA TRAPASSARE LO SCHIENALE
+                    // 1. Asse Z locale della sedia = Direzione LATERALE (per sfilarsi dal cuscino)
                     const sideDir = new THREE.Vector3(1, 0, 0).applyQuaternion(chair.quaternion).normalize();
-                    customer.userData.leaveSafeSpot = chair.position.clone().add(sideDir.multiplyScalar(6));
+                    // 2. Asse -X locale della sedia = Direzione POSTERIORE (per allontanarsi dal tavolo)
+                    const backDir = new THREE.Vector3(0, 0, -1).applyQuaternion(chair.quaternion).normalize();
+                    
+                    // Crea due "waypoint" (tappe) per l'uscita
+                    const stepSide = customer.position.clone().add(sideDir.multiplyScalar(4)); // Scivola di lato
+                    const stepBack = stepSide.clone().add(backDir.multiplyScalar(6));          // Poi va indietro
+                    
+                    customer.userData.leaveWaypoints = [stepSide, stepBack];
+                    customer.userData.leaveWpIdx = 0;
                 } 
                 else{
-                    customer.userData.leaveSafeSpot = customer.position.clone();
+                    customer.userData.leaveWaypoints = [customer.position.clone()];
+                    customer.userData.leaveWpIdx = 0;
                 }
 
-                customer.userData.leaveSafeSpot.y = 0;
+                // Abbassa il pinguino a livello del pavimento
+                customer.userData.leaveWaypoints[0].y = 0;
                 customer.position.y = 0;
+
+                // Raddrizza le zampette che erano piegate
+                if (typeof TWEEN !== 'undefined') {
+                    new TWEEN.Tween(customer.userData.leftFoot.rotation).to({ x: 0 }, 200).start();
+                    new TWEEN.Tween(customer.userData.rightFoot.rotation).to({ x: 0 }, 200).start();
+                } else {
+                    customer.userData.leftFoot.rotation.x = 0;
+                    customer.userData.rightFoot.rotation.x = 0;
+                }
                 customer.userData.subState = 'BACK_AWAY_FROM_TABLE';
             }
 
             if (customer.userData.subState === 'BACK_AWAY_FROM_TABLE'){
-                if (moveTowards(customer, customer.userData.leaveSafeSpot, true)) { 
-                    if (customer.userData.seat) {
-                        customer.userData.seat.userData.isOccupied = false;
-                        customer.userData.seat.userData.isInteractable = true;
-                        customer.userData.seat = null;
+                // Recupera il punto di destinazione corrente (prima stepSide, poi stepBack)
+                const currentTarget = customer.userData.leaveWaypoints[customer.userData.leaveWpIdx];
+
+                // Muove il pinguino verso il waypoint corrente
+                if (moveTowards(customer, currentTarget, true)) { 
+                    // Una volta raggiunto il punto corrente, passa al waypoint successivo
+                    customer.userData.leaveWpIdx++;
+
+                    // Controlla se ha terminato tutti i passaggi della manovra di uscita
+                    if (customer.userData.leaveWpIdx >= customer.userData.leaveWaypoints.length) {
+                        if (customer.userData.seat) {
+                            customer.userData.seat.userData.isOccupied = false;
+                            customer.userData.seat.userData.isInteractable = true;
+                            customer.userData.seat = null;
+                        }
+                        // Solo ora che è completamente fuori dal tavolo passa alla fase successiva
+                        customer.userData.subState = 'WALK_TO_AISLE';
                     }
-                    customer.userData.subState = 'WALK_TO_AISLE';
                 }
             }
             else if (customer.userData.subState === 'WALK_TO_AISLE') {
