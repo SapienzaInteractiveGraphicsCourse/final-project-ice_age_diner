@@ -515,8 +515,8 @@ export function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/WallArt01.glb', 35, 44, 0, 12, 10);
     loadFurniture(scene, 'models/furniture/CoffeePlant.glb', 35, 44, 0, 0, 1.5);
 
-
-
+    //loadFurniture(scene, 'models/furniture/pottedPlant.glb', 35, 44, 0, 0, 1.5);
+ 
     //tables and chairs
     const diamondLayout = [
         {
@@ -554,7 +554,10 @@ export function buildRestaurant() {
     ];
 
     diamondLayout.forEach(group =>{
+       
         loadFurniture(scene, 'models/furniture/RoundTable.glb', group.table.x, group.table.z, 2*Math.PI, 0, 5.5);
+
+        loadFurniture(scene, 'models/furniture/pottedPlant.glb', group.table.x, group.table.z, 0, 5.2, 5);
 
         group.chairs.forEach(chairPos => {
             loadFurniture(scene, 'models/furniture/chairModernCushion.glb', chairPos.x, chairPos.z, chairPos.rot, 0, 14, false, true);
