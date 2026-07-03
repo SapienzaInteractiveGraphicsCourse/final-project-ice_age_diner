@@ -2,7 +2,7 @@ import { state } from './state.js';
 import {
     startWalking, stopWalking, animateInteractable, seatPenguin, updateBubble, createPlate,
     resetFlippers, animateChefFridgeReach, animateChefStove, setChefPickupPose,
-    animateChefPickupPlate, setChefCarryPose, animateChefCounterRelease
+    animateChefPickupPlate, setChefCarryPose, animateChefCounterRelease, stackPlates, pickUpPlate
 } from './animations.js';
 import { checkCollision } from './controlWaiter.js';
 
@@ -12,12 +12,13 @@ export let lastSpawnTime = 0;
 
 export const KITCHEN_POS = {
     FRIDGE: new THREE.Vector3(-65, 0, 25),
-    STOVE: new THREE.Vector3(-65, 0, 5),
+    STOVE: new THREE.Vector3(-65, 0, 4.5),
     COUNTER: new THREE.Vector3(-42, 0, 0),
     IDLE_CHEF: new THREE.Vector3(-55, 0, 5),
     IDLE_WAITER: new THREE.Vector3(-10, 0, 10),
-    IDLE_DISHWASHER: new THREE.Vector3(-55, 0, 15),
-    SINK: new THREE.Vector3(-65, 0, -10)
+    IDLE_DISHWASHER: new THREE.Vector3(-55, 0, -18),
+    SINK: new THREE.Vector3(-65, 0, -10),
+    COUNTER_DISHWASHER: new THREE.Vector3(-42, 0, -18)
 };
 
 export const CUSTOMER_POSITIONS = {
@@ -603,28 +604,68 @@ function updateChefRoutine(chef){
 function updateDishwasherRoutine(dishwasher) {
     switch(dishwasher.userData.state) {
         case 'IDLE':
-            const dirtyPlateOnCounter = state.scene.children.find(c => c.name === 'plate' && c.userData.interactionType === 'dirty_plate');
-            if (dirtyPlateOnCounter){
-                dishwasher.userData.targetPlate = dirtyPlateOnCounter;
-                dishwasher.userData.state = 'WALK_COUNTER';
+            let tray = null;
+            state.scene.traverse((child) => {
+                if (child.userData && child.userData.interactionType === 'tray') {
+                    tray = child;
+                }
+            });
+
+            if (tray) {
+                // Contiamo fisicamente se ci sono piatti sporchi sul vassoio
+                let dirtyCount = 0;
+                tray.children.forEach(c => {
+                    if (c.userData && c.userData.interactionType === 'dirty_plate') {
+                        dirtyCount++;
+                    }
+                });
+
+                // Se trova almeno un piatto figlio, parte!
+                if (dirtyCount > 0) {
+                    dishwasher.userData.targetTray = tray; // Salviamo il vassoio corretto!
+                    dishwasher.userData.state = 'WALK_COUNTER';
+                }
             }
             break;
 
         case 'WALK_COUNTER':
-            if (moveTowards(dishwasher, new THREE.Vector3(-44, 0, 15))) {
+            if (moveTowards(dishwasher, KITCHEN_POS.COUNTER_DISHWASHER)) {
                 dishwasher.rotation.y = Math.PI/2;
                 dishwasher.userData.state = 'ACTION_COUNTER';
-                dishwasher.userData.timer = 60;
+                dishwasher.userData.timer = 40;
             }
             break;
 
         case 'ACTION_COUNTER':
             dishwasher.userData.timer--;
+            
             if (dishwasher.userData.timer <= 0) {
-                if (dishwasher.userData.targetPlate){
-                    state.scene.remove(dishwasher.userData.targetPlate);
-                    dishwasher.userData.targetPlate = null;
+                const targetTray = dishwasher.userData.targetTray;
+                
+                const plateStack = new THREE.Group();
+                plateStack.userData.interactionType = 'dirty_plate'; 
+                
+                const platesToWash = [];
+                for (let i = targetTray.children.length - 1; i >= 0; i--) {
+                    const child = targetTray.children[i];
+                    if (child.userData && child.userData.interactionType === 'dirty_plate') {
+                        targetTray.remove(child);
+                        platesToWash.push(child);
+                    }
                 }
+                
+                if (platesToWash.length > 0) {
+                    platesToWash.forEach(p => {
+                        stackPlates(plateStack, p);
+                    });
+                    
+                    // --- USIAMO LA TUA FUNZIONE PICKUP PLATE ---
+                    // Gestirà da sola la scala (2,2,2), la posizione, 
+                    // le variabili (hasPlate, plate) e le animazioni TWEEN delle braccia!
+                    pickUpPlate(dishwasher, plateStack);
+                    
+                }
+
                 dishwasher.userData.state = 'WALK_SINK';
             }
             break;
@@ -639,9 +680,81 @@ function updateDishwasherRoutine(dishwasher) {
 
         case 'ACTION_SINK':
             dishwasher.userData.timer--;
+            
+            // Quando arriva al lavandino (primo frame del timer)
+            if (dishwasher.userData.timer === 299 && dishwasher.userData.hasPlate) {
+                 // Dato che pickUpPlate ha salvato il piatto in userData.plate, lo prendiamo da lì
+                 const stack = dishwasher.userData.plate;
+                 
+                 // --- DEPOSITO AL LAVANDINO (Logica riadattata da putDownPlate) ---
+                 dishwasher.remove(stack);
+                 state.scene.add(stack);
+                 
+                 // Coordinate fisse del lavandino
+                 stack.position.set(KITCHEN_POS.SINK.x, 4.6, KITCHEN_POS.SINK.z);
+                 stack.scale.set(4, 4, 4); // Scala del mondo
+                 stack.rotation.set(0, 0, 0);
+                 
+                 // Animazione TWEEN per riportare l'ala a riposo (come in putDownPlate)
+                 new TWEEN.Tween(dishwasher.userData.rightFlipper.rotation)
+                     .to({ x: 0, y: 0, z: Math.PI/6 }, 300)
+                     .easing(TWEEN.Easing.Quadratic.In)
+                     .start();
+                 
+                 // Reset variabili
+                 dishwasher.userData.hasPlate = false;
+                 dishwasher.userData.plate = null;
+                 dishwasher.userData.washingStack = stack; 
+            }
+
+            // Oscillazione del lavaggio
             dishwasher.rotation.y = (-Math.PI / 2) + Math.sin(dishwasher.userData.timer * 0.2) * 0.1;
+
             if (dishwasher.userData.timer <= 0) {
-                dishwasher.userData.state = 'IDLE';  
+                // Distruggiamo i piatti appena lavati
+                if (dishwasher.userData.washingStack) {
+                    state.scene.remove(dishwasher.userData.washingStack);
+                    dishwasher.userData.washingStack = null;
+                }
+                
+                // --- NUOVO CONTROLLO: Cerchiamo il vassoio ---
+                let tray = null;
+                state.scene.traverse((child) => {
+                    if (child.userData && child.userData.interactionType === 'tray') {
+                        tray = child;
+                    }
+                });
+
+                if (tray) {
+                    // Contiamo fisicamente i piatti sporchi presenti ORA sul vassoio
+                    let dirtyCount = 0;
+                    tray.children.forEach(c => {
+                        if (c.userData && c.userData.interactionType === 'dirty_plate') {
+                            dirtyCount++;
+                        }
+                    });
+
+                    // Se ci sono altri piatti, torna subito al bancone!
+                    if (dirtyCount > 0) {
+                        console.log("Ci sono altri piatti! Vado subito a prenderli.");
+                        dishwasher.userData.targetTray = tray; // Salviamo il riferimento corretto
+                        dishwasher.userData.state = 'WALK_COUNTER';
+                    } else {
+                        // Se è vuoto, torna in attesa
+                        console.log("Nessun altro piatto, torno in attesa.");
+                        dishwasher.userData.state = 'IDLE'; 
+                    }
+                } else {
+                    // Sicurezza: se per qualche motivo non trova il vassoio, va in IDLE
+                    dishwasher.userData.state = 'WALK_IDLE';
+                }
+            }
+            break;
+
+        case 'WALK_IDLE':
+            if (moveTowards(dishwasher, KITCHEN_POS.IDLE_DISHWASHER)) {
+                dishwasher.rotation.y = Math.PI;
+                dishwasher.userData.state = 'IDLE';
             }
             break;
     }
@@ -873,6 +986,7 @@ function updateCustomerRoutine(customer) {
                         plate.remove(foodItem);
                     }
                     plate.userData.isInteractable = true;
+                    plate.userData.interactionType = 'dirty_plate';
                 }
                 
                 customer.userData.state = 'LEAVING';

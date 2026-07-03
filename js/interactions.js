@@ -1,4 +1,4 @@
-import { animateInteractable, pickUpPlate, putDownPlate } from './animations.js';
+import { animateInteractable, pickUpPlate, putDownPlate, stackPlates } from './animations.js';
 import { penguins, waitingQueue } from './penguin.js';
 import { state } from './state.js';
 
@@ -47,7 +47,6 @@ function onMouseClick(event){
             if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'WAIT_FOR_WAITER'){
                 console.log("Customer interaction: calling waiter for customer.");
                 
-                // Rimuoviamo dalla coda e impostiamo lo stato di attesa assegnazione sedia
                 const queueIdx = waitingQueue.indexOf(clickedObj);
                 if (queueIdx !== -1) waitingQueue.splice(queueIdx, 1);
 
@@ -64,15 +63,24 @@ function onMouseClick(event){
                 }
                 return;
             }
-            else if (clickedObj.userData.interactionType === 'plate' && clickedObj.userData.isInteractable){ 
+            else if ((clickedObj.userData.interactionType === 'plate' || clickedObj.userData.interactionType === 'dirty_plate') && clickedObj.userData.isInteractable){ 
                 if (waiter && waiter.userData.hasPlate === false){
-                    console.log("Plate interaction: picking up the plate.");
+                    console.log("Plate interaction: picking up the first plate.");
                     interactionScene.remove(clickedObj);
                     pickUpPlate(waiter, clickedObj);
                     clickedObj.userData.isInteractable = false;
                 }
+                else if (waiter && waiter.userData.hasPlate){
+                    const heldPlate = waiter.userData.plate;
+                    if (heldPlate.userData.interactionType === 'dirty_plate'){
+                        console.log("Plate interaction: picking up another plate.");
+                        interactionScene.remove(clickedObj);
+                        stackPlates(heldPlate, clickedObj);
+                        clickedObj.userData.isInteractable = false;
+                    }
+                }
                 else{
-                    console.log("Waiter already has a plate. Cannot pick up another one.");
+                    console.log("Plate are of two different types");
                 }
             }
             else if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'WAIT_FOR_FOOD'){
@@ -88,7 +96,42 @@ function onMouseClick(event){
                     clickedObj.userData.state = 'EATING';
                 }
             }
-            // Interazione sulla sedia: Cerca il cliente che attende l'assegnazione
+            else if (clickedObj.userData.interactionType === 'tray' && clickedObj.userData.isInteractable){
+                if (waiter && waiter.userData.hasPlate) {
+                    const heldPlate = waiter.userData.plate;
+                    
+                    if (heldPlate.userData.interactionType === 'dirty_plate') {
+                        console.log("Vassoio cliccato: trasferisco i piatti usando stackPlate!");
+                        
+                        waiter.remove(heldPlate);
+                        
+                        const platesToTray = [heldPlate];
+                        for (let i = heldPlate.children.length - 1; i >= 0; i--) {
+                            const child = heldPlate.children[i];
+                            if (child.userData && child.userData.interactionType === 'dirty_plate') {
+                                heldPlate.remove(child);
+                                platesToTray.push(child);
+                            }
+                        }
+                        
+                        platesToTray.forEach(p => {
+                            stackPlates(clickedObj, p);
+                            p.userData.isInteractable = false; 
+                        });
+                        
+                        waiter.userData.hasPlate = false;
+                        waiter.userData.plate = null;
+                        new TWEEN.Tween(waiter.userData.rightFlipper.rotation)
+                            .to({ x: 0, y: 0, z: Math.PI/6 }, 300)
+                            .easing(TWEEN.Easing.Quadratic.In)
+                            .start();
+                    }
+                
+                }else {
+                    console.log("problem with tray interaction: waiter doesn't have a plate or the plate is not dirty.");
+                }
+                
+            }
             else if (clickedObj.userData.interactionType === 'chair' && !clickedObj.userData.isOccupied){
                 const followingPenguinData = penguins.find(p => p.mesh && p.mesh.userData.state === 'WAIT_FOR_SEAT_ASSIGNMENT');
 
@@ -98,22 +141,6 @@ function onMouseClick(event){
                     followingPenguin.userData.targetPosition = clickedObj.position.clone();
                     clickedObj.userData.isOccupied = true;
                     followingPenguin.userData.seat = clickedObj;
-                }
-            }
-            else if (clickedObj.userData.interactionType === 'counter'){
-                if (waiter && waiter.userData.hasPlate && waiter.userData.plate.userData.interactionType === 'dirty_plate'){
-                    console.log("Waiter: putting dirty plate on the counter");
-                    const plate = waiter.userData.plate;
-                    waiter.remove(plate);
-                    interactionScene.add(plate);
-
-                    const dirtyZ = 10 + Math.random()*8;
-                    plate.position.set(-36, 4.6, dirtyZ);
-                    plate.rotation.set(0,0,0);
-                    plate.scale.set(4,4,4);
-
-                    waiter.userData.hasPlate = false;
-                    waiter.userData.plate = null;
                 }
             }
             else{

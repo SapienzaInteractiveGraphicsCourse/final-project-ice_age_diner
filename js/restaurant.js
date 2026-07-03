@@ -399,6 +399,8 @@ export function buildRestaurant() {
 
     loadDoor(scene, 'models/furniture/doorway.glb', width/2, 0, 10, -Math.PI/2, 15);
     
+    //load of tray
+    loadFurniture(scene, 'models/food/plate-rectangle.glb', -36, -18 , 0, 4.5, 10, false, false, true);
     //bottom, from left to right
     
     loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -68.5, 40, Math.PI);

@@ -304,6 +304,41 @@ export function putDownPlate(waiter, scene, customer){
     return plate;
 }
 
+export function stackPlates(baseObject, newPlate) {
+    if (baseObject.userData.stackCount === undefined) {
+        baseObject.userData.stackCount = 0; 
+    }
+    
+    baseObject.add(newPlate);
+    newPlate.rotation.set(0, (Math.random() - 0.5) * 0.5, 0);
+    
+    if (baseObject.userData.interactionType === 'tray') {
+        
+        const worldScale = new THREE.Vector3();
+        baseObject.getWorldScale(worldScale);
+        
+        newPlate.scale.set(4 / worldScale.x, 4 / worldScale.y, 4 / worldScale.z);
+        
+        const trayBaseY_World = 0.7; 
+        const trayThickness_World = 0.2; 
+        
+        const localBaseY = trayBaseY_World / worldScale.y;
+        const localThickness = trayThickness_World / worldScale.y;
+        
+        newPlate.position.set(0, localBaseY + (baseObject.userData.stackCount * localThickness), 0);
+        
+    } else {
+        
+        newPlate.scale.set(1, 1, 1);
+        
+        const plateThickness = 0.03; 
+        const altezza = (baseObject.userData.stackCount + 1) * plateThickness;
+        newPlate.position.set(0, altezza, 0);
+    }
+    
+    baseObject.userData.stackCount++;
+}
+
 // Chef animations helpers
 export function resetFlippers(penguin){
     penguin.userData.leftFlipper.rotation.set(0, 0, -Math.PI/6);
