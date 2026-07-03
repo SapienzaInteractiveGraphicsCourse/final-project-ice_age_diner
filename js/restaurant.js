@@ -400,6 +400,16 @@ export function buildRestaurant() {
     loadDoor(scene, 'models/furniture/doorway.glb', width/2, 0, 10, -Math.PI/2, 15);
     
     //bottom, from left to right
+    
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -68.5, 40, Math.PI);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -63, 40, Math.PI);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -57.5, 40, Math.PI);
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -52, 40, Math.PI)
+    loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -46.5, 40, Math.PI)
+
+    loadFurniture(scene, 'models/furniture/WallShelf.glb', -65, 40, -2*Math.PI, 15.5, 5);
+    loadFurniture(scene, 'models/furniture/WallShelf.glb', -60, 40, -2*Math.PI, 15.5, 5);
+
     loadFurniture(scene, 'models/furniture/kitchenFridgeLarge.glb', -75, 25, Math.PI/2, 0, 13, true);
     loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, 15.5, Math.PI/2);
     loadFurniture(scene, 'models/furniture/kitchenStoveElectric.glb', -74, 10, Math.PI/2);
@@ -412,10 +422,53 @@ export function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, -28.5, Math.PI/2);
     loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, -34, Math.PI/2);
     
-    loadFurniture(scene, 'models/furniture/bookcaseClosedWide.glb', -74, -40, 2*Math.PI);
-    loadFurniture(scene, 'models/furniture/bookcaseClosedWide.glb', -65, -40, 2*Math.PI);
+
+    //   loadFurniture(scene, 'models/furniture/WallArt06.glb', 4, -44, Math.PI, 15, 10);
+    //main room //quanto vai a destra, vai indietro, rotazione, altezza, quanto piccolo
+
+    loadFurniture(scene, 'models/furniture/bookcaseClosedWide.glb', -74, -40, 2*Math.PI, 0, 18);
+    //0
+    loadFurniture(scene, 'models/furniture/barrel.glb', -70, -40, 3*Math.PI/2, 14.1, 6);
+    loadFurniture(scene, 'models/furniture/mug.glb', -65, -40, 0, 14.1, 6);
+    //1
+    loadFurniture(scene, 'models/furniture/wine-red.glb', -70, -40, 0, 10, 5.5);
+    loadFurniture(scene, 'models/furniture/wine-white.glb', -68, -40, 0, 10, 5.5);
+    loadFurniture(scene, 'models/furniture/wine-white.glb', -66, -40, 0, 10, 5.5);
+    //2
+    loadFurniture(scene, 'models/furniture/mug.glb', -70, -40, 0, 6, 6);
+    loadFurniture(scene, 'models/furniture/wine-red.glb', -67, -40, 0, 6, 5.5);
+    loadFurniture(scene, 'models/furniture/wine-red.glb', -65, -40, 0, 6, 5.5);
+    loadFurniture(scene, 'models/furniture/wine-red.glb', -63, -40, 0, 6, 5.5);
+    //3
+    loadFurniture(scene, 'models/furniture/wine-white.glb', -70, -40, 0, 2, 5.5);
+    loadFurniture(scene, 'models/furniture/wine-white.glb', -68, -40, 0, 2, 5.5);
+    loadFurniture(scene, 'models/furniture/Crate.glb', -63, -40, 0, 2, 2);
+
+
+    loadFurniture(scene, 'models/furniture/bookcaseClosedWide.glb', -59, -40, 2*Math.PI, 0, 18);
+    //0
+    loadFurniture(scene, 'models/furniture/Bottles.glb', -55, -40, Math.PI/2, 14.1, 3.5);
+    //1
+    loadFurniture(scene, 'models/furniture/can.glb', -55, -40, 0, 10, 5.5);
+    loadFurniture(scene, 'models/furniture/can-open.glb', -52.5, -40, 0, 10, 5.5);
+    loadFurniture(scene, 'models/furniture/can-small.glb', -50, -40, 0, 10, 5.5);
+    //2
+    loadFurniture(scene, 'models/furniture/bottle-oil.glb', -55, -40, 0, 6, 5.5);
+    loadFurniture(scene, 'models/furniture/pepper-mill.glb', -53, -40, 0, 6, 5.5);
+    loadFurniture(scene, 'models/furniture/bottle-ketchup.glb', -49, -40, 0, 6, 6);
+    loadFurniture(scene, 'models/furniture/bottle-musterd.glb', -47, -40, 0, 6, 6);
+    //3
+    loadFurniture(scene, 'models/furniture/carton.glb', -54, -40, 0, 2, 5.5);
+    loadFurniture(scene, 'models/furniture/carton-small.glb', -51, -40, 0, 2, 5.5);
+
+
 
     //superior, from left to right
+    loadFurniture(scene, 'models/furniture/WallShelf.glb', -76, 21.3, 3*Math.PI/2, 15.5, 5);
+    //inside
+    loadFurniture(scene, 'models/furniture/Vase.glb', -65, 40, 3*Math.PI/2, 21.5, 0.8);
+    loadFurniture(scene, 'models/furniture/Vines.glb', -58, 40, Math.PI, 16, 5);
+
     loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, 15.5, Math.PI/2, 15);
     loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, 10, Math.PI/2, 15);
     loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, 4.5, Math.PI/2, 15);
@@ -434,6 +487,35 @@ export function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/hoodModern.glb', -74, 7.25, Math.PI/2, 12);
     loadFurniture(scene, 'models/furniture/CuttingTable.glb', -77, -25, Math.PI/2, 4, 2);
     loadFurniture(scene, 'models/furniture/Whiteboard.glb', -74, -14, 2*Math.PI, 8, 0.08);
+
+    loadFurniture(scene, 'models/furniture/OilBarrels.glb', -71, 30, Math.PI, 0, 90);
+    loadFurniture(scene, 'models/furniture/OilBarrels.glb', -75, 34, 0, 0, 70);
+
+
+
+    //main room //quanto vai a destra, vai indietro, rotazione, altezza, quanto piccolo
+    loadFurniture(scene, 'models/furniture/theBedroomHanger.glb', 74, 0, Math.PI/2, 10, 10);
+    loadFurniture(scene, 'models/furniture/LittleBookcase.glb', 74, -16, Math.PI/2, 0, 13);
+    loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', 74, -32, Math.PI/2, 10, 10);
+
+    loadFurniture(scene, 'models/furniture/Board.glb', -30, 27, Math.PI/2, 4, 25);
+
+    loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', -33, 40, Math.PI/2, 10, 10);
+    loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', -33, -40, -Math.PI/2, 10, 10);
+
+    loadFurniture(scene, 'models/furniture/WallArt06.glb', 4, -44, Math.PI, 15, 10);
+    loadFurniture(scene, 'models/furniture/CoffeePlant.glb', 4, -44, Math.PI, 0, 1.5);
+
+    loadFurniture(scene, 'models/furniture/WallArt02.glb', 35 , -44, Math.PI, 12, 10);
+    loadFurniture(scene, 'models/furniture/FiddleLeafPlant(1).glb', 35 , -44, Math.PI, 0, 1.5);
+
+    loadFurniture(scene, 'models/furniture/WallArt03.glb', 4, 44, 0, 15, 10);
+    loadFurniture(scene, 'models/furniture/FiddleLeafPlant(1).glb', 4, 44, 0, 0, 1.5);
+
+    loadFurniture(scene, 'models/furniture/WallArt01.glb', 35, 44, 0, 12, 10);
+    loadFurniture(scene, 'models/furniture/CoffeePlant.glb', 35, 44, 0, 0, 1.5);
+
+
 
     //tables and chairs
     const diamondLayout = [
