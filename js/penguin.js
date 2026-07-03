@@ -612,7 +612,6 @@ function updateDishwasherRoutine(dishwasher) {
             });
 
             if (tray) {
-                // Contiamo fisicamente se ci sono piatti sporchi sul vassoio
                 let dirtyCount = 0;
                 tray.children.forEach(c => {
                     if (c.userData && c.userData.interactionType === 'dirty_plate') {
@@ -620,9 +619,8 @@ function updateDishwasherRoutine(dishwasher) {
                     }
                 });
 
-                // Se trova almeno un piatto figlio, parte!
                 if (dirtyCount > 0) {
-                    dishwasher.userData.targetTray = tray; // Salviamo il vassoio corretto!
+                    dishwasher.userData.targetTray = tray; 
                     dishwasher.userData.state = 'WALK_COUNTER';
                 }
             }
@@ -659,9 +657,6 @@ function updateDishwasherRoutine(dishwasher) {
                         stackPlates(plateStack, p);
                     });
                     
-                    // --- USIAMO LA TUA FUNZIONE PICKUP PLATE ---
-                    // Gestirà da sola la scala (2,2,2), la posizione, 
-                    // le variabili (hasPlate, plate) e le animazioni TWEEN delle braccia!
                     pickUpPlate(dishwasher, plateStack);
                     
                 }
@@ -681,43 +676,35 @@ function updateDishwasherRoutine(dishwasher) {
         case 'ACTION_SINK':
             dishwasher.userData.timer--;
             
-            // Quando arriva al lavandino (primo frame del timer)
             if (dishwasher.userData.timer === 299 && dishwasher.userData.hasPlate) {
-                 // Dato che pickUpPlate ha salvato il piatto in userData.plate, lo prendiamo da lì
+
                  const stack = dishwasher.userData.plate;
                  
-                 // --- DEPOSITO AL LAVANDINO (Logica riadattata da putDownPlate) ---
                  dishwasher.remove(stack);
                  state.scene.add(stack);
                  
-                 // Coordinate fisse del lavandino
                  stack.position.set(KITCHEN_POS.SINK.x, 4.6, KITCHEN_POS.SINK.z);
-                 stack.scale.set(4, 4, 4); // Scala del mondo
+                 stack.scale.set(4, 4, 4); 
                  stack.rotation.set(0, 0, 0);
                  
-                 // Animazione TWEEN per riportare l'ala a riposo (come in putDownPlate)
                  new TWEEN.Tween(dishwasher.userData.rightFlipper.rotation)
                      .to({ x: 0, y: 0, z: Math.PI/6 }, 300)
                      .easing(TWEEN.Easing.Quadratic.In)
                      .start();
                  
-                 // Reset variabili
                  dishwasher.userData.hasPlate = false;
                  dishwasher.userData.plate = null;
                  dishwasher.userData.washingStack = stack; 
             }
 
-            // Oscillazione del lavaggio
             dishwasher.rotation.y = (-Math.PI / 2) + Math.sin(dishwasher.userData.timer * 0.2) * 0.1;
 
             if (dishwasher.userData.timer <= 0) {
-                // Distruggiamo i piatti appena lavati
                 if (dishwasher.userData.washingStack) {
                     state.scene.remove(dishwasher.userData.washingStack);
                     dishwasher.userData.washingStack = null;
                 }
                 
-                // --- NUOVO CONTROLLO: Cerchiamo il vassoio ---
                 let tray = null;
                 state.scene.traverse((child) => {
                     if (child.userData && child.userData.interactionType === 'tray') {
@@ -726,7 +713,6 @@ function updateDishwasherRoutine(dishwasher) {
                 });
 
                 if (tray) {
-                    // Contiamo fisicamente i piatti sporchi presenti ORA sul vassoio
                     let dirtyCount = 0;
                     tray.children.forEach(c => {
                         if (c.userData && c.userData.interactionType === 'dirty_plate') {
@@ -734,18 +720,15 @@ function updateDishwasherRoutine(dishwasher) {
                         }
                     });
 
-                    // Se ci sono altri piatti, torna subito al bancone!
                     if (dirtyCount > 0) {
                         console.log("Ci sono altri piatti! Vado subito a prenderli.");
-                        dishwasher.userData.targetTray = tray; // Salviamo il riferimento corretto
+                        dishwasher.userData.targetTray = tray; 
                         dishwasher.userData.state = 'WALK_COUNTER';
                     } else {
-                        // Se è vuoto, torna in attesa
                         console.log("Nessun altro piatto, torno in attesa.");
                         dishwasher.userData.state = 'IDLE'; 
                     }
                 } else {
-                    // Sicurezza: se per qualche motivo non trova il vassoio, va in IDLE
                     dishwasher.userData.state = 'WALK_IDLE';
                 }
             }
