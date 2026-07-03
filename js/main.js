@@ -23,6 +23,9 @@ document.addEventListener("DOMContentLoaded", function (){
     const btnResume = document.getElementById("btn-resume");
     const btnQuit = document.getElementById("btn-quit");
     const inGameVolumeSlider = document.getElementById("in-game-volume-slider");
+    [gameUI, inGameSettingsBtn, pauseMenu].forEach(el => {
+        if (el) el.style.zIndex = '10';
+    });
 
     document.addEventListener("click", initAudio, {once:true});
 

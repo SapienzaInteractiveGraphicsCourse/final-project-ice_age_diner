@@ -19,11 +19,11 @@ export function startWalking(penguin){
 
     leftFootFwd.chain(leftFootBwd); leftFootBwd.chain(leftFootFwd);
     rightFootBwd.chain(rightFootFwd); rightFootFwd.chain(rightFootBwd);
-
     penguin.userData.tweens = [leftFootFwd, rightFootBwd];
 
     // Flipper animation: small front/back swing (not a shoulder dislocation!)
     // Flippers swing forward and back alternately with the feet, in sync with walking rhythm.
+    penguin.userData.flipperTweens = null;
     if (!penguin.userData.hasPlate){
         const leftFlipper = penguin.userData.leftFlipper;
         const rightFlipper = penguin.userData.rightFlipper;
@@ -43,10 +43,13 @@ export function startWalking(penguin){
         rightFlipBwd.chain(rightFlipFwd);
         rightFlipFwd.chain(rightFlipBwd);
 
-        penguin.userData.tweens.push(leftFlipFwd, rightFlipBwd);
+        penguin.userData.flipperTweens = [leftFlipFwd, rightFlipBwd];
     }
 
     penguin.userData.tweens.forEach(tween => tween.start());
+    if (penguin.userData.flipperTweens){
+        penguin.userData.flipperTweens.forEach(tween => tween.start());
+    }
 }
 
 export function stopWalking(penguin) {
@@ -55,6 +58,10 @@ export function stopWalking(penguin) {
 
     if (penguin.userData.tweens){
         penguin.userData.tweens.forEach(tween => tween.stop());
+    }
+    if (penguin.userData.flipperTweens){
+        penguin.userData.flipperTweens.forEach(tween => tween.stop());
+        penguin.userData.flipperTweens = null;
     }
 
     new TWEEN.Tween(penguin.userData.leftFoot.rotation).to({ x: 0 }, 200).easing(TWEEN.Easing.Quadratic.Out).start();
@@ -247,6 +254,147 @@ export function createPlate(foodName){
     plateGroup.userData.interactionType = 'plate';
     plateGroup.scale.set(2,2,2);
     return plateGroup;
+}
+
+//Waiter <-> plate interaction
+export function pickUpPlate(waiter, plateGroup){
+    if (waiter.userData.flipperTweens){
+        waiter.userData.flipperTweens.forEach(tween => tween.stop());
+        waiter.userData.flipperTweens = null;
+    }
+    plateGroup.position.set(2.0, 2.0, 0.5);
+    plateGroup.scale.set(2, 2, 2);
+    waiter.add(plateGroup);
+
+    new TWEEN.Tween(waiter.userData.rightFlipper.rotation)
+        .to({ x: 0, y: 0, z: -Math.PI/1.5 }, 300)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .start();
+    new TWEEN.Tween(waiter.userData.leftFlipper.rotation)
+        .to({ x: 0 }, 300)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .start();
+
+    waiter.userData.hasPlate = true;
+    waiter.userData.plate = plateGroup;
+}
+
+// Delivers the plate the waiter is holding to a customer's table and eases
+// the right flipper back down to its resting pose
+export function putDownPlate(waiter, scene, customer){
+    const plate = waiter.userData.plate;
+    if (!plate) return null;
+
+    waiter.remove(plate);
+    scene.add(plate);
+
+    plate.scale.set(5, 5, 5);
+    const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), customer.rotation.y);
+    plate.position.set(customer.position.x + (forward.x*6), 5.5, customer.position.z + (forward.z*6));
+    plate.rotation.set(0, 0, 0);
+
+    new TWEEN.Tween(waiter.userData.rightFlipper.rotation)
+        .to({ x: 0, y: 0, z: Math.PI/6 }, 300)
+        .easing(TWEEN.Easing.Quadratic.In)
+        .start();
+
+    waiter.userData.hasPlate = false;
+    waiter.userData.plate = null;
+
+    return plate;
+}
+
+// Chef animations helpers
+export function resetFlippers(penguin){
+    penguin.userData.leftFlipper.rotation.set(0, 0, -Math.PI/6);
+    penguin.userData.rightFlipper.rotation.set(0, 0, Math.PI/6);
+}
+
+// Per-frame flipper/door pose while the chef reaches into the fridge
+export function animateChefFridgeReach(chef, timer, doorFridge, axis, origRot, openAngle){
+    if (timer > 60){
+        chef.userData.rightFlipper.rotation.set(-Math.PI/2.5, Math.PI/6, 0);
+        if (doorFridge){
+            const progress = (80 - timer) / 20;
+            doorFridge.rotation[axis] = origRot + (openAngle * progress);
+            doorFridge.userData.isOpen = true;
+        }
+    }
+    else if (timer > 20){
+        chef.userData.leftFlipper.rotation.x = -Math.PI/4 + Math.sin(timer * 0.4) * 0.1;
+        chef.userData.rightFlipper.rotation.x = -Math.PI/3 + Math.cos(timer * 0.4) * 0.1;
+        if (doorFridge){
+            doorFridge.rotation[axis] = origRot + openAngle;
+        }
+    }
+    else if (timer > 0){
+        chef.userData.rightFlipper.rotation.set(-Math.PI/4, -Math.PI/12, 0);
+        chef.userData.leftFlipper.rotation.set(0, 0, -Math.PI/6);
+        if (doorFridge){
+            const progress = timer / 20;
+            doorFridge.rotation[axis] = origRot + (openAngle * progress);
+        }
+    }
+}
+
+// Per-frame flipper wiggle while the chef is cooking at the stove
+export function animateChefStove(chef, timer){
+    chef.userData.leftFlipper.rotation.set(-Math.PI/2.2, 0, -Math.PI/12 + Math.sin(timer * 0.2) * 0.15);
+    chef.userData.rightFlipper.rotation.set(-Math.PI/2.2, 0, Math.PI/12 + Math.cos(timer * 0.2) * 0.15);
+}
+
+// Instant pose used while the chef is grabbing the finished plate
+export function setChefPickupPose(chef){
+    chef.userData.leftFlipper.rotation.set(-Math.PI/4, 0, -Math.PI/12);
+    chef.userData.rightFlipper.rotation.set(-Math.PI/4, 0, Math.PI/12);
+}
+
+// One-shot tween confirming the pickup pose
+export function animateChefPickupPlate(chef){
+    new TWEEN.Tween(chef.userData.leftFlipper.rotation)
+        .to({ x: -Math.PI/4, y: 0, z: -Math.PI/12 }, 300)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .start();
+
+    new TWEEN.Tween(chef.userData.rightFlipper.rotation)
+        .to({ x: -Math.PI/4, y: 0, z: Math.PI/12 }, 300)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .start();
+}
+
+// Instant pose used while the chef is carrying a plate to the counter
+export function setChefCarryPose(chef){
+    chef.userData.leftFlipper.rotation.set(-Math.PI/2.5, 0, -Math.PI/16);
+    chef.userData.rightFlipper.rotation.set(-Math.PI/2.5, 0, Math.PI/16);
+}
+
+// One-shot tween sequence for setting the plate down on the counter and
+// bringing the flippers back to rest
+export function animateChefCounterRelease(chef){
+    //const finalReleaseAngle = -Math.PI/2.5 + (Math.PI/4);
+    const finalReleaseAngle = -0.3;
+
+    new TWEEN.Tween(chef.userData.leftFlipper.rotation)
+        .to({ x: finalReleaseAngle, y: 0, z: -Math.PI/16 }, 400)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .start();
+
+    new TWEEN.Tween(chef.userData.rightFlipper.rotation)
+        .to({ x: finalReleaseAngle, y: 0, z: Math.PI/16 }, 400)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .start();
+
+    new TWEEN.Tween(chef.userData.leftFlipper.rotation)
+        .to({ x: 0, y: 0, z: -Math.PI/6 }, 300)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .delay(660)
+        .start();
+
+    new TWEEN.Tween(chef.userData.rightFlipper.rotation)
+        .to({ x: 0, y: 0, z: Math.PI/6 }, 300)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .delay(660)
+        .start();
 }
 
 export function updateTweens(){

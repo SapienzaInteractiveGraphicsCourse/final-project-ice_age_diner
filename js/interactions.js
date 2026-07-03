@@ -1,4 +1,4 @@
-import { animateInteractable } from './animations.js';
+import { animateInteractable, pickUpPlate, putDownPlate } from './animations.js';
 import { penguins, waitingQueue } from './penguin.js';
 import { state } from './state.js';
 
@@ -15,32 +15,23 @@ export function setupInteractions(camera, scene){
     // Store the camera and scene for later use in the click event
     interactionCamera = camera;
     interactionScene = scene;
-
-    // listener for mouse click events
     window.addEventListener('click', onMouseClick, false);
-
     console.log("interaction setup complete.");
 }
 
-// function that activates event on mouse click
 function onMouseClick(event){
-    // position of the mouse in normalized device coordinates (-1 to +1) for both components
     mouse.x = (event.clientX / window.innerWidth)*2 - 1;
     mouse.y = -(event.clientY / window.innerHeight)*2 + 1;
 
-    // update the raycaster with the camera and mouse position
     raycaster.setFromCamera(mouse, interactionCamera);
-    // search for intersections
     const intersects = raycaster.intersectObjects(interactionScene.children, true);
 
     if (intersects.length > 0){
-
         let clickedObj = null;
-        //only if it's interactable
         for (let i = 0; i < intersects.length; i++){
             let obj = intersects[i].object;
             while (obj) {
-                if (obj.userData && obj.userData.isInteractable) {
+                if (obj.userData && obj.userData.isInteractable){
                     clickedObj = obj;
                     break;
                 }
@@ -50,38 +41,34 @@ function onMouseClick(event){
         }
 
         if (clickedObj){
-
             const waiterData = penguins.find(p => p.mesh.userData.role === 'waiter');
             const waiter = waiterData ? waiterData.mesh : null;
 
             if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'WAIT_FOR_WAITER'){
                 console.log("Customer interaction: calling waiter for customer.");
-
+                
+                // Rimuoviamo dalla coda e impostiamo lo stato di attesa assegnazione sedia
                 const queueIdx = waitingQueue.indexOf(clickedObj);
                 if (queueIdx !== -1) waitingQueue.splice(queueIdx, 1);
 
-                clickedObj.userData.state = 'WAITING_FOR_SEAT_ASSIGNMENT';
+                clickedObj.userData.state = 'WAIT_FOR_SEAT_ASSIGNMENT';
                 clickedObj.userData.isInteractable = false;
             }
             else if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'READY_TO_ORDER'){
                 console.log("Customer interaction: ready to order.");
                 const orderFood = clickedObj.userData.order;
                 state.orders.push({customer: clickedObj, food: orderFood, status: 'pending'});
-                //UPDATE HTML INTERFACE TO SHOW ORDER ON THE RIGHT
                 clickedObj.userData.state = 'WAIT_FOR_FOOD';
-                clickedObj.remove(clickedObj.userData.bubble);
+                if (clickedObj.userData.bubble) {
+                    clickedObj.remove(clickedObj.userData.bubble);
+                }
                 return;
             }
-            else if (clickedObj.userData.interactionType === 'plate' && clickedObj.userData.isInteractable  ){ 
-                if (waiter.userData.hasPlate === false){
+            else if (clickedObj.userData.interactionType === 'plate' && clickedObj.userData.isInteractable){ 
+                if (waiter && waiter.userData.hasPlate === false){
                     console.log("Plate interaction: picking up the plate.");
                     interactionScene.remove(clickedObj);
-                    waiter.add(clickedObj);
-                    clickedObj.position.set(2.4, 4, 0.2);
-                    clickedObj.scale.set(2,2,2);
-                    waiter.userData.rightFlipper.rotation.z = -Math.PI/1.5;
-                    waiter.userData.hasPlate = true;
-                    waiter.userData.plate = clickedObj;
+                    pickUpPlate(waiter, clickedObj);
                     clickedObj.userData.isInteractable = false;
                 }
                 else{
@@ -89,18 +76,9 @@ function onMouseClick(event){
                 }
             }
             else if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'WAIT_FOR_FOOD'){
-                if (waiter.userData.hasPlate){
-                    console.log("Customer interaction: delivering food to customer.");
-                    const plate = waiter.userData.plate;
-                    waiter.remove(plate);
-                    interactionScene.add(plate);
-                    waiter.userData.rightFlipper.rotation.z = Math.PI/6;
-                    plate.scale.set(5, 5, 5);
-                    const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), clickedObj.rotation.y);
-                    plate.position.set(clickedObj.position.x + (forward.x*6), 5.5, clickedObj.position.z + (forward.z*6));
-                    plate.rotation.set(0, 0, 0);
-                    waiter.userData.hasPlate = false;
-                    waiter.userData.plate = null;
+                if (waiter && waiter.userData.hasPlate){
+                    console.log("Customer interaction: delivering food.");
+                    const plate = putDownPlate(waiter, interactionScene, clickedObj);
                     clickedObj.userData.plate = plate;
                     clickedObj.userData.timer = 300;
                     if (clickedObj.userData.bubble) {
@@ -110,9 +88,9 @@ function onMouseClick(event){
                     clickedObj.userData.state = 'EATING';
                 }
             }
-            else if (clickedObj.userData.interactionType === 'chair' && !clickedObj.userData.isOccupied ){
-
-                const followingPenguinData = penguins.find(p =>p.mesh && p.mesh.userData.state === 'WAITING_FOR_SEAT_ASSIGNMENT');
+            // Interazione sulla sedia: Cerca il cliente che attende l'assegnazione
+            else if (clickedObj.userData.interactionType === 'chair' && !clickedObj.userData.isOccupied){
+                const followingPenguinData = penguins.find(p => p.mesh && p.mesh.userData.state === 'WAIT_FOR_SEAT_ASSIGNMENT');
 
                 if (followingPenguinData && followingPenguinData.mesh){
                     const followingPenguin = followingPenguinData.mesh;
@@ -121,13 +99,24 @@ function onMouseClick(event){
                     clickedObj.userData.isOccupied = true;
                     followingPenguin.userData.seat = clickedObj;
                 }
-                else{
-                    console.log("No penguin is currently following the waiter to sit down.");
-                }
+            }
+            else if (clickedObj.userData.interactionType === 'counter'){
+                if (waiter && waiter.userData.hasPlate && waiter.userData.plate.userData.interactionType === 'dirty_plate'){
+                    console.log("Waiter: putting dirty plate on the counter");
+                    const plate = waiter.userData.plate;
+                    waiter.remove(plate);
+                    interactionScene.add(plate);
 
+                    const dirtyZ = 10 + Math.random()*8;
+                    plate.position.set(-36, 4.6, dirtyZ);
+                    plate.rotation.set(0,0,0);
+                    plate.scale.set(4,4,4);
+
+                    waiter.userData.hasPlate = false;
+                    waiter.userData.plate = null;
+                }
             }
             else{
-                console.log("interaction with:", clickedObj.name);
                 const rotationTarget = clickedObj.userData.targetToRotate || clickedObj;
                 if (rotationTarget.userData.originalRotation === undefined) return;
 
@@ -150,7 +139,6 @@ function onMouseClick(event){
                 const axis = rotationTarget.userData.rotationAxis || 'y';
                 animateInteractable(rotationTarget, targetAngle, axis);
             }
-            
         }
     }
 }

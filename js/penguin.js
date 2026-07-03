@@ -1,5 +1,9 @@
 import { state } from './state.js';
-import { startWalking, stopWalking, animateInteractable, seatPenguin, updateBubble, createPlate } from './animations.js';
+import {
+    startWalking, stopWalking, animateInteractable, seatPenguin, updateBubble, createPlate,
+    resetFlippers, animateChefFridgeReach, animateChefStove, setChefPickupPose,
+    animateChefPickupPlate, setChefCarryPose, animateChefCounterRelease
+} from './animations.js';
 import { checkCollision } from './controlWaiter.js';
 
 export const penguins = [];
@@ -7,7 +11,7 @@ export const waitingQueue = [];
 export let lastSpawnTime = 0;
 
 export const KITCHEN_POS = {
-    FRIDGE: new THREE.Vector3(-65, 0, 15),
+    FRIDGE: new THREE.Vector3(-65, 0, 25),
     STOVE: new THREE.Vector3(-65, 0, 5),
     COUNTER: new THREE.Vector3(-42, 0, 0),
     IDLE_CHEF: new THREE.Vector3(-55, 0, 5),
@@ -275,14 +279,12 @@ export function moveTowards(penguin, targetPos, ignoreCollision=false){
         
         let isColliding = false;
 
-        if (!ignoreCollision) {
-            // I pinguini gestiti dal computer (NPC) controllano le collisioni SOLO con il cameriere!
-            // In questo modo i loro percorsi intelligenti aggirano i tavoli senza bloccarsi nelle scatole invisibili.
+        if (!ignoreCollision){
             const waiterData = penguins.find(p => p.mesh && p.mesh.userData.role === 'waiter');
             if (waiterData && penguin.userData.role !== 'waiter') {
                 const waiter = waiterData.mesh;
                 const distToWaiter = Math.sqrt(Math.pow(nextX - waiter.position.x, 2) + Math.pow(nextZ - waiter.position.z, 2));
-                if (distToWaiter < 4.5) { // Raggio della "pancia" per evitare compenetrazioni
+                if (distToWaiter < 4.5) {
                     isColliding = true;
                 }
             }
@@ -368,11 +370,10 @@ export function spawnCustomer(){
     const optionState = p.mesh.userData.state;
     return optionState === 'WAIT_FOR_WAITER' || optionState === 'WAIT_FOR_SEAT_ASSIGNMENT' || optionState === 'WALK_TO_WAITING';
     }).length;
-    console.log("--- STATO ATTUALE DI TUTTI I PINGUINI ---");
+    console.log("Current status of all the penguins:");
     penguins.forEach((p, index) => {
-        console.log(`Pinguino [${index}] - Ruolo: ${p.mesh.userData.role} - Stato: ${p.mesh.userData.state}`);
-    });
-console.log("----------------------------------------");
+        console.log(`Penguin [${index}] - Role: ${p.mesh.userData.role} - Status: ${p.mesh.userData.state}`);
+    });;
     console.log(`Current waiting customers: ${penguinWaiting}`);
     if ((penguinWaiting >= 3) || state.someone_is_leaving) {
         console.log("No available waiting position for customer!");
@@ -458,11 +459,6 @@ function updateMainDoorState() {
 }
 
 function updateChefRoutine(chef){
-    const resetFlippers = () => {
-        chef.userData.leftFlipper.rotation.set(0, 0, -Math.PI / 6);
-        chef.userData.rightFlipper.rotation.set(0, 0, Math.PI / 6);
-    };
-
     switch(chef.userData.state){
         case 'IDLE':
             if (state.orders.length > 0 && state.orders.some(order => order.status === 'pending')) {
@@ -490,36 +486,14 @@ function updateChefRoutine(chef){
             const origRot = doorFridge ? (doorFridge.userData.originalRotation || 0) : 0;
             const openAngle = (doorFridge && doorFridge.userData.openAngle !== undefined) ? doorFridge.userData.openAngle : -Math.PI / 2;
 
-            if (chef.userData.timer > 60){
-                chef.userData.rightFlipper.rotation.set(-Math.PI / 2.5, Math.PI / 6, 0);
-                if (doorFridge) {
-                    const progress = (80 - chef.userData.timer) / 20;
-                    doorFridge.rotation[axis] = origRot + (openAngle * progress);
-                    doorFridge.userData.isOpen = true;
-                }
-            }
-            else if (chef.userData.timer > 20){
-                chef.userData.leftFlipper.rotation.x = -Math.PI / 4 + Math.sin(chef.userData.timer * 0.4) * 0.1;
-                chef.userData.rightFlipper.rotation.x = -Math.PI / 3 + Math.cos(chef.userData.timer * 0.4) * 0.1;
-                if (doorFridge) {
-                    doorFridge.rotation[axis] = origRot + openAngle;
-                }
-            }
-            else if (chef.userData.timer > 0){
-                chef.userData.rightFlipper.rotation.set(-Math.PI / 4, -Math.PI / 12, 0);
-                chef.userData.leftFlipper.rotation.set(0, 0, -Math.PI / 6);
-                if (doorFridge) {
-                    const progress = chef.userData.timer / 20;
-                    doorFridge.rotation[axis] = origRot + (openAngle * progress);
-                }
-            }
+            animateChefFridgeReach(chef, chef.userData.timer, doorFridge, axis, origRot, openAngle);
 
             if (chef.userData.timer <= 0) {
                 if (doorFridge) {
                     doorFridge.rotation[axis] = origRot;
                     doorFridge.userData.isOpen = false;
                 }
-                resetFlippers();
+                resetFlippers(chef);
                 chef.userData.state = 'WALK_STOVE';
             }
             break;
@@ -534,11 +508,10 @@ function updateChefRoutine(chef){
 
         case 'ACTION_STOVE':
             chef.userData.timer--;
-            chef.userData.leftFlipper.rotation.set(-Math.PI / 2.2, 0, -Math.PI / 12 + Math.sin(chef.userData.timer * 0.2) * 0.15);
-            chef.userData.rightFlipper.rotation.set(-Math.PI / 2.2, 0, Math.PI / 12 + Math.cos(chef.userData.timer * 0.2) * 0.15);
+            animateChefStove(chef, chef.userData.timer);
 
             if (chef.userData.timer <= 0) {
-                resetFlippers();
+                resetFlippers(chef);
                 chef.userData.state = 'ACTION_PICK_PLATE';
                 chef.userData.timer = 50; 
             }
@@ -546,22 +519,11 @@ function updateChefRoutine(chef){
 
         case 'ACTION_PICK_PLATE':
             chef.userData.timer--;
-            chef.userData.leftFlipper.rotation.set(-Math.PI / 4, 0, -Math.PI / 12);
-            chef.userData.rightFlipper.rotation.set(-Math.PI / 4, 0, Math.PI / 12);
-            
+            setChefPickupPose(chef);
+
             if (!chef.userData.flipperTweenStarted){
                 chef.userData.flipperTweenStarted = true;
-
-                new TWEEN.Tween(chef.userData.leftFlipper.rotation)
-                    .to({ x: -Math.PI / 4, y: 0, z: -Math.PI / 12 }, 300) // 300ms di transizione
-                    .easing(TWEEN.Easing.Quadratic.Out)
-                    .start();
-
-                // Anima l'ala destra verso la posizione del piatto
-                new TWEEN.Tween(chef.userData.rightFlipper.rotation)
-                    .to({ x: -Math.PI / 4, y: 0, z: Math.PI / 12 }, 300)
-                    .easing(TWEEN.Easing.Quadratic.Out)
-                    .start();
+                animateChefPickupPlate(chef);
             }
             if (chef.userData.timer <= 0) {
                 const newplate = createPlate(chef.userData.currentOrder.food);
@@ -571,16 +533,17 @@ function updateChefRoutine(chef){
                 newplate.scale.set(2, 2, 2);
                 chef.userData.hasPlate = true;
                 chef.userData.flipperTweenStarted = false;
+                chef.userData.targetCounterZ = -18 + Math.random()*23;
                 chef.userData.state = 'WALK_COUNTER';
             }
             break;
 
         case 'WALK_COUNTER':
+            const targetCounter = new THREE.Vector3(KITCHEN_POS.COUNTER.x, 0, chef.userData.targetCounterZ);
             const reachedCounter = moveTowards(chef, KITCHEN_POS.COUNTER);
             
             if (chef.userData.hasPlate) {
-                chef.userData.leftFlipper.rotation.set(-Math.PI / 2.5, 0, -Math.PI / 16);
-                chef.userData.rightFlipper.rotation.set(-Math.PI / 2.5, 0, Math.PI / 16);
+                setChefCarryPose(chef);
             }
 
             if (reachedCounter) {
@@ -593,49 +556,21 @@ function updateChefRoutine(chef){
         case 'ACTION_COUNTER':
             if (!chef.userData.counterTweenStarted) {
                 chef.userData.counterTweenStarted = true;
-
-                // Calcoliamo l'angolo finale che prima calcolavi alla fine del progresso (progress = 1)
-                // -Math.PI / 2.5 + Math.PI / 4 = circa -Math.PI / 6.66
-                const finalReleaseAngle = -Math.PI / 2.5 + (Math.PI / 4);
-
-                // Anima l'ala sinistra in avanti/giù verso la posa di rilascio
-                new TWEEN.Tween(chef.userData.leftFlipper.rotation)
-                    .to({ x: finalReleaseAngle, y: 0, z: -Math.PI / 16 }, 400) // Dura 400ms (pari a circa 24 frame)
-                    .easing(TWEEN.Easing.Quadratic.Out)
-                    .start();
-
-                // Anima l'ala destra
-                new TWEEN.Tween(chef.userData.rightFlipper.rotation)
-                    .to({ x: finalReleaseAngle, y: 0, z: Math.PI / 16 }, 400)
-                    .easing(TWEEN.Easing.Quadratic.Out)
-                    .start();
-
-                // 2. Programma il ritorno a riposo (le vecchie righe dell'else con resetFlippers)
-                // Usiamo un ritardo (.delay) per farlo partire esattamente quando il timer scende sotto i 20 frame.
-                // Se il timer iniziale è 60, dopo 40 frame (circa 660ms) dobbiamo resettare.
-                new TWEEN.Tween(chef.userData.leftFlipper.rotation)
-                    .to({ x: 0, y: 0, z: 0 }, 300)
-                    .easing(TWEEN.Easing.Quadratic.Out)
-                    .delay(660) 
-                    .start();
-
-                new TWEEN.Tween(chef.userData.rightFlipper.rotation)
-                    .to({ x: 0, y: 0, z: Math.PI/6 }, 300)
-                    .easing(TWEEN.Easing.Quadratic.Out)
-                    .delay(660)
-                    .start();
+                animateChefCounterRelease(chef);
             }
 
             chef.userData.timer--;
 
             if (chef.userData.timer <= 0) {
+                chef.userData.counterTweenStarted = false;
                 if (chef.userData.hasPlate && chef.children.find(child => child.name === 'plate')) {
                     chef.userData.hasPlate = false;
                     const completedOrder = chef.children.find(child => child.name === 'plate')
                     chef.remove(completedOrder);
                     completedOrder.userData.isInteractable = true;
+                    completedOrder.userData.interactionType = 'plate';
                     state.scene.add(completedOrder);
-                    completedOrder.position.set(KITCHEN_POS.COUNTER.x +8, KITCHEN_POS.COUNTER.y + 4.6, KITCHEN_POS.COUNTER.z );
+                    completedOrder.position.set(-36, KITCHEN_POS.COUNTER.y + 4.6, KITCHEN_POS.COUNTER.z);
                     completedOrder.rotation.set(0, 0, 0);
                     completedOrder.scale.set(4,4,4);
                     chef.userData.currentOrder.status = 'ready';
@@ -652,6 +587,7 @@ function updateChefRoutine(chef){
                 else {
                     chef.userData.state = 'WALK_IDLE';
                 }
+                chef.userData.counterTweenStarted = false;
             }
             break;
 
@@ -667,11 +603,16 @@ function updateChefRoutine(chef){
 function updateDishwasherRoutine(dishwasher) {
     switch(dishwasher.userData.state) {
         case 'IDLE':
+            const dirtyPlateOnCounter = state.scene.children.find(c => c.name === 'plate' && c.userData.interactionType === 'dirty_plate');
+            if (dirtyPlateOnCounter){
+                dishwasher.userData.targetPlate = dirtyPlateOnCounter;
+                dishwasher.userData.state = 'WALK_COUNTER';
+            }
             break;
 
         case 'WALK_COUNTER':
-            if (moveTowards(dishwasher, KITCHEN_POS.COUNTER)) {
-                dishwasher.rotation.y = Math.PI / 2;
+            if (moveTowards(dishwasher, new THREE.Vector3(-44, 0, 15))) {
+                dishwasher.rotation.y = Math.PI/2;
                 dishwasher.userData.state = 'ACTION_COUNTER';
                 dishwasher.userData.timer = 60;
             }
@@ -680,6 +621,10 @@ function updateDishwasherRoutine(dishwasher) {
         case 'ACTION_COUNTER':
             dishwasher.userData.timer--;
             if (dishwasher.userData.timer <= 0) {
+                if (dishwasher.userData.targetPlate){
+                    state.scene.remove(dishwasher.userData.targetPlate);
+                    dishwasher.userData.targetPlate = null;
+                }
                 dishwasher.userData.state = 'WALK_SINK';
             }
             break;
@@ -696,8 +641,9 @@ function updateDishwasherRoutine(dishwasher) {
             dishwasher.userData.timer--;
             dishwasher.rotation.y = (-Math.PI / 2) + Math.sin(dishwasher.userData.timer * 0.2) * 0.1;
             if (dishwasher.userData.timer <= 0) {
-                dishwasher.userData.state = 'WALK_COUNTER';  
+                dishwasher.userData.state = 'IDLE';  
             }
+            break;
     }
 }
 
@@ -809,7 +755,7 @@ function updateCustomerRoutine(customer) {
             break;
 
         case 'WAIT_FOR_SEAT_ASSIGNMENT':
-            stopWalking(customer);
+            if (typeof stopWalking !== 'undefined') stopWalking(customer);
             break;
         
         case 'WALK_TO_SEAT':
@@ -966,7 +912,8 @@ function updateCustomerRoutine(customer) {
                 if (typeof TWEEN !== 'undefined') {
                     new TWEEN.Tween(customer.userData.leftFoot.rotation).to({ x: 0 }, 200).start();
                     new TWEEN.Tween(customer.userData.rightFoot.rotation).to({ x: 0 }, 200).start();
-                } else {
+                }
+                else{
                     customer.userData.leftFoot.rotation.x = 0;
                     customer.userData.rightFoot.rotation.x = 0;
                 }
@@ -1005,10 +952,9 @@ function updateCustomerRoutine(customer) {
                 }
             }
             else if (customer.userData.subState === 'WALK_TO_DOOR_INSIDE') {
-                if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_INSIDE_LEAVE)) {
-                    customer.userData.timer = 50; 
+                if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_INSIDE)){
                     customer.userData.subState = 'WAIT_FOR_DOOR';
-                    animateInteractable(state.door, Math.PI / 2, 'y');
+                    animateInteractable(state.door, Math.PI/2, 'y');
                 }
             }
             else if (customer.userData.subState === 'WAIT_FOR_DOOR') {

@@ -31,11 +31,10 @@ export function buildRestaurant() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    // Renderer behind the UI elements
     renderer.domElement.style.position = 'absolute';
     renderer.domElement.style.top = '0';
     renderer.domElement.style.left = '0';
+    renderer.domElement.style.zIndex = '0';
     renderer.domElement.style.pointerEvents = 'auto';
 
     document.body.appendChild(renderer.domElement);
@@ -205,12 +204,12 @@ export function buildRestaurant() {
     const counterMaterial = new THREE.MeshStandardMaterial({ 
         color: 0x5B1706, roughness: 1.0, metalness: 0.0,             
     });
-
     const counter = new THREE.Mesh(new THREE.BoxGeometry(counterWidth, counterThickness, counterDepth), counterMaterial);
     counter.position.set(divisorWallX + 1.6*divisorWallThickness - counterWidth/2, 3.5 + (counterThickness/2), 0);
-    
     counter.castShadow = true;
     counter.receiveShadow = true;
+    counter.userData.isInteractable = true;
+    counter.userData.interactionType = 'counter';
     scene.add(counter);
 
     state.colliders.push(backDivisor, frontDivisor, divisorLowWall, divisorHighWall, counter);
