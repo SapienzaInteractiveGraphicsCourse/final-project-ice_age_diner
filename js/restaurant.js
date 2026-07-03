@@ -494,9 +494,9 @@ export function buildRestaurant() {
 
 
     //main room //quanto vai a destra, vai indietro, rotazione, altezza, quanto piccolo
-    loadFurniture(scene, 'models/furniture/theBedroomHanger.glb', 74, 0, Math.PI/2, 10, 10);
-    loadFurniture(scene, 'models/furniture/LittleBookcase.glb', 74, -16, Math.PI/2, 0, 13);
-    loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', 74, -32, Math.PI/2, 10, 10);
+    loadFurniture(scene, 'models/furniture/theBedroomHanger.glb', 77, 0, Math.PI/2, 10, 10);
+    loadFurniture(scene, 'models/furniture/LittleBookcase.glb', 76, -16, Math.PI/2, 2, 13);
+    loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', 75, -32, Math.PI/2, 10, 10);
 
     loadFurniture(scene, 'models/furniture/Board.glb', -30, 27, Math.PI/2, 4, 25);
 
@@ -557,7 +557,7 @@ export function buildRestaurant() {
        
         loadFurniture(scene, 'models/furniture/RoundTable.glb', group.table.x, group.table.z, 2*Math.PI, 0, 5.5);
 
-        loadFurniture(scene, 'models/furniture/pottedPlant.glb', group.table.x, group.table.z, 0, 5.2, 5);
+        //loadFurniture(scene, 'models/furniture/pottedPlant.glb', group.table.x, group.table.z, 0, 5.2, 5);
 
         group.chairs.forEach(chairPos => {
             loadFurniture(scene, 'models/furniture/chairModernCushion.glb', chairPos.x, chairPos.z, chairPos.rot, 0, 14, false, true);
