@@ -2,7 +2,7 @@ import { state } from './state.js';
 import {
     startWalking, stopWalking, animateInteractable, seatPenguin, updateBubble, createPlate,
     resetFlippers, animateChefFridgeReach, animateChefStove, setChefPickupPose,
-    animateChefPickupPlate, setChefCarryPose, animateChefCounterRelease, stackPlates, pickUpPlate
+    setChefCarryPose, animateChefCounterRelease, stackPlates, pickUpPlate
 } from './animations.js';
 import { checkCollision } from './controlWaiter.js';
 
@@ -11,13 +11,13 @@ export const waitingQueue = [];
 export let lastSpawnTime = 0;
 
 export const KITCHEN_POS = {
-    FRIDGE: new THREE.Vector3(-65, 0, 25),
+    FRIDGE: new THREE.Vector3(-65, 0, 24),
     STOVE: new THREE.Vector3(-65, 0, 4.5),
     COUNTER: new THREE.Vector3(-42, 0, 0),
     IDLE_CHEF: new THREE.Vector3(-55, 0, 5),
     IDLE_WAITER: new THREE.Vector3(-10, 0, 10),
     IDLE_DISHWASHER: new THREE.Vector3(-55, 0, -18),
-    SINK: new THREE.Vector3(-65, 0, -10),
+    SINK: new THREE.Vector3(-65, 0, -12),
     COUNTER_DISHWASHER: new THREE.Vector3(-42, 0, -18)
 };
 
@@ -512,7 +512,7 @@ function updateChefRoutine(chef){
             animateChefStove(chef, chef.userData.timer);
 
             if (chef.userData.timer <= 0) {
-                resetFlippers(chef);
+                //resetFlippers(chef);
                 chef.userData.state = 'ACTION_PICK_PLATE';
                 chef.userData.timer = 50; 
             }
@@ -522,10 +522,6 @@ function updateChefRoutine(chef){
             chef.userData.timer--;
             setChefPickupPose(chef);
 
-            if (!chef.userData.flipperTweenStarted){
-                chef.userData.flipperTweenStarted = true;
-                animateChefPickupPlate(chef);
-            }
             if (chef.userData.timer <= 0) {
                 const newplate = createPlate(chef.userData.currentOrder.food);
                 newplate.name = 'plate';
@@ -535,6 +531,10 @@ function updateChefRoutine(chef){
                 chef.userData.hasPlate = true;
                 chef.userData.flipperTweenStarted = false;
                 chef.userData.targetCounterZ = -18 + Math.random()*23;
+                if (!chef.userData.flipperTweenStarted){
+                    chef.userData.flipperTweenStarted = true;
+                    pickUpPlate(chef, newplate);
+                }
                 chef.userData.state = 'WALK_COUNTER';
             }
             break;
@@ -549,28 +549,31 @@ function updateChefRoutine(chef){
 
             if (reachedCounter) {
                 chef.rotation.y = Math.PI / 2;
-                chef.userData.state = 'ACTION_COUNTER';
                 chef.userData.timer = 60;
+                chef.userData.state = 'ACTION_COUNTER';
+                
             }
             break;
 
         case 'ACTION_COUNTER':
-            if (!chef.userData.counterTweenStarted) {
-                chef.userData.counterTweenStarted = true;
-                animateChefCounterRelease(chef);
-            }
+            
 
             chef.userData.timer--;
 
             if (chef.userData.timer <= 0) {
                 chef.userData.counterTweenStarted = false;
                 if (chef.userData.hasPlate && chef.children.find(child => child.name === 'plate')) {
+                    if (!chef.userData.counterTweenStarted) {
+                        chef.userData.counterTweenStarted = true;
+                        animateChefCounterRelease(chef);
+                    }
                     chef.userData.hasPlate = false;
                     const completedOrder = chef.children.find(child => child.name === 'plate')
                     chef.remove(completedOrder);
                     completedOrder.userData.isInteractable = true;
                     completedOrder.userData.interactionType = 'plate';
                     state.scene.add(completedOrder);
+
                     completedOrder.position.set(-36, KITCHEN_POS.COUNTER.y + 4.6, KITCHEN_POS.COUNTER.z);
                     completedOrder.rotation.set(0, 0, 0);
                     completedOrder.scale.set(4,4,4);
@@ -601,6 +604,7 @@ function updateChefRoutine(chef){
     }
 }
 
+//DISHWASHER ROUTINE
 function updateDishwasherRoutine(dishwasher) {
     switch(dishwasher.userData.state) {
         case 'IDLE':
@@ -726,7 +730,7 @@ function updateDishwasherRoutine(dishwasher) {
                         dishwasher.userData.state = 'WALK_COUNTER';
                     } else {
                         console.log("Nessun altro piatto, torno in attesa.");
-                        dishwasher.userData.state = 'IDLE'; 
+                        dishwasher.userData.state = 'WALK_IDLE'; 
                     }
                 } else {
                     dishwasher.userData.state = 'WALK_IDLE';
@@ -736,7 +740,7 @@ function updateDishwasherRoutine(dishwasher) {
 
         case 'WALK_IDLE':
             if (moveTowards(dishwasher, KITCHEN_POS.IDLE_DISHWASHER)) {
-                dishwasher.rotation.y = Math.PI;
+                dishwasher.rotation.y = Math.PI/2;
                 dishwasher.userData.state = 'IDLE';
             }
             break;

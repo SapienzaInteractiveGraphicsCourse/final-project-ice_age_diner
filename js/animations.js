@@ -257,26 +257,37 @@ export function createPlate(foodName){
 }
 
 //Waiter <-> plate interaction
-export function pickUpPlate(waiter, plateGroup){
-    if (waiter.userData.flipperTweens){
-        waiter.userData.flipperTweens.forEach(tween => tween.stop());
-        waiter.userData.flipperTweens = null;
+export function pickUpPlate(penguin, plateGroup){
+    if (penguin.userData.flipperTweens){
+        penguin.userData.flipperTweens.forEach(tween => tween.stop());
+        penguin.userData.flipperTweens = null;
     }
-    plateGroup.position.set(2.0, 2.0, 0.5);
+    
     plateGroup.scale.set(2, 2, 2);
-    waiter.add(plateGroup);
+    penguin.add(plateGroup);
 
-    new TWEEN.Tween(waiter.userData.rightFlipper.rotation)
-        .to({ x: 0, y: 0, z: -Math.PI/1.5 }, 300)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .start();
-    new TWEEN.Tween(waiter.userData.leftFlipper.rotation)
+    if (penguin.userData.role === 'chef'){
+        plateGroup.position.set(1.5, 2.4, 1.5);
+        new TWEEN.Tween(penguin.userData.rightFlipper.rotation)
+            .to({ x: Math.PI/2, y: Math.PI/2, z: Math.PI/4 }, 300)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .start();
+    }
+    else {
+        plateGroup.position.set(2.0, 2.0, 0.5);
+        new TWEEN.Tween(penguin.userData.rightFlipper.rotation)
+            .to({ x: 0, y: 0, z: -Math.PI/1.5 }, 300)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .start();
+    }
+    
+    new TWEEN.Tween(penguin.userData.leftFlipper.rotation)
         .to({ x: 0 }, 300)
         .easing(TWEEN.Easing.Quadratic.Out)
         .start();
 
-    waiter.userData.hasPlate = true;
-    waiter.userData.plate = plateGroup;
+    penguin.userData.hasPlate = true;
+    penguin.userData.plate = plateGroup;
 }
 
 // Delivers the plate the waiter is holding to a customer's table and eases
@@ -384,23 +395,10 @@ export function setChefPickupPose(chef){
     chef.userData.rightFlipper.rotation.set(-Math.PI/4, 0, Math.PI/12);
 }
 
-// One-shot tween confirming the pickup pose
-export function animateChefPickupPlate(chef){
-    new TWEEN.Tween(chef.userData.leftFlipper.rotation)
-        .to({ x: -Math.PI/4, y: 0, z: -Math.PI/12 }, 300)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .start();
-
-    new TWEEN.Tween(chef.userData.rightFlipper.rotation)
-        .to({ x: -Math.PI/4, y: 0, z: Math.PI/12 }, 300)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .start();
-}
-
 // Instant pose used while the chef is carrying a plate to the counter
 export function setChefCarryPose(chef){
-    chef.userData.leftFlipper.rotation.set(-Math.PI/2.5, 0, -Math.PI/16);
-    chef.userData.rightFlipper.rotation.set(-Math.PI/2.5, 0, Math.PI/16);
+    //chef.userData.leftFlipper.rotation.set(-Math.PI/2.5, 0, -Math.PI/16);
+    chef.userData.rightFlipper.rotation.set(0, 0, Math.PI/2);
 }
 
 // One-shot tween sequence for setting the plate down on the counter and
