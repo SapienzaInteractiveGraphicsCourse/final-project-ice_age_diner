@@ -256,6 +256,52 @@ export function createPlate(foodName){
     return plateGroup;
 }
 
+export function getFreeCounterSpot(basePosition) {
+    // 1. Definisci i limiti del tuo bancone sull'asse Z
+    const COUNTER_Z_MIN = -20;  // Modifica questi valori in base alla lunghezza 
+    const COUNTER_Z_MAX = 20;   // del tuo modello 3D del bancone
+    
+    // 2. Definisci la Z dove si trova il vassoio (es. a Z = 0)
+    const TRAY_Z = -18;          
+    
+    // 3. Definisci la distanza minima tra un piatto e l'altro (e dal vassoio)
+    const SAFE_DISTANCE = 2.5; 
+
+    let freeZ = 0;
+    let isOccupied = true;
+    let attempts = 0;
+    
+    // Cerca un punto libero (massimo 50 tentativi per evitare loop infiniti)
+    while (isOccupied && attempts < 50) {
+        // Genera una Z casuale lungo il bancone
+        freeZ = Math.random() * (COUNTER_Z_MAX - COUNTER_Z_MIN) + COUNTER_Z_MIN;
+        
+        isOccupied = false;
+        
+        // Controlla se la posizione è troppo vicina al vassoio
+        if (Math.abs(freeZ - TRAY_Z) < SAFE_DISTANCE) {
+            isOccupied = true;
+        }
+        
+        // Controlla se è troppo vicina a un piatto già appoggiato
+        for (let plateZ of state.platesOnCounter) {
+            if (Math.abs(freeZ - plateZ) < SAFE_DISTANCE) {
+                isOccupied = true;
+                break;
+            }
+        }
+        attempts++;
+    }
+    
+    // Se abbiamo trovato un posto, salviamo la Z per i futuri piatti
+    if (!isOccupied) {
+        state.platesOnCounter.push(freeZ);
+    }
+    
+    // Ritorna la nuova posizione completa (X e Y rimangono quelle base del bancone, Z cambia)
+    return new THREE.Vector3(basePosition.x, basePosition.y, freeZ);
+}
+
 //Waiter <-> plate interaction
 export function pickUpPlate(penguin, plateGroup){
     if (penguin.userData.flipperTweens){

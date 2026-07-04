@@ -66,6 +66,10 @@ function onMouseClick(event){
             else if ((clickedObj.userData.interactionType === 'plate' || clickedObj.userData.interactionType === 'dirty_plate') && clickedObj.userData.isInteractable){ 
                 if (waiter && waiter.userData.hasPlate === false){
                     console.log("Plate interaction: picking up the first plate.");
+                    const index = state.platesOnCounter.indexOf(clickedObj.position.z);
+                    if (index > -1) {
+                        state.platesOnCounter.splice(index, 1);
+                    }
                     interactionScene.remove(clickedObj);
                     pickUpPlate(waiter, clickedObj);
                     clickedObj.userData.isInteractable = false;

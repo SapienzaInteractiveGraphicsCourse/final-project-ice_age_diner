@@ -14,6 +14,7 @@ export const state = {
     colliders: [],
     icebergs: [],
     orders: [],
+    platesOnCounter: [],
     menu: ['hamburger', 'pizza', 'hotdog', 'taco', 'fish'], //ADD MORE FOOD
     models:{}
 };

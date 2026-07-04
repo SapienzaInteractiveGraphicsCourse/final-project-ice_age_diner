@@ -2,7 +2,7 @@ import { state } from './state.js';
 import {
     startWalking, stopWalking, animateInteractable, seatPenguin, updateBubble, createPlate,
     resetFlippers, animateChefFridgeReach, animateChefStove, setChefPickupPose,
-    setChefCarryPose, animateChefCounterRelease, stackPlates, pickUpPlate
+    setChefCarryPose, animateChefCounterRelease, stackPlates, pickUpPlate, getFreeCounterSpot
 } from './animations.js';
 import { checkCollision } from './controlWaiter.js';
 
@@ -568,13 +568,17 @@ function updateChefRoutine(chef){
                         animateChefCounterRelease(chef);
                     }
                     chef.userData.hasPlate = false;
+                    const counterSpot = getFreeCounterSpot(KITCHEN_POS.COUNTER);
                     const completedOrder = chef.children.find(child => child.name === 'plate')
                     chef.remove(completedOrder);
                     completedOrder.userData.isInteractable = true;
                     completedOrder.userData.interactionType = 'plate';
                     state.scene.add(completedOrder);
 
-                    completedOrder.position.set(-36, KITCHEN_POS.COUNTER.y + 4.6, KITCHEN_POS.COUNTER.z);
+                    //completedOrder.position.set(-36, KITCHEN_POS.COUNTER.y + 4.6, KITCHEN_POS.COUNTER.z);
+                    completedOrder.position.copy(counterSpot);
+                    completedOrder.position.x = -36;
+                    completedOrder.position.y = KITCHEN_POS.COUNTER.y + 4.6;
                     completedOrder.rotation.set(0, 0, 0);
                     completedOrder.scale.set(4,4,4);
                     chef.userData.currentOrder.status = 'ready';
