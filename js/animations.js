@@ -74,6 +74,196 @@ export function stopWalking(penguin) {
     }
 }
 
+export function startReadingMenu(penguin){
+    if (penguin.userData.isReadingMenu) return;
+    penguin.userData.isReadingMenu = true;
+
+    const leftFlipper = penguin.userData.leftFlipper;
+    const rightFlipper = penguin.userData.rightFlipper;
+    const head = penguin.userData.head;
+
+    new TWEEN.Tween(leftFlipper.rotation)
+        .to({ x: -Math.PI/2.3, y: 0, z: -Math.PI/10 }, 400)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .start();
+
+    new TWEEN.Tween(rightFlipper.rotation)
+        .to({ x: -Math.PI/2.3, y: 0, z: Math.PI/10 }, 400)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .start();
+
+    // Small held downward tilt of the head only, like looking down at a page
+    if (head){
+        new TWEEN.Tween(head.rotation)
+            .to({ x: 0.35 }, 400)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .start();
+    }
+}
+
+export function stopReadingMenu(penguin){
+    if (!penguin.userData.isReadingMenu) return;
+    penguin.userData.isReadingMenu = false;
+
+    const head = penguin.userData.head;
+    if (head){
+        new TWEEN.Tween(head.rotation).to({ x: 0 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
+    }
+
+    const leftFlipper = penguin.userData.leftFlipper;
+    const rightFlipper = penguin.userData.rightFlipper;
+    new TWEEN.Tween(leftFlipper.rotation).to({ x: 0, y: 0, z: -Math.PI/6 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
+    new TWEEN.Tween(rightFlipper.rotation).to({ x: 0, y: 0, z: Math.PI/6 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
+}
+
+export function startCallingWaiter(penguin){
+    if (penguin.userData.isCallingWaiter) return;
+    penguin.userData.isCallingWaiter = true;
+
+    const rightFlipper = penguin.userData.rightFlipper;
+
+    new TWEEN.Tween(rightFlipper.rotation)
+        .to({ x: -Math.PI/1.15, y: 0, z: Math.PI/4 }, 400)
+        .easing(TWEEN.Easing.Back.Out)
+        .onComplete(() => {
+            if (!penguin.userData.isCallingWaiter) return;
+
+            const waveOut = new TWEEN.Tween(rightFlipper.rotation).to({ z: Math.PI/2.5 }, 350).easing(TWEEN.Easing.Quadratic.InOut);
+            const waveIn = new TWEEN.Tween(rightFlipper.rotation).to({ z: Math.PI/4 }, 350).easing(TWEEN.Easing.Quadratic.InOut);
+            waveOut.chain(waveIn);
+            waveIn.chain(waveOut);
+            penguin.userData.callWaiterTween = waveOut;
+            waveOut.start();
+        })
+        .start();
+}
+
+export function stopCallingWaiter(penguin){
+    if (!penguin.userData.isCallingWaiter) return;
+    penguin.userData.isCallingWaiter = false;
+
+    if (penguin.userData.callWaiterTween){
+        penguin.userData.callWaiterTween.stop();
+        penguin.userData.callWaiterTween = null;
+    }
+
+    const rightFlipper = penguin.userData.rightFlipper;
+    new TWEEN.Tween(rightFlipper.rotation).to({ x: 0, y: 0, z: Math.PI/6 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
+}
+
+function applyForwardPitch(penguin, angle){
+    const yaw = penguin.userData.leanYaw !== undefined ? penguin.userData.leanYaw : penguin.rotation.y;
+    const qYaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+    const qPitch = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), angle);
+    penguin.quaternion.copy(qYaw).multiply(qPitch);
+}
+
+
+export function startEating(penguin){
+    if (penguin.userData.isEating) return;
+    penguin.userData.isEating = true;
+
+    penguin.userData.leanYaw = penguin.rotation.y;
+    penguin.userData.leanState = { angle: 0 };
+
+    new TWEEN.Tween(penguin.userData.leanState)
+        .to({ angle: 0.3 }, 350)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .onUpdate(() => applyForwardPitch(penguin, penguin.userData.leanState.angle))
+        .start();
+
+    const leftFlipper = penguin.userData.leftFlipper;
+    const rightFlipper = penguin.userData.rightFlipper;
+
+    const biteUpLeft = new TWEEN.Tween(leftFlipper.rotation).to({ x: -Math.PI/2, z: -Math.PI/3 }, 280).easing(TWEEN.Easing.Quadratic.Out);
+    const biteDownLeft = new TWEEN.Tween(leftFlipper.rotation).to({ x: 0, z: -Math.PI/6 }, 280).easing(TWEEN.Easing.Quadratic.In).delay(250);
+    biteUpLeft.chain(biteDownLeft);
+    biteDownLeft.chain(biteUpLeft);
+
+    const biteUpRight = new TWEEN.Tween(rightFlipper.rotation).to({ x: -Math.PI/2, z: Math.PI/3 }, 280).easing(TWEEN.Easing.Quadratic.Out);
+    const biteDownRight = new TWEEN.Tween(rightFlipper.rotation).to({ x: 0, z: Math.PI/6 }, 280).easing(TWEEN.Easing.Quadratic.In).delay(250);
+    biteUpRight.chain(biteDownRight);
+    biteDownRight.chain(biteUpRight);
+
+    penguin.userData.eatingTweens = [biteUpLeft, biteUpRight];
+    biteUpLeft.start();
+    biteUpRight.start();
+}
+
+export function stopEating(penguin){
+    if (!penguin.userData.isEating) return;
+    penguin.userData.isEating = false;
+
+    if (penguin.userData.eatingTweens){
+        penguin.userData.eatingTweens.forEach(tween => tween.stop());
+        penguin.userData.eatingTweens = null;
+    }
+
+    const leftFlipper = penguin.userData.leftFlipper;
+    const rightFlipper = penguin.userData.rightFlipper;
+    new TWEEN.Tween(leftFlipper.rotation).to({ x: 0, y: 0, z: -Math.PI/6 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
+    new TWEEN.Tween(rightFlipper.rotation).to({ x: 0, y: 0, z: Math.PI/6 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
+
+    if (penguin.userData.leanState){
+        new TWEEN.Tween(penguin.userData.leanState)
+            .to({ angle: 0 }, 300)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .onUpdate(() => applyForwardPitch(penguin, penguin.userData.leanState.angle))
+            .onComplete(() => {
+                penguin.userData.leanYaw = undefined;
+                penguin.userData.leanState = null;
+            })
+            .start();
+    }
+}
+
+// Anime-style red "anger vein" symbol shown above the penguin's head
+export function showAngerSymbol(penguin){
+    if (penguin.userData.angerSymbol) return;
+
+    const texture = new THREE.TextureLoader().load('textures/angry.png');
+    const material = new THREE.SpriteMaterial({ 
+        map: texture, 
+        transparent: true, 
+        depthTest: false 
+    });
+    
+    const sprite = new THREE.Sprite(material);
+    sprite.position.set(1.2, 3.5, 0.0); 
+    sprite.scale.set(0.5, 0.5, 0.5);
+    
+    penguin.add(sprite);
+    penguin.userData.angerSymbol = sprite;
+
+    const pulseUp = new TWEEN.Tween(sprite.scale)
+        .to({ x: 1.8, y: 1.8, z: 1.8 }, 280)
+        .easing(TWEEN.Easing.Quadratic.InOut);
+        
+    const pulseDown = new TWEEN.Tween(sprite.scale)
+        .to({ x: 1.5, y: 1.5, z: 1.5 }, 280)
+        .easing(TWEEN.Easing.Quadratic.InOut);
+        
+    pulseUp.chain(pulseDown);
+    pulseDown.chain(pulseUp);
+    
+    penguin.userData.angerPulseTween = pulseUp;
+    pulseUp.start();
+}
+
+export function hideAngerSymbol(penguin){
+    if (!penguin.userData.angerSymbol) return;
+
+    if (penguin.userData.angerPulseTween){
+        penguin.userData.angerPulseTween.stop();
+        penguin.userData.angerPulseTween = null;
+    }
+
+    penguin.remove(penguin.userData.angerSymbol);
+    penguin.userData.angerSymbol.material.map.dispose();
+    penguin.userData.angerSymbol.material.dispose();
+    penguin.userData.angerSymbol = null;
+}
+
 export function animateInteractable(target, targetAngle, axis = 'y') {
     const duration = 1500;
     const currentRotation = { angle: target.rotation[axis] };
@@ -257,33 +447,25 @@ export function createPlate(foodName){
 }
 
 export function getFreeCounterSpot(basePosition) {
-    // 1. Definisci i limiti del tuo bancone sull'asse Z
-    const COUNTER_Z_MIN = -20;  // Modifica questi valori in base alla lunghezza 
-    const COUNTER_Z_MAX = 20;   // del tuo modello 3D del bancone
-    
-    // 2. Definisci la Z dove si trova il vassoio (es. a Z = 0)
+    // Define counter limits on z axis
+    const COUNTER_Z_MIN = -5; 
+    const COUNTER_Z_MAX = 20;
     const TRAY_Z = -18;          
-    
-    // 3. Definisci la distanza minima tra un piatto e l'altro (e dal vassoio)
     const SAFE_DISTANCE = 2.5; 
 
     let freeZ = 0;
     let isOccupied = true;
     let attempts = 0;
     
-    // Cerca un punto libero (massimo 50 tentativi per evitare loop infiniti)
     while (isOccupied && attempts < 50) {
-        // Genera una Z casuale lungo il bancone
-        freeZ = Math.random() * (COUNTER_Z_MAX - COUNTER_Z_MIN) + COUNTER_Z_MIN;
+        freeZ = Math.random()*(COUNTER_Z_MAX - COUNTER_Z_MIN) + COUNTER_Z_MIN;
         
         isOccupied = false;
-        
-        // Controlla se la posizione è troppo vicina al vassoio
+
         if (Math.abs(freeZ - TRAY_Z) < SAFE_DISTANCE) {
             isOccupied = true;
         }
         
-        // Controlla se è troppo vicina a un piatto già appoggiato
         for (let plateZ of state.platesOnCounter) {
             if (Math.abs(freeZ - plateZ) < SAFE_DISTANCE) {
                 isOccupied = true;
@@ -293,12 +475,10 @@ export function getFreeCounterSpot(basePosition) {
         attempts++;
     }
     
-    // Se abbiamo trovato un posto, salviamo la Z per i futuri piatti
     if (!isOccupied) {
         state.platesOnCounter.push(freeZ);
     }
     
-    // Ritorna la nuova posizione completa (X e Y rimangono quelle base del bancone, Z cambia)
     return new THREE.Vector3(basePosition.x, basePosition.y, freeZ);
 }
 

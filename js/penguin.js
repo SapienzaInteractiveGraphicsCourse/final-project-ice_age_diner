@@ -2,7 +2,9 @@ import { state } from './state.js';
 import {
     startWalking, stopWalking, animateInteractable, seatPenguin, updateBubble, createPlate,
     resetFlippers, animateChefFridgeReach, animateChefStove, setChefPickupPose,
-    setChefCarryPose, animateChefCounterRelease, stackPlates, pickUpPlate, getFreeCounterSpot
+    setChefCarryPose, animateChefCounterRelease, stackPlates, pickUpPlate, getFreeCounterSpot,
+    startReadingMenu, stopReadingMenu, startCallingWaiter, stopCallingWaiter,
+    stopEating, showAngerSymbol, hideAngerSymbol
 } from './animations.js';
 import { checkCollision } from './controlWaiter.js';
 
@@ -27,6 +29,8 @@ export const CUSTOMER_POSITIONS = {
     DOOR_INSIDE: new THREE.Vector3(74, 0, 10),
     DOOR_INSIDE_LEAVE: new THREE.Vector3(65, 0, 10),
 };
+
+const ANGER_THRESHOLD = 7200;
 
 const QUEUE_START_X = 74;
 const QUEUE_START_Z = 36;
@@ -74,38 +78,41 @@ export function createPenguinModel(role, options = {}){
     belly.position.set(0, 1.4, 0.47);
     penguinGroup.add(belly);
 
-    // Head
+    const headGroup = new THREE.Group();
+    headGroup.position.set(0, 3.0, 0);
     const headGeo = new THREE.SphereGeometry(0.8, 16, 16);
     const head = new THREE.Mesh(headGeo, blackMat);
-    head.position.y = 3.2;
-    penguinGroup.add(head);
+    head.position.y = 0.2;
+    headGroup.add(head);
 
     // Eyes and pupils
     const eyeGeo = new THREE.SphereGeometry(0.15, 16, 16);
     const pupilGeo = new THREE.SphereGeometry(0.1, 16, 16);
 
     const leftEye = new THREE.Mesh(eyeGeo, whiteMat);
-    leftEye.position.set(-0.3, 3.3, 0.7);
+    leftEye.position.set(-0.3, 0.3, 0.7);
     const leftPupil = new THREE.Mesh(pupilGeo, blackMat);
     leftPupil.scale.set(1, 1, 0.2);
     leftPupil.position.set(0, 0, 0.14);
     leftEye.add(leftPupil);
-    penguinGroup.add(leftEye);
+    headGroup.add(leftEye);
 
     const rightEye = new THREE.Mesh(eyeGeo, whiteMat);
-    rightEye.position.set(0.3, 3.3, 0.7);
+    rightEye.position.set(0.3, 0.3, 0.7);
     const rightPupil = new THREE.Mesh(pupilGeo, blackMat);
     rightPupil.scale.set(1, 1, 0.2);
     rightPupil.position.set(0, 0, 0.14);
     rightEye.add(rightPupil);
-    penguinGroup.add(rightEye);
+    headGroup.add(rightEye);
 
     // Beak
     const beakGeo = new THREE.ConeGeometry(0.2, 0.6, 16);
     const beak = new THREE.Mesh(beakGeo, orangeMat);
     beak.rotation.x = Math.PI/2;
-    beak.position.set(0, 3.1, 0.9);
-    penguinGroup.add(beak);
+    beak.position.set(0, 0.1, 0.9);
+    headGroup.add(beak);
+
+    penguinGroup.add(headGroup);
 
     // Flippers
     const flipperMat = (role === 'dishwasher') ? yellowGlovesMat : blackMat;
@@ -206,6 +213,7 @@ export function createPenguinModel(role, options = {}){
     }
 
     penguinGroup.scale.set(2.2, 2.2, 2.2);
+    penguinGroup.userData.head = headGroup;
     penguinGroup.userData.leftFlipper = leftFlipper;
     penguinGroup.userData.rightFlipper = rightFlipper;
     penguinGroup.userData.leftFoot = leftFoot;
@@ -390,7 +398,8 @@ export function spawnCustomer(){
     if (currentIdx <4) {
         customer.userData.state = 'WALK_TO_DOOR';
         customer.userData.targetPosition = CUSTOMER_POSITIONS.DOOR_OUTSIDE;
-    } else {
+    }
+    else{
         customer.userData.state = 'WALK_TO_WAITING';
         customer.userData.targetPosition = WAITING_POSITION[currentIdx];
     }
@@ -530,7 +539,8 @@ function updateChefRoutine(chef){
                 newplate.scale.set(2, 2, 2);
                 chef.userData.hasPlate = true;
                 chef.userData.flipperTweenStarted = false;
-                chef.userData.targetCounterZ = -18 + Math.random()*23;
+                const counterSpot = getFreeCounterSpot(KITCHEN_POS.COUNTER);
+                chef.userData.targetCounterZ = counterSpot.z;
                 if (!chef.userData.flipperTweenStarted){
                     chef.userData.flipperTweenStarted = true;
                     pickUpPlate(chef, newplate);
@@ -541,7 +551,7 @@ function updateChefRoutine(chef){
 
         case 'WALK_COUNTER':
             const targetCounter = new THREE.Vector3(KITCHEN_POS.COUNTER.x, 0, chef.userData.targetCounterZ);
-            const reachedCounter = moveTowards(chef, KITCHEN_POS.COUNTER);
+            const reachedCounter = moveTowards(chef, targetCounter);
             
             if (chef.userData.hasPlate) {
                 setChefCarryPose(chef);
@@ -556,8 +566,6 @@ function updateChefRoutine(chef){
             break;
 
         case 'ACTION_COUNTER':
-            
-
             chef.userData.timer--;
 
             if (chef.userData.timer <= 0) {
@@ -575,10 +583,10 @@ function updateChefRoutine(chef){
                     completedOrder.userData.interactionType = 'plate';
                     state.scene.add(completedOrder);
 
-                    //completedOrder.position.set(-36, KITCHEN_POS.COUNTER.y + 4.6, KITCHEN_POS.COUNTER.z);
-                    completedOrder.position.copy(counterSpot);
-                    completedOrder.position.x = -36;
-                    completedOrder.position.y = KITCHEN_POS.COUNTER.y + 4.6;
+                    completedOrder.position.set(-36, KITCHEN_POS.COUNTER.y + 4.6, chef.userData.targetCounterZ);
+                    //completedOrder.position.copy(counterSpot);
+                    //completedOrder.position.x = -36;
+                    //completedOrder.position.y = KITCHEN_POS.COUNTER.y + 4.6;
                     completedOrder.rotation.set(0, 0, 0);
                     completedOrder.scale.set(4,4,4);
                     chef.userData.currentOrder.status = 'ready';
@@ -704,7 +712,6 @@ function updateDishwasherRoutine(dishwasher) {
                  dishwasher.userData.plate = null;
                  dishwasher.userData.washingStack = stack; 
             }
-
             dishwasher.rotation.y = (-Math.PI / 2) + Math.sin(dishwasher.userData.timer * 0.2) * 0.1;
 
             if (dishwasher.userData.timer <= 0) {
@@ -728,15 +735,17 @@ function updateDishwasherRoutine(dishwasher) {
                         }
                     });
 
-                    if (dirtyCount > 0) {
+                    if (dirtyCount > 0){
                         console.log("Ci sono altri piatti! Vado subito a prenderli.");
                         dishwasher.userData.targetTray = tray; 
                         dishwasher.userData.state = 'WALK_COUNTER';
-                    } else {
+                    }
+                    else{
                         console.log("Nessun altro piatto, torno in attesa.");
                         dishwasher.userData.state = 'WALK_IDLE'; 
                     }
-                } else {
+                }
+                else{
                     dishwasher.userData.state = 'WALK_IDLE';
                 }
             }
@@ -823,7 +832,20 @@ function updateCustomerRoutine(customer) {
             if (!customer.userData.isInteractable) {
                 customer.userData.isInteractable = true;
                 customer.userData.interactionType = 'customer';
-                customer.userData.timer = 0;
+                customer.userData.timer = ANGER_THRESHOLD*2;
+            }
+
+            customer.userData.timer--;
+            if (customer.userData.timer === ANGER_THRESHOLD) {
+                updateBubble(customer, '!!!');
+                showAngerSymbol(customer);
+            }
+
+            if (customer.userData.timer <= 0) {
+                removeFromQueue(customer);
+                userData.isInteractable = false;
+                customer.userData.state = 'LEAVING';
+                break;
             }
 
             const checkIdx = waitingQueue.indexOf(customer);
@@ -860,6 +882,16 @@ function updateCustomerRoutine(customer) {
 
         case 'WAIT_FOR_SEAT_ASSIGNMENT':
             if (typeof stopWalking !== 'undefined') stopWalking(customer);
+
+            customer.userData.timer--;
+            if (customer.userData.timer === ANGER_THRESHOLD) {
+                updateBubble(customer, '!!!');
+                showAngerSymbol(customer);
+            }
+            if (customer.userData-timer <= 0){
+                customer.userData.isInteractable = false;
+                customer.userData.state ='LEAVING';
+            }
             break;
         
         case 'WALK_TO_SEAT':
@@ -937,6 +969,7 @@ function updateCustomerRoutine(customer) {
             customer.userData.state = 'THINKING';
             customer.userData.timer = 500;
             updateBubble(customer, '...');
+            startReadingMenu(customer);
             break;
 
         case 'THINKING':
@@ -944,25 +977,35 @@ function updateCustomerRoutine(customer) {
             if (customer.userData.timer <= 0) {
                 customer.userData.order = state.menu[Math.floor(Math.random() * state.menu.length)];
                 customer.userData.isInteractable = true;
-                customer.userData.timer = 30000;
+                customer.userData.timer = ANGER_THRESHOLD * 2;
                 customer.userData.state = 'READY_TO_ORDER';
                 updateBubble(customer, '!');
+                stopReadingMenu(customer);
+                startCallingWaiter(customer);
             }
             break;
 
         case 'READY_TO_ORDER':
             customer.userData.timer--;
-            if (customer.userData.timer <= 10000) {
-                customer.userData.state = 'ANGRY';
+            if (customer.userData.timer === ANGER_THRESHOLD) {
                 updateBubble(customer, '!!!');
+                showAngerSymbol(customer);
+            }
+            if (customer.userData.timer <= 0){
+                customer.userData.isInteractable = false;
+                customer.userData.state = 'LEAVING';
             }
             break;
 
         case 'WAIT_FOR_FOOD':
             customer.userData.timer--;
-            if (customer.userData.timer <= 10000) {
-                customer.userData.state = 'ANGRY';
+            if (customer.userData.timer === ANGER_THRESHOLD) {
                 updateBubble(customer, '!!!');
+                showAngerSymbol(customer);
+            }
+            if (customer.userData.timer <= 0){
+                customer.userData.isInteractable = false;
+                customer.userData.state = 'LEAVING';
             }
             break;
 
@@ -979,17 +1022,16 @@ function updateCustomerRoutine(customer) {
                     plate.userData.isInteractable = true;
                     plate.userData.interactionType = 'dirty_plate';
                 }
-                
-                customer.userData.state = 'LEAVING';
+
+                stopEating(customer);
+                customer.userData.timer = 20;
+                customer.userData.state = 'FINISH_EATING';
             }
             break;
-
-        case 'ANGRY':
+        
+        case 'FINISH_EATING':
             customer.userData.timer--;
-            if (customer.userData.timer <= 0) {
-                customer.userData.state = 'LEAVING';
-                updateBubble(customer, '!!!');
-            }
+            if (customer.userData.timer <= 0) customer.userData.state = 'LEAVING';
             break;
 
         case 'LEAVING':
@@ -1012,9 +1054,10 @@ function updateCustomerRoutine(customer) {
                 }
 
                 customer.userData.leaveWaypoints[0].y = 0;
-                customer.position.y = 0;
+                //customer.position.y = 0;
 
-                if (typeof TWEEN !== 'undefined') {
+                if (typeof TWEEN !== 'undefined'){
+                    new TWEEN.Tween(customer.position).to({ y: 0 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
                     new TWEEN.Tween(customer.userData.leftFoot.rotation).to({ x: 0 }, 200).start();
                     new TWEEN.Tween(customer.userData.rightFoot.rotation).to({ x: 0 }, 200).start();
                 }
@@ -1075,6 +1118,7 @@ function updateCustomerRoutine(customer) {
             }
             else if (customer.userData.subState === 'WALK_TO_DESPAWN') {
                 if (moveTowards(customer, CUSTOMER_POSITIONS.SPAWN)) {
+                    hideAngerSymbol(customer);
                     state.scene.remove(customer);
                     const pIdx = penguins.findIndex(p => p.mesh === customer);
                     if (pIdx > -1) penguins.splice(pIdx, 1);

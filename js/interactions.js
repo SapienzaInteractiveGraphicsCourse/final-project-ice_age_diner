@@ -1,4 +1,4 @@
-import { animateInteractable, pickUpPlate, putDownPlate, stackPlates } from './animations.js';
+import { animateInteractable, pickUpPlate, putDownPlate, stackPlates, stopCallingWaiter, startEating, hideAngerSymbol } from './animations.js';
 import { penguins, waitingQueue } from './penguin.js';
 import { state } from './state.js';
 
@@ -50,6 +50,8 @@ function onMouseClick(event){
                 const queueIdx = waitingQueue.indexOf(clickedObj);
                 if (queueIdx !== -1) waitingQueue.splice(queueIdx, 1);
 
+                hideAngerSymbol(clickedObj);
+                clickedObj.userData.timer = 14400;
                 clickedObj.userData.state = 'WAIT_FOR_SEAT_ASSIGNMENT';
                 clickedObj.userData.isInteractable = false;
             }
@@ -58,6 +60,11 @@ function onMouseClick(event){
                 const orderFood = clickedObj.userData.order;
                 state.orders.push({customer: clickedObj, food: orderFood, status: 'pending'});
                 clickedObj.userData.state = 'WAIT_FOR_FOOD';
+                
+                hideAngerSymbol(clickedObj);
+                clickedObj.userData.timer = 14400;
+
+                stopCallingWaiter(clickedObj);
                 if (clickedObj.userData.bubble) {
                     clickedObj.remove(clickedObj.userData.bubble);
                 }
@@ -92,12 +99,16 @@ function onMouseClick(event){
                     console.log("Customer interaction: delivering food.");
                     const plate = putDownPlate(waiter, interactionScene, clickedObj);
                     clickedObj.userData.plate = plate;
+
+                    hideAngerSymbol(clickedObj);
                     clickedObj.userData.timer = 300;
+
                     if (clickedObj.userData.bubble) {
                         clickedObj.remove(clickedObj.userData.bubble);
                         clickedObj.userData.bubble = null;
                     }
                     clickedObj.userData.state = 'EATING';
+                    startEating(clickedObj);
                 }
             }
             else if (clickedObj.userData.interactionType === 'tray' && clickedObj.userData.isInteractable){
@@ -141,6 +152,7 @@ function onMouseClick(event){
 
                 if (followingPenguinData && followingPenguinData.mesh){
                     const followingPenguin = followingPenguinData.mesh;
+                    hideAngerSymbol(followingPenguin);
                     followingPenguin.userData.state = 'WALK_TO_SEAT';
                     followingPenguin.userData.targetPosition = clickedObj.position.clone();
                     clickedObj.userData.isOccupied = true;
