@@ -399,6 +399,8 @@ export function buildRestaurant() {
 
     loadDoor(scene, 'models/furniture/doorway.glb', width/2, 0, 10, -Math.PI/2, 15);
     
+    loadDoor(scene, 'models/furniture/doorway.glb', width/2, 0, 10, -Math.PI/2, 15);
+    
     //load of tray
     loadFurniture(scene, 'models/food/plate-rectangle.glb', -36, -18 , 0, 4.5, 10, false, false, true);
     //bottom, from left to right
@@ -471,51 +473,57 @@ export function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/Vase.glb', -65, 40, 3*Math.PI/2, 21.5, 0.8);
     loadFurniture(scene, 'models/furniture/Vines.glb', -58, 40, Math.PI, 16, 5);
 
-    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, 15.5, Math.PI/2, 15);
-    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, 10, Math.PI/2, 15);
-    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, 4.5, Math.PI/2, 15);
-    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, -1, Math.PI/2, 15);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -78, 15.5, Math.PI/2, 15);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -78, 10, Math.PI/2, 15);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -78, 4.5, Math.PI/2, 15);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -78, -1, Math.PI/2, 15);
 
-    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperLow.glb', -74, -6.5, Math.PI/2, 17.5);
-    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperLow.glb', -74, -12, Math.PI/2, 17.5);
-    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperLow.glb', -74, -17.5, Math.PI/2, 17.5);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperLow.glb', -78, -6.5, Math.PI/2, 17.5);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperLow.glb', -78, -12, Math.PI/2, 17.5);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperLow.glb', -78, -17.5, Math.PI/2, 17.5);
     
-    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, -23, Math.PI/2, 15);
-    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, -28.5, Math.PI/2, 15);
-    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -74, -34, Math.PI/2, 15);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -78, -23, Math.PI/2, 15);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -78, -28.5, Math.PI/2, 15);
+    loadFurniture(scene, 'models/furniture/kitchenCabinetUpperDouble.glb', -78, -34, Math.PI/2, 15);
+
+       
+
     
     //decorations and little forniture
     loadFurniture(scene, 'models/furniture/kitchenCoffeeMachine.glb', -75, -5, Math.PI/2, 5.5);
-    loadFurniture(scene, 'models/furniture/hoodModern.glb', -74, 7.25, Math.PI/2, 12);
+    loadFurniture(scene, 'models/furniture/hoodModern.glb', -76, 7.25, Math.PI/2, 12);
     loadFurniture(scene, 'models/furniture/CuttingTable.glb', -77, -25, Math.PI/2, 4, 2);
-    loadFurniture(scene, 'models/furniture/Whiteboard.glb', -74, -14, 2*Math.PI, 8, 0.08);
+    loadFurniture(scene, 'models/furniture/Whiteboard.glb', -78, -14, 2*Math.PI, 8, 0.08);
+    loadFurniture(scene, 'models/furniture/JarShelf.glb', -78, -29, -Math.PI/2, 10, 9);
 
     loadFurniture(scene, 'models/furniture/OilBarrels.glb', -71, 30, Math.PI, 0, 90);
     loadFurniture(scene, 'models/furniture/OilBarrels.glb', -75, 34, 0, 0, 70);
 
 
 
-    //main room //quanto vai a destra, vai indietro, rotazione, altezza, quanto piccolo
-    loadFurniture(scene, 'models/furniture/theBedroomHanger.glb', 77, 0, Math.PI/2, 10, 10);
-    loadFurniture(scene, 'models/furniture/LittleBookcase.glb', 76, -16, Math.PI/2, 2, 13);
+    //main room //parametri: vai a destra, vai indietro, rotazione, altezza, quanto piccolo
+    loadFurniture(scene, 'models/furniture/theBedroomHanger.glb', 79, 0, Math.PI/2, 10, 10);
+    loadFurniture(scene, 'models/furniture/LittleBookcase.glb', 76, -16, Math.PI/2, 5.5, 11);
     loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', 75, -32, Math.PI/2, 10, 10);
 
-    loadFurniture(scene, 'models/furniture/Board.glb', -30, 27, Math.PI/2, 4, 25);
+    loadFurniture(scene, 'models/furniture/Board.glb', -30, 24, Math.PI/2, 4, 25);
+    loadFurniture(scene, 'models/furniture/Clock.glb', -35, 27, Math.PI/2, 15, 0.65);
 
-    loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', -33, 40, Math.PI/2, 10, 10);
-    loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', -33, -40, -Math.PI/2, 10, 10);
 
-    loadFurniture(scene, 'models/furniture/WallArt06.glb', 4, -44, Math.PI, 15, 10);
-    loadFurniture(scene, 'models/furniture/CoffeePlant.glb', 4, -44, Math.PI, 0, 1.5);
+    loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', -33, 37, Math.PI/2, 10, 10);
+    loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', -33, -37, -Math.PI/2, 10, 10);
 
-    loadFurniture(scene, 'models/furniture/WallArt02.glb', 35 , -44, Math.PI, 12, 10);
-    loadFurniture(scene, 'models/furniture/FiddleLeafPlant(1).glb', 35 , -44, Math.PI, 0, 1.5);
+    loadFurniture(scene, 'models/furniture/WallArt06.glb', 4, -44.5, Math.PI, 15, 10);
+    loadFurniture(scene, 'models/furniture/CoffeePlant.glb', 4, -42, Math.PI, 0, 1.5);
 
-    loadFurniture(scene, 'models/furniture/WallArt03.glb', 4, 44, 0, 15, 10);
-    loadFurniture(scene, 'models/furniture/FiddleLeafPlant(1).glb', 4, 44, 0, 0, 1.5);
+    loadFurniture(scene, 'models/furniture/WallArt02.glb', 35 , -44.5, Math.PI, 12, 10);
+    loadFurniture(scene, 'models/furniture/FiddleLeafPlant(1).glb', 35 , -42, Math.PI, 0, 1.5);
 
-    loadFurniture(scene, 'models/furniture/WallArt01.glb', 35, 44, 0, 12, 10);
-    loadFurniture(scene, 'models/furniture/CoffeePlant.glb', 35, 44, 0, 0, 1.5);
+    loadFurniture(scene, 'models/furniture/WallArt03.glb', 4, 44.5, 0, 15, 10);
+    loadFurniture(scene, 'models/furniture/FiddleLeafPlant(1).glb', 4, 42, 0, 0, 1.5);
+
+    loadFurniture(scene, 'models/furniture/WallArt01.glb', 35, 44.5, 0, 12, 10);
+    loadFurniture(scene, 'models/furniture/CoffeePlant.glb', 35, 42, 0, 0, 1.5);
 
     //loadFurniture(scene, 'models/furniture/pottedPlant.glb', 35, 44, 0, 0, 1.5);
  
