@@ -600,7 +600,7 @@ creaFarettoCentrale(66, 30, 0, 0);
     loadFurniture(scene, 'models/furniture/JarShelf.glb', -78, -29, -Math.PI/2, 10, 9);
     loadFurniture(scene, 'models/furniture/OilBarrels.glb', -71, 30, Math.PI, 0, 90);
     loadFurniture(scene, 'models/furniture/OilBarrels.glb', -75, 34, 0, 0, 70);
-
+    loadFurniture(scene, 'models/furniture/coffee_menu.glb', -55, 40, -Math.PI, 13, 10);
 
     //main room decorations
     //parametri: vai a destra, vai indietro, rotazione, altezza, quanto piccolo
@@ -608,7 +608,7 @@ creaFarettoCentrale(66, 30, 0, 0);
     loadFurniture(scene, 'models/furniture/LittleBookcase.glb', 76, -16, Math.PI/2, 5.5, 11);
     loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', 75, -32, Math.PI/2, 10, 10);
 
-    loadFurniture(scene, 'models/furniture/Board.glb', -30, 24, Math.PI/2, 4, 25);
+    loadFurniture(scene, 'models/furniture/welcome_sign_restaurant.glb', -30, 24, Math.PI, 0, 8);
     loadFurniture(scene, 'models/furniture/Clock.glb', -35, 27, Math.PI/2, 12, 0.65);
 
 
@@ -627,7 +627,8 @@ creaFarettoCentrale(66, 30, 0, 0);
     loadFurniture(scene, 'models/furniture/WallArt01.glb', 35, 44.5, 0, 12, 10);
     loadFurniture(scene, 'models/furniture/CoffeePlant.glb', 35, 42, 0, 0, 1.5);
 
-    //loadFurniture(scene, 'models/furniture/pottedPlant.glb', 35, 44, 0, 0, 1.5);
+    //loadFurniture(scene, 'models/furniture/menu2.glb', 0, 0, 0, 5.3, 1.5);
+    
  
     //tables and chairs
     const diamondLayout = [
@@ -665,16 +666,13 @@ creaFarettoCentrale(66, 30, 0, 0);
         }
     ];
 
-    diamondLayout.forEach(group =>{
-       
-        loadFurniture(scene, 'models/furniture/RoundTable.glb', group.table.x, group.table.z, 2*Math.PI, 0, 5.5);
-
-        //loadFurniture(scene, 'models/furniture/pottedPlant.glb', group.table.x, group.table.z, 0, 5.2, 5);
-
-        group.chairs.forEach(chairPos => {
-            loadFurniture(scene, 'models/furniture/chairModernCushion.glb', chairPos.x, chairPos.z, chairPos.rot, 0, 14, false, true);
-        });
+    diamondLayout.forEach(group => {
+    loadFurniture(scene, 'models/furniture/RoundTable.glb', group.table.x, group.table.z, 2 * Math.PI, 0, 5.5);
+    loadFurniture(scene, 'models/furniture/menu2.glb', group.table.x, group.table.z-2.5, 0, 5.3, 1.5);
+    group.chairs.forEach(chairPos => {
+        loadFurniture(scene, 'models/furniture/chairModernCushion.glb', chairPos.x, chairPos.z, chairPos.rot, 0, 14, false, true);
     });
+});
 
     loadEnvironment(scene, state.icebergs);
     animate(waiter, camera, state.icebergs);
