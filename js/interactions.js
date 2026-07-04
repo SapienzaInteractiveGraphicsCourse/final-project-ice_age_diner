@@ -51,6 +51,11 @@ function onMouseClick(event){
                 if (queueIdx !== -1) waitingQueue.splice(queueIdx, 1);
 
                 hideAngerSymbol(clickedObj);
+                if (clickedObj.userData.bubble){
+                    clickedObj.remove(clickedObj.userData.bubble);
+                    clickedObj.userData.bubble = null;
+                }
+                
                 clickedObj.userData.timer = 14400;
                 clickedObj.userData.state = 'WAIT_FOR_SEAT_ASSIGNMENT';
                 clickedObj.userData.isInteractable = false;

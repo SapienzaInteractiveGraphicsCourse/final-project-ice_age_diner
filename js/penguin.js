@@ -24,10 +24,11 @@ export const KITCHEN_POS = {
 };
 
 export const CUSTOMER_POSITIONS = {
-    SPAWN: new THREE.Vector3(90, 0, 10),
+    SPAWN: new THREE.Vector3(124, 0, 20),
     DOOR_OUTSIDE: new THREE.Vector3(84, 0, 10), 
     DOOR_INSIDE: new THREE.Vector3(74, 0, 10),
     DOOR_INSIDE_LEAVE: new THREE.Vector3(65, 0, 10),
+    DESPAWN: new THREE.Vector3(124, 0, 10)
 };
 
 const ANGER_THRESHOLD = 7200;
@@ -40,11 +41,12 @@ const QUEUE_EXIT_X = 65;
 const AISLE_Z = 10; 
 
 export const WAITING_POSITION = [];
-
-for (let i=0; i<4; i++) {
-    WAITING_POSITION.push(new THREE.Vector3(QUEUE_START_X, 0, QUEUE_START_Z - (i * QUEUE_SPACING)));
+for (let i = 0; i < 3; i++) {
+    WAITING_POSITION.push(new THREE.Vector3(QUEUE_START_X, 0, QUEUE_START_Z - (i*QUEUE_SPACING)));
 }
-
+for (let i = 0; i < 4; i++) {
+    WAITING_POSITION.push(new THREE.Vector3(92 + (i*8), 0, 20));
+}
 
 export function createPenguinModel(role, options = {}){
     const penguinGroup = new THREE.Group();
@@ -175,7 +177,7 @@ export function createPenguinModel(role, options = {}){
         const bandanaGeo = new THREE.TorusGeometry(0.78, 0.08, 8, 24);
         const bandana = new THREE.Mesh(bandanaGeo, redOutfitMat);
         bandana.position.set(0, 3.4, 0);
-        bandana.rotation.x = Math.PI / 2;
+        bandana.rotation.x = Math.PI/2;
         penguinGroup.add(bandana);
 
         const knotGeo = new THREE.ConeGeometry(0.08, 0.25, 4);
@@ -375,17 +377,7 @@ function getFridgeDoor(chef) {
 }
 
 export function spawnCustomer(){
-    const penguinWaiting = penguins.filter(p => {
-    const optionState = p.mesh.userData.state;
-    return optionState === 'WAIT_FOR_WAITER' || optionState === 'WAIT_FOR_SEAT_ASSIGNMENT' || optionState === 'WALK_TO_WAITING';
-    }).length;
-    console.log("Current status of all the penguins:");
-    penguins.forEach((p, index) => {
-        console.log(`Penguin [${index}] - Role: ${p.mesh.userData.role} - Status: ${p.mesh.userData.state}`);
-    });;
-    console.log(`Current waiting customers: ${penguinWaiting}`);
-    if ((penguinWaiting >= 3) || state.someone_is_leaving) {
-        console.log("No available waiting position for customer!");
+    if (state.someone_is_leaving || waitingQueue.length >= WAITING_POSITION.length) {
         return;
     }
 
@@ -395,13 +387,20 @@ export function spawnCustomer(){
     const currentIdx = waitingQueue.indexOf(customer);
     customer.userData.positionIndex = currentIdx;
 
-    if (currentIdx <4) {
+    const insideSpot = WAITING_POSITION[2];
+    const isSpotClear = !penguins.some(p => 
+        p.mesh !== customer && 
+        p.mesh.userData.role === 'customer' && 
+        p.mesh.position.distanceTo(insideSpot) < 4.0
+    );
+
+    if (currentIdx < 3 && !state.someone_is_leaving && isSpotClear) {
         customer.userData.state = 'WALK_TO_DOOR';
         customer.userData.targetPosition = CUSTOMER_POSITIONS.DOOR_OUTSIDE;
-    }
-    else{
-        customer.userData.state = 'WALK_TO_WAITING';
-        customer.userData.targetPosition = WAITING_POSITION[currentIdx];
+    } 
+    else {
+        customer.userData.state = 'WALK_TO_WAITING_OUTSIDE';
+        customer.userData.targetPosition = WAITING_POSITION[Math.max(currentIdx, 3)];
     }
 }
 
@@ -437,24 +436,30 @@ function updateMainDoorState() {
     const mainDoor = getMainDoor(customerData.mesh);
     if (!mainDoor) return;
 
-    let shouldBeOpen = state.someone_is_leaving;
+    let shouldBeOpen = penguins.some(p => {
+        const mesh = p.mesh;
+        if (mesh.userData.role !== 'customer') return false;
+        const s = mesh.userData.state;
+        
+        // Condizioni per aprire in entrata
+        const isEntering = (
+            s === 'WAIT_FOR_DOOR_ANIMATION' || 
+            s === 'WALK_INSIDE' ||
+            (s === 'WALK_TO_DOOR' && mesh.position.distanceTo(CUSTOMER_POSITIONS.DOOR_OUTSIDE) < 5)
+        );
+        
+        // Condizioni per aprire in uscita (solo quando il pinguino è nei pressi della porta)
+        const isLeaving = (
+            s === 'LEAVING' && (
+                mesh.userData.subState === 'WALK_TO_DOOR_INSIDE' || 
+                mesh.userData.subState === 'WAIT_FOR_DOOR' || 
+                mesh.userData.subState === 'WALK_TO_DOOR_OUTSIDE' || 
+                (mesh.userData.subState === 'WALK_TO_DESPAWN' && mesh.position.distanceTo(CUSTOMER_POSITIONS.DOOR_OUTSIDE) < 5)
+            )
+        );
 
-    if (!shouldBeOpen) {
-        shouldBeOpen = penguins.some(p => {
-            const mesh = p.mesh;
-            if (mesh.userData.role !== 'customer') return false;
-            const s = mesh.userData.state;
-            const idx = waitingQueue.indexOf(mesh);
-            
-            return (
-                s === 'WAIT_FOR_DOOR_ANIMATION' || 
-                s === 'WALK_INSIDE' ||
-                (s === 'WALK_TO_DOOR' && mesh.position.distanceTo(CUSTOMER_POSITIONS.DOOR_OUTSIDE) < 5) ||
-                //(s === 'LEAVING' && (mesh.userData.subState === 'WAIT_FOR_DOOR' || mesh.userData.subState === 'WALK_TO_DOOR_INSIDE' || mesh.userData.subState === ' WALK_TO_DOOR_OUTSIDE' || mesh.userData.subState === 'WALK_TO_DESPAWN')) ||
-                (idx >= 5) 
-            );
-        });
-    }
+        return isEntering || isLeaving;
+    });
 
     if (shouldBeOpen && !mainDoor.userData.isOpen) {
         mainDoor.userData.isOpen = true;
@@ -763,15 +768,90 @@ function updateDishwasherRoutine(dishwasher) {
 function updateCustomerRoutine(customer) {
     switch(customer.userData.state) {
         case 'WALK_TO_DOOR':
-            if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_OUTSIDE)) {
-                customer.rotation.y = -Math.PI / 2;
-                const mainDoor = getMainDoor(customer);
-                if (mainDoor && mainDoor.userData.isOpen) {
-                    customer.userData.timer = 60; 
-                    customer.userData.state = 'WAIT_FOR_DOOR_ANIMATION';
+            if (!customer.userData.doorWaypoints){
+                if (customer.position.z>15){
+                    customer.userData.doorWaypoints = [
+                        new THREE.Vector3(customer.position.x, 0, CUSTOMER_POSITIONS.DOOR_OUTSIDE.z),
+                        CUSTOMER_POSITIONS.DOOR_OUTSIDE
+                    ]
+                }
+                else{
+                    customer.userData.doorWaypoints = [CUSTOMER_POSITIONS.DOOR_OUTSIDE];
+                }
+                customer.userData.doorWpIdx = 0;
+            }
+
+            const currentWp = customer.userData.doorWaypoints[customer.userData.doorWpIdx];
+
+            if (moveTowards(customer, currentWp)) {
+                customer.userData.doorWpIdx++;
+                if (customer.userData.doorWpIdx >= customer.userData.doorWaypoints.length) {
+                    customer.rotation.y = -Math.PI/2;
+                    const mainDoor = getMainDoor(customer);
+                    
+                    if (mainDoor && mainDoor.userData.isOpen) {
+                        customer.userData.timer = 60; 
+                        customer.userData.state = 'WAIT_FOR_DOOR_ANIMATION';
+                        customer.userData.doorWaypoints = null;
+                    }
+                    else{
+                        customer.userData.doorWpIdx--;
+                    }
                 }
             }
             break;
+
+        case 'WALK_TO_WAITING_OUTSIDE': {
+            const outIdx = waitingQueue.indexOf(customer);
+            if (outIdx !== -1 && outIdx < 3) {
+                const insideSpot = WAITING_POSITION[2];
+                const isSpotClear = !penguins.some(p =>
+                    p.mesh !== customer && p.mesh.userData.role === 'customer' && p.mesh.position.distanceTo(insideSpot) < 4.0
+                );
+
+                if (!state.someone_is_leaving && isSpotClear) {
+                    customer.userData.state = 'WALK_TO_DOOR';
+                    break;
+                }
+            }
+
+            if (moveTowards(customer, customer.userData.targetPosition)){
+                customer.rotation.y = -Math.PI/2;
+                customer.userData.state = 'WAITING_OUTSIDE';
+            }
+            break;
+        }
+
+        case 'WAITING_OUTSIDE': {
+            const checkIdxOut = waitingQueue.indexOf(customer);
+            if (checkIdxOut !== -1){
+                if (checkIdxOut < 3) {
+                    const insideSpot = WAITING_POSITION[2];
+                    const isSpotClear = !penguins.some(p =>
+                        p.mesh !== customer && p.mesh.userData.role === 'customer' && p.mesh.position.distanceTo(insideSpot) < 4.0
+                    );
+
+                    if (!state.someone_is_leaving && isSpotClear) {
+                        customer.userData.state = 'WALK_TO_DOOR';
+                    }
+                    else{
+                        const waitSpot = WAITING_POSITION[3];
+                        if (customer.position.distanceTo(waitSpot) > 0.5) {
+                            customer.userData.targetPosition = waitSpot;
+                            customer.userData.state = 'WALK_TO_WAITING_OUTSIDE';
+                        }
+                    }
+                }
+                else {
+                    const newSpot = WAITING_POSITION[checkIdxOut];
+                    if (customer.position.distanceTo(newSpot) > 0.5){
+                        customer.userData.targetPosition = newSpot;
+                        customer.userData.state = 'WALK_TO_WAITING_OUTSIDE';
+                    }
+                }
+            }
+            break;
+        }
 
         case 'WAIT_FOR_DOOR_ANIMATION':
             customer.userData.timer--;
@@ -799,9 +879,21 @@ function updateCustomerRoutine(customer) {
             if (currentIdx !== -1){
                 const spotIdx = Math.min(currentIdx, WAITING_POSITION.length-1);
                 
-                if (spotIdx < 5 && !customer.userData.hasEnteredInside) {
-                    customer.userData.state = 'WALK_TO_DOOR';
-                    customer.userData.queueWaypoints = null;
+                if (spotIdx < 3 && !customer.userData.hasEnteredInside) {
+                    const insideSpot = WAITING_POSITION[2];
+                    const isSpotClear = !penguins.some(p =>
+                        p.mesh !== customer && p.mesh.userData.role === 'customer' && p.mesh.position.distanceTo(insideSpot) < 4.0
+                    );
+                    
+                    if (!state.someone_is_leaving && isSpotClear) {
+                        customer.userData.state = 'WALK_TO_DOOR';
+                        customer.userData.queueWaypoints = null;
+                    }
+                    else{
+                        customer.userData.targetPosition = WAITING_POSITION[3];
+                        customer.userData.queueWaypoints = null;
+                        customer.userData.state = 'WALK_TO_WAITING_OUTSIDE';
+                    }
                     break;
                 }
                 customer.userData.targetPosition = WAITING_POSITION[spotIdx];
@@ -861,8 +953,16 @@ function updateCustomerRoutine(customer) {
                     
                     if (isSpotClear){
                         customer.userData.targetPosition = currentAssignedSpot;
-                        if (spotIdx<5 && !customer.userData.hasEnteredInside){
-                            customer.userData.state = 'WALK_TO_DOOR';
+                        if (spotIdx < 3 && !customer.userData.hasEnteredInside){
+                            const insideSpot = WAITING_POSITION[2];
+                            const clear = !penguins.some(p => p.mesh !== customer && p.mesh.userData.role === 'customer' && p.mesh.position.distanceTo(insideSpot) < 4.0);
+                            
+                            if (!state.someone_is_leaving && clear) {
+                                customer.userData.state = 'WALK_TO_DOOR';
+                            } else {
+                                customer.userData.targetPosition = WAITING_POSITION[3];
+                                customer.userData.state = 'WALK_TO_WAITING_OUTSIDE';
+                            }
                         }
                         else{
                             customer.userData.queueWaypoints = getQueueWaypoints(customer, currentAssignedSpot);
@@ -888,7 +988,7 @@ function updateCustomerRoutine(customer) {
                 updateBubble(customer, '!!!');
                 showAngerSymbol(customer);
             }
-            if (customer.userData-timer <= 0){
+            if (customer.userData.timer <= 0){
                 customer.userData.isInteractable = false;
                 customer.userData.state ='LEAVING';
             }
@@ -1102,7 +1202,9 @@ function updateCustomerRoutine(customer) {
             else if (customer.userData.subState === 'WALK_TO_DOOR_INSIDE') {
                 if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_INSIDE)){
                     customer.userData.subState = 'WAIT_FOR_DOOR';
-                    animateInteractable(state.door, Math.PI/2, 'y');
+                    const mainDoor = getMainDoor(customer);
+                    //if (mainDoor) animateInteractable(mainDoor, Math.PI/2, 'y');
+                    customer.userData.timer = 60;
                 }
             }
             else if (customer.userData.subState === 'WAIT_FOR_DOOR') {
@@ -1116,8 +1218,8 @@ function updateCustomerRoutine(customer) {
                     customer.userData.subState = 'WALK_TO_DESPAWN';
                 }
             }
-            else if (customer.userData.subState === 'WALK_TO_DESPAWN') {
-                if (moveTowards(customer, CUSTOMER_POSITIONS.SPAWN)) {
+            else if (customer.userData.subState === 'WALK_TO_DESPAWN'){
+                if (moveTowards(customer, CUSTOMER_POSITIONS.DESPAWN)){
                     hideAngerSymbol(customer);
                     state.scene.remove(customer);
                     const pIdx = penguins.findIndex(p => p.mesh === customer);
