@@ -843,7 +843,7 @@ function updateCustomerRoutine(customer) {
 
             if (customer.userData.timer <= 0) {
                 removeFromQueue(customer);
-                userData.isInteractable = false;
+                customer.userData.isInteractable = false;
                 customer.userData.state = 'LEAVING';
                 break;
             }
@@ -888,7 +888,7 @@ function updateCustomerRoutine(customer) {
                 updateBubble(customer, '!!!');
                 showAngerSymbol(customer);
             }
-            if (customer.userData-timer <= 0){
+            if (customer.userData.timer <= 0){
                 customer.userData.isInteractable = false;
                 customer.userData.state ='LEAVING';
             }
