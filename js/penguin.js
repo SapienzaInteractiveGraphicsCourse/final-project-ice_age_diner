@@ -4,7 +4,7 @@ import {
     resetFlippers, animateChefFridgeReach, animateChefStove, setChefPickupPose,
     setChefCarryPose, animateChefCounterRelease, stackPlates, pickUpPlate, getFreeCounterSpot,
     startReadingMenu, stopReadingMenu, startCallingWaiter, stopCallingWaiter,
-    stopEating, showAngerSymbol, hideAngerSymbol
+    stopEating, showAngerSymbol, hideAngerSymbol, createNameTag
 } from './animations.js';
 import { checkCollision } from './controlWaiter.js';
 
@@ -226,12 +226,14 @@ export function createPenguinModel(role, options = {}){
 
 export function spawnPenguin(position, role){
     let options = {};
-
+    let nameTag = null;
     if (role === 'customer') {
         const customerColors = [
             0xff5733, 0x33ff57, 0x3357ff, 0xf39c12, 0x9b59b6, 0x1abc9c, 0xe74c3c, 0xe84393, 0x00cec9
         ];
         options.shirtColor = customerColors[Math.floor(Math.random() * customerColors.length)];
+
+        nameTag = state.penguins_name[Math.floor(Math.random() * state.penguins_name.length)];
     }
 
     const penguin = createPenguinModel(role, options);
@@ -245,6 +247,10 @@ export function spawnPenguin(position, role){
         penguin.userData.seat = null;
         penguin.userData.order = null;
         penguin.userData.hasEnteredInside = false;
+        penguin.userData.nameTag = nameTag;
+        const nameSprite = createNameTag(penguin.userData.nameTag);
+        nameSprite.position.set(0, 4.5, 0);
+        penguin.add(nameSprite);
     }
 
     if (role === 'chef') {
@@ -338,8 +344,12 @@ export function removeFromQueue(customer){
 }
 
 export function updateRoutines(){
-    updateCustomerSpawn();
+    if (state.dayInProgress) {
+        updateCustomerSpawn();
+    }
+    
 
+    
     penguins.forEach(penData => {
         const penguin = penData.mesh;
         if (penguin.userData.role === 'chef'){
@@ -349,6 +359,7 @@ export function updateRoutines(){
             updateDishwasherRoutine(penguin);
         }
         else if (penguin.userData.role === 'customer'){
+            
             updateCustomerRoutine(penguin);
         }
     });

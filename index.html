@@ -49,50 +49,14 @@
             </div>
         </div>
 
-        <div id="game-ui">
-            <div id="camera-controls">
-                <button id="btn-kitchen" class="cam-btn">Kitchen view</button>
-                <button id="btn-general" class="cam-btn">General view</button>
-                <button id="btn-main-room" class="cam-btn">Main room view</button>
-            </div>
-
-            <div id="ui-top-left" class="ui-panel">
-                <label>Working time</label>
-                <div class="slider-wrapper">
-                    <div class="slider-track-visual">
-                        <div class="track-segment giorno-seg"></div>
-                        <div class="track-segment tramonto-seg"></div>
-                        <div class="track-segment notte-seg"></div>
-                    </div>
-                    <input type="range" id="time-slider" min="0" max="100" value="0" step="1"> 
-                </div>
-                <div class="slider-labels">
-                    <span class="label-item">Sole<br><small>Day</small></span>
-                    <span class="label-item">Tramonto<br><small>Sunset</small></span>
-                    <span class="label-item">Luna<br><small>Night</small></span>
-                </div>
-            </div>
-
-            <div id="ui-top-right" class="ui-panel">
-                <div class="stars-container">
-                    <span class="star" data-value="1">Stella</span>
-                    <span class="star" data-value="2">Stella</span>
-                    <span class="star" data-value="3">Stella</span>
-                    <span class="star" data-value="4">Stella</span>
-                    <span class="star" data-value="5">Stella</span>
-                </div>
-                <div id="earnings-counter">Soldi: Cash $00.00</div>
-            </div>
-
-            <div id="ui-side-right" class="ui-panel">
-                <h3>Lampadina Tables Lights</h3>
-                <button id="btn-faretto-1" class="game-btn">Faretto 1</button>
-                <button id="btn-faretto-2" class="game-btn">Faretto 2</button>
-                <button id="btn-faretto-3" class="game-btn">Faretto 3</button>
-            </div>
-        </div> 
+        <div id="orders-panel" class="hidden-panel">
+            <h3 class="orders-title">Active orders</h3>
+            <div id="orders-container"></div>
+        </div>
 
         <button id="in-game-settings-btn" class="hidden-panel"><i class="fas fa-cog"></i></button>
+        <button id="start-day-btn" class="hidden-panel" ><i class="fas fa-play"></i>Start Day</button>
+        <button id="timer-display" class="hidden-panel"><span id="timer-value">05:00</span></button>
         <div id="pause-menu" class="hidden-panel">
             <div class="pause-menu-content menu-box">
                 <h2 class="panel-title">Pause</h2>

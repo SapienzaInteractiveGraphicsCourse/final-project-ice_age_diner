@@ -213,6 +213,7 @@ export function loadFoodModels() {
             }
         });
         state.models.hamburger = model;
+        state.foodIcons.hamburger = create3DTo2DIcon(model);
     });
 
     loader.load('models/food/pizza.glb', (gltf) => {
@@ -224,6 +225,7 @@ export function loadFoodModels() {
             }
         });
         state.models.pizza = model;
+        state.foodIcons.pizza = create3DTo2DIcon(model);
     });
 
     loader.load('models/food/hot-dog.glb', (gltf) => {
@@ -235,6 +237,7 @@ export function loadFoodModels() {
             }
         });
         state.models.hotdog = model;
+        state.foodIcons.hotdog = create3DTo2DIcon(model);
     });
 
     loader.load('models/food/fish.glb', (gltf) => {
@@ -246,6 +249,7 @@ export function loadFoodModels() {
             }
         });
         state.models.fish = model;
+        state.foodIcons.fish = create3DTo2DIcon(model);
     });
 
     loader.load('models/food/taco.glb', (gltf) => {
@@ -257,23 +261,52 @@ export function loadFoodModels() {
             }
         });
         state.models.taco = model;
+        state.foodIcons.taco = create3DTo2DIcon(model);
     });
 }
 
-/*export function addReflectiveFloor(scene, width, depth) {
-    const geometry = new THREE.PlaneGeometry(width, depth);
+export function create3DTo2DIcon(model) {
+    // 1. Crea un mini-renderizzatore trasparente
+    const tempRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    tempRenderer.setSize(128, 128); // Risoluzione dell'icona (128x128 pixel)
 
-    const groundMirror = new THREE.Reflector(geometry, {
-        clipBias: 0.003,
-        textureWidth: window.innerWidth * window.devicePixelRatio,
-        textureHeight: window.innerHeight * window.devicePixelRatio,
-        color: 0x555555,
-        multisample: 4
-    });
+    // 2. Crea una mini scena e una telecamera
+    const tempScene = new THREE.Scene();
+    const tempCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+    tempCamera.position.set(0, 3, 6); // Telecamera leggermente in alto
+    tempCamera.lookAt(0, 0, 0);
 
-    groundMirror.rotation.x = -Math.PI / 2;
-    groundMirror.position.y = 0.01;
+    // 3. Aggiungi delle luci fisse per illuminare bene il cibo
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+    dirLight.position.set(5, 10, 5);
+    tempScene.add(ambientLight, dirLight);
 
-    scene.add(groundMirror);
-    return groundMirror;
-}*/
+    // 4. Clona il modello per non rovinare quello originale del gioco
+    const iconModel = model.clone();
+
+    // 5. Centra e scala il modello per farlo entrare bene nella foto
+    const box = new THREE.Box3().setFromObject(iconModel);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    
+    const scale = 3.5 / maxDim; // Adatta la dimensione
+    iconModel.scale.set(scale, scale, scale);
+    iconModel.position.sub(center.multiplyScalar(scale)); // Lo mette al centro esatto (0,0,0)
+    
+    // Inclinazione per farlo vedere meglio di 3/4
+    iconModel.rotation.y = Math.PI / 4; 
+    iconModel.rotation.x = Math.PI / 8;
+
+    tempScene.add(iconModel);
+
+    // 6. SCATTA LA FOTO!
+    tempRenderer.render(tempScene, tempCamera);
+    const dataURL = tempRenderer.domElement.toDataURL("image/png");
+
+    // 7. Pulisci la memoria
+    tempRenderer.dispose();
+
+    return dataURL; // Restituisce l'immagine in formato Base64
+}

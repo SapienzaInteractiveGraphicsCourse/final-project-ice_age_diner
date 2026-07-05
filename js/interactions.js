@@ -85,6 +85,9 @@ function onMouseClick(event){
                     interactionScene.remove(clickedObj);
                     pickUpPlate(waiter, clickedObj);
                     clickedObj.userData.isInteractable = false;
+                    if (clickedObj.userData.foodName){
+                        state.heldFood = clickedObj.userData.foodName;
+                    }
                 }
                 else if (waiter && waiter.userData.hasPlate){
                     const heldPlate = waiter.userData.plate;
@@ -104,9 +107,14 @@ function onMouseClick(event){
                     console.log("Customer interaction: delivering food.");
                     const plate = putDownPlate(waiter, interactionScene, clickedObj);
                     clickedObj.userData.plate = plate;
+                    state.heldFood = null;
 
                     hideAngerSymbol(clickedObj);
                     clickedObj.userData.timer = 300;
+
+                    if (state.orders) {
+                        state.orders = state.orders.filter(order => order.customer !== clickedObj);
+                    }
 
                     if (clickedObj.userData.bubble) {
                         clickedObj.remove(clickedObj.userData.bubble);

@@ -398,8 +398,6 @@ export function buildRestaurant() {
     }
 
     loadDoor(scene, 'models/furniture/doorway.glb', width/2, 0, 10, -Math.PI/2, 15);
-    loadDoor(scene, 'models/furniture/doorway.glb', width/2, 0, 10, -Math.PI/2, 15);
-    
     //load of tray
     loadFurniture(scene, 'models/food/plate-rectangle.glb', -36, -18 , 0, 4.5, 10, false, false, true);
     
@@ -562,6 +560,7 @@ export function buildRestaurant() {
 
     loadFurniture(scene, 'models/furniture/LOGO.glb', 77, 0, -Math.PI/2, 20, 9, 0, 0, 0, 0);
 
+    //TRADURRE IN INGLESE
 function creaFarettoCentrale(x, y, z, targetZ) {
     const farettoGeometry = new THREE.CylinderGeometry(0.3, 0.4, 1.2, 16);
     const farettoMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, metalness: 0.8 });

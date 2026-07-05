@@ -406,9 +406,33 @@ export function updateBubble(customer, text) {
     }
 }
 
+export function createNameTag(name) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 64;
+    const context = canvas.getContext('2d');
+    
+    context.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    context.fillRect(0, 0, 256, 64);
+    
+    context.font = 'bold 36px "Segoe UI", sans-serif';
+    context.fillStyle = 'white';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(name, 128, 32);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }); 
+    const sprite = new THREE.Sprite(material);
+    sprite.scale.set(3.5, 0.8, 1);
+    
+    return sprite;
+}
+
 export function createPlate(foodName){
     const plateGroup = new THREE.Group();
     plateGroup.name = 'heldPlate';
+    plateGroup.userData.foodName = foodName;
 
     if (state.models.plate){
         const plateClone = state.models.plate.clone();
@@ -417,18 +441,23 @@ export function createPlate(foodName){
 
     let foodModel = null;
     if (foodName === 'hamburger' && state.models.hamburger){
+        plateGroup.userData.foodName = 'hamburger';
         foodModel = state.models.hamburger;
     }
     else if (foodName === 'pizza' && state.models.pizza){
+        plateGroup.userData.foodName = 'pizza';
         foodModel = state.models.pizza;
     }
     else if (foodName === 'hotdog' && state.models.hotdog){
+        plateGroup.userData.foodName = 'hotdog';
         foodModel = state.models.hotdog;
     }
     else if (foodName === 'taco' && state.models.taco){
+        plateGroup.userData.foodName = 'taco';
         foodModel = state.models.taco;
     }
     else if (foodName === 'fish' && state.models.fish){
+        plateGroup.userData.foodName = 'fish';
         foodModel = state.models.fish;
     }
     if (foodModel){

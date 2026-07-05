@@ -6,6 +6,9 @@ export const state = {
     gameControls: null,
 
     isPaused: false,
+    dayInProgress: false,
+    dayDuration: 300, // 5 minutes
+    earnings: 0,
 
     audioListener: null,
 
@@ -14,7 +17,10 @@ export const state = {
     colliders: [],
     icebergs: [],
     orders: [],
+    heldFood: null,
     platesOnCounter: [],
     menu: ['hamburger', 'pizza', 'hotdog', 'taco', 'fish'], //ADD MORE FOOD
-    models:{}
+    foodIcons:{},
+    models:{},
+    penguins_name: ["Pingu", "kowalski", "Rico", "Skipper", "Soldato", "Gunter", "Cody", "Mumble", "Flipper"] // ADD MORE NAMES IF YOU WANT
 };
