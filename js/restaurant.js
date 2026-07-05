@@ -590,7 +590,6 @@ creaFarettoCentrale(66, 30, 0, 0);
 
 
 
-
     //kitchen decorations
     loadFurniture(scene, 'models/furniture/kitchenCoffeeMachine.glb', -75, -5, Math.PI/2, 5.5);
     loadFurniture(scene, 'models/furniture/hoodModern.glb', -76, 7.25, Math.PI/2, 12);
@@ -607,7 +606,7 @@ creaFarettoCentrale(66, 30, 0, 0);
     loadFurniture(scene, 'models/furniture/LittleBookcase.glb', 76, -16, Math.PI/2, 5.5, 11);
     loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', 75, -32, Math.PI/2, 10, 10);
 
-    loadFurniture(scene, 'models/furniture/welcome_sign_restaurant.glb', -30, 24, Math.PI, 0, 8);
+    loadFurniture(scene, 'models/furniture/welcome_sign_restaurant-v1.glb', -30, 24, Math.PI, 0, 8);
     loadFurniture(scene, 'models/furniture/Clock.glb', -35, 27, Math.PI/2, 12, 0.65);
 
 
