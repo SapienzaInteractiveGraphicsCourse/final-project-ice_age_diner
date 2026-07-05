@@ -613,17 +613,25 @@ creaFarettoCentrale(66, 30, 0, 0);
     loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', -33, 37, Math.PI/2, 10, 10);
     loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', -33, -37, -Math.PI/2, 10, 10);
 
-    loadFurniture(scene, 'models/furniture/WallArt06.glb', 4, -44.5, Math.PI, 15, 10);
+    loadFurniture(scene, 'models/furniture/WallArt06.glb', 4, -44.5, Math.PI, 17, 10);
     loadFurniture(scene, 'models/furniture/CoffeePlant.glb', 4, -42, Math.PI, 0, 1.5);
 
-    loadFurniture(scene, 'models/furniture/WallArt02.glb', 35 , -44.5, Math.PI, 12, 10);
+    loadFurniture(scene, 'models/furniture/WallArt02.glb', 35 , -44.5, Math.PI, 17, 10);
     loadFurniture(scene, 'models/furniture/FiddleLeafPlant(1).glb', 35 , -42, Math.PI, 0, 1.5);
 
-    loadFurniture(scene, 'models/furniture/WallArt03.glb', 4, 44.5, 0, 15, 10);
+    loadFurniture(scene, 'models/furniture/WallArt03.glb', 4, 44.5, 0, 17, 10);
     loadFurniture(scene, 'models/furniture/FiddleLeafPlant(1).glb', 4, 42, 0, 0, 1.5);
 
-    loadFurniture(scene, 'models/furniture/WallArt01.glb', 35, 44.5, 0, 12, 10);
+    loadFurniture(scene, 'models/furniture/WallArt01.glb', 35, 44.5, 0, 17, 10);
     loadFurniture(scene, 'models/furniture/CoffeePlant.glb', 35, 42, 0, 0, 1.5);
+
+    loadFurniture(scene, 'models/furniture/Pulpit.glb', 56, 28, -Math.PI/2, -2, 0.5);
+    loadFurniture(scene, 'models/furniture/Phone.glb', 50, 40, Math.PI/2, 5.5, 0.05);
+    loadFurniture(scene, 'models/furniture/SmallStackofPaper.glb', 55, 35, -2*Math.PI, 5.9, 20);
+    loadFurniture(scene, 'models/furniture/lampRoundTable.glb', 55, 43, -2*Math.PI, 5.5, 17);
+    loadFurniture(scene, 'models/furniture/pottedPlant.glb', 57, 39, -2*Math.PI, 5, 7);
+    loadFurniture(scene, 'models/furniture/DeskCorner.glb', 45, 30, Math.PI/2, 0, 14);
+
 
     //loadFurniture(scene, 'models/furniture/menu2.glb', 0, 0, 0, 5.3, 1.5);
     

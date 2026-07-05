@@ -202,12 +202,12 @@ export function createPenguinModel(role, options = {}){
         const wingGeo = new THREE.ConeGeometry(0.12, 0.22, 4);
         const leftWing = new THREE.Mesh(wingGeo, redOutfitMat);
         leftWing.position.x = -0.14;
-        leftWing.rotation.z = Math.PI / 2;
+        leftWing.rotation.z = -Math.PI / 2; // Sistemata rotazione (punta verso il centro)
         bowtieGroup.add(leftWing);
 
         const rightWing = new THREE.Mesh(wingGeo, redOutfitMat);
         rightWing.position.x = 0.14;
-        rightWing.rotation.z = -Math.PI / 2;
+        rightWing.rotation.z = Math.PI / 2; // Sistemata rotazione (punta verso il centro)
         bowtieGroup.add(rightWing);
 
         bowtieGroup.position.set(0, 2.5, 0.98);
