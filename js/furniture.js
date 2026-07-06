@@ -10,7 +10,6 @@ export function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, op
         model.position.set(x, y, z);
         model.rotation.y = rotation;
         
-        // Se viene passata una rotazione per il sottosopra, la applica sull'asse X
         if (upsideDownRotation !== 0) {
             model.rotation.x = upsideDownRotation;
         }
@@ -193,7 +192,6 @@ export function loadFoodModels() {
     loader.load('models/food/plate.glb', (gltf) => {
         const model = gltf.scene;
         
-        // Attiviamo le ombre per il piatto base
         model.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
@@ -266,47 +264,39 @@ export function loadFoodModels() {
 }
 
 export function create3DTo2DIcon(model) {
-    // 1. Crea un mini-renderizzatore trasparente
     const tempRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    tempRenderer.setSize(128, 128); // Risoluzione dell'icona (128x128 pixel)
+    tempRenderer.setSize(128, 128); 
 
-    // 2. Crea una mini scena e una telecamera
     const tempScene = new THREE.Scene();
     const tempCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
-    tempCamera.position.set(0, 3, 6); // Telecamera leggermente in alto
+    tempCamera.position.set(0, 3, 6); 
     tempCamera.lookAt(0, 0, 0);
 
-    // 3. Aggiungi delle luci fisse per illuminare bene il cibo
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
     dirLight.position.set(5, 10, 5);
     tempScene.add(ambientLight, dirLight);
 
-    // 4. Clona il modello per non rovinare quello originale del gioco
     const iconModel = model.clone();
 
-    // 5. Centra e scala il modello per farlo entrare bene nella foto
     const box = new THREE.Box3().setFromObject(iconModel);
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
     
-    const scale = 3.5 / maxDim; // Adatta la dimensione
+    const scale = 3.5 / maxDim; 
     iconModel.scale.set(scale, scale, scale);
-    iconModel.position.sub(center.multiplyScalar(scale)); // Lo mette al centro esatto (0,0,0)
+    iconModel.position.sub(center.multiplyScalar(scale)); 
     
-    // Inclinazione per farlo vedere meglio di 3/4
     iconModel.rotation.y = Math.PI / 4; 
     iconModel.rotation.x = Math.PI / 8;
 
     tempScene.add(iconModel);
 
-    // 6. SCATTA LA FOTO!
     tempRenderer.render(tempScene, tempCamera);
     const dataURL = tempRenderer.domElement.toDataURL("image/png");
 
-    // 7. Pulisci la memoria
     tempRenderer.dispose();
 
-    return dataURL; // Restituisce l'immagine in formato Base64
+    return dataURL; 
 }

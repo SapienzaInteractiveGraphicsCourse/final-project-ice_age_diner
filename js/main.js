@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", function (){
     const timerDisplay = document.getElementById("timer-display");
     const timerValue = document.getElementById("timer-value");
     const ordersPanel = document.getElementById("orders-panel");
+    const earningsDisplay = document.getElementById("earnings-display");
 
     let dayInterval = null;
     [gameUI, inGameSettingsBtn, pauseMenu].forEach(el => {
@@ -56,12 +57,14 @@ document.addEventListener("DOMContentLoaded", function (){
             buildRestaurant();
             gameStarted = true;
             setInterval(updateOrdersUI, 200);
+            setInterval(updateEarningsUI, 200);
 
         }
         console.log("Game started successfully!");
 
         startDayBtn.classList.remove("hidden-panel");
         state.dayInProgress = false;
+        earningsDisplay.classList.remove("hidden-panel");
 
         function togglePause(){
             if (!gameStarted) return;
@@ -168,67 +171,83 @@ document.addEventListener("DOMContentLoaded", function (){
     }
 
     function updateOrdersUI() {
-    const container = document.getElementById("orders-container");
-    if (!container) return;
+        const container = document.getElementById("orders-container");
+        if (!container) return;
 
-    if (state.orders.length === 0) {
-        container.innerHTML = "<p style='text-align: center; color: #ccc;'>No orders at the moment.</p>";
-        return;
+        if (state.orders.length === 0) {
+            container.innerHTML = "<p style='text-align: center; color: #ccc;'>No orders at the moment.</p>";
+            return;
+        }
+
+        container.innerHTML = ""; 
+
+        state.orders.forEach(order => {
+            const customer = order.customer;
+            const foodName = order.food;
+            const customerName = customer.userData.nameTag || 'Customer';
+            const imgSrc = state.foodIcons[foodName.toLowerCase()] || ''; 
+
+            if (!customer.userData.maxTimer) {
+                customer.userData.maxTimer = customer.userData.timer || 1500; 
+            }
+
+            const maxTime = customer.userData.maxTimer;
+            const timeLeft = customer.userData.timer || 0;
+
+            let percent = (timeLeft / maxTime) * 100;
+            percent = Math.max(0, Math.min(100, percent)); 
+            
+            let barColor = "#4ade80"; 
+            if (percent < 50) barColor = "#facc15"; 
+            if (percent < 25) barColor = "#ef4444"; 
+
+            const card = document.createElement("div");
+            let cardClass = "order-card";
+            
+            if (state.heldFood && state.heldFood.toLowerCase() === foodName.toLowerCase()) {
+                cardClass += " status-held";
+            } 
+            else if (order.status === 'ready') {
+                cardClass += " status-ready";
+            } 
+            else {
+                cardClass += " status-pending";
+            }
+            
+            card.className = cardClass;
+            
+            card.innerHTML = `
+                <div class="order-header">
+                    <span style="font-weight: bold;"> ${customerName}</span>
+                    <span class="order-food" style="display: flex; align-items: center; gap: 15px; font-weight: bold;">
+                        <img src="${imgSrc}" alt="${foodName}" style="width: 60px; height: 60px; object-fit: contain; transform: scale(1.6); filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.8)) brightness(1.2);">
+                        ${foodName.toUpperCase()}
+                    </span>
+                </div>
+                <div class="order-progress-bg">
+                    <div class="order-progress-bar" style="width: ${percent}%; background-color: ${barColor};"></div>
+                </div>
+            `;
+            
+            container.appendChild(card);
+        });
     }
 
-    container.innerHTML = ""; 
+    function updateEarningsUI() {
+        earningsDisplay.textContent = "Profit: $" + state.earnings;
+    }
 
-    state.orders.forEach(order => {
-        const customer = order.customer;
-        const foodName = order.food;
-        const customerName = customer.userData.nameTag || 'Customer';
-        const imgSrc = state.foodIcons[foodName.toLowerCase()] || ''; 
-
-        if (!customer.userData.maxTimer) {
-            customer.userData.maxTimer = customer.userData.timer || 1500; 
-        }
-
-        const maxTime = customer.userData.maxTimer;
-        const timeLeft = customer.userData.timer || 0;
-
-        let percent = (timeLeft / maxTime) * 100;
-        percent = Math.max(0, Math.min(100, percent)); 
+    window.addEventListener("earningsUpdated", function() {
+        updateEarningsUI();
         
-        let barColor = "#4ade80"; 
-        if (percent < 50) barColor = "#facc15"; 
-        if (percent < 25) barColor = "#ef4444"; 
-
-        const card = document.createElement("div");
-        let cardClass = "order-card";
+        earningsDisplay.classList.add("money-up");
         
-        if (state.heldFood && state.heldFood.toLowerCase() === foodName.toLowerCase()) {
-            cardClass += " status-held";
-        } 
-        else if (order.status === 'ready') {
-            cardClass += " status-ready";
-        } 
-        else {
-            cardClass += " status-pending";
-        }
-        
-        card.className = cardClass;
-        
-        card.innerHTML = `
-            <div class="order-header">
-                <span style="font-weight: bold;"> ${customerName}</span>
-                <span class="order-food" style="display: flex; align-items: center; gap: 15px; font-weight: bold;">
-                    <img src="${imgSrc}" alt="${foodName}" style="width: 60px; height: 60px; object-fit: contain; transform: scale(1.6); filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.8)) brightness(1.2);">
-                    ${foodName.toUpperCase()}
-                </span>
-            </div>
-            <div class="order-progress-bg">
-                <div class="order-progress-bar" style="width: ${percent}%; background-color: ${barColor};"></div>
-            </div>
-        `;
-        
-        container.appendChild(card);
+        setTimeout(() => {
+            earningsDisplay.classList.remove("money-up");
+        }, 1000);
     });
-}
+
+
 });
 
 function initAudio(){

@@ -1086,7 +1086,7 @@ function updateCustomerRoutine(customer) {
         case 'THINKING':
             customer.userData.timer--;
             if (customer.userData.timer <= 0) {
-                customer.userData.order = state.menu[Math.floor(Math.random() * state.menu.length)];
+                customer.userData.order = state.menu[Math.floor(Math.random() * state.menu.length)].name;
                 customer.userData.isInteractable = true;
                 customer.userData.timer = ANGER_THRESHOLD * 2;
                 customer.userData.state = 'READY_TO_ORDER';
@@ -1142,7 +1142,14 @@ function updateCustomerRoutine(customer) {
         
         case 'FINISH_EATING':
             customer.userData.timer--;
-            if (customer.userData.timer <= 0) customer.userData.state = 'LEAVING';
+            if (customer.userData.timer <= 0){
+                const foodOrder = customer.userData.order;
+                const orderIndex = state.menu.findIndex(food => food.name === foodOrder);
+                const price = state.menu[orderIndex].price;
+                state.earnings += price;
+                customer.userData.state = 'LEAVING';
+                window.dispatchEvent(new Event('earningsUpdated'));
+            } 
             break;
 
         case 'LEAVING':

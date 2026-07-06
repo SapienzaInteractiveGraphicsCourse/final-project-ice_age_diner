@@ -370,3 +370,25 @@ body, html{
     border-color: #4ade80; 
     background-color: rgba(74, 222, 128, 0.2);
 }
+
+#earnings-display {
+    position: absolute;
+    top: 90px; 
+    right: 30px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    z-index: 90;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 8px 15px;
+    border-radius: 10px;
+    border: 1px solid #0ea5e9;
+    backdrop-filter: blur(4px);
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+#earnings-display.money-up {
+    color: #4ade80 !important; 
+    transform: scale(1.1);       
+}

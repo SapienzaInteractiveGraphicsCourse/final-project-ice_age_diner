@@ -19,7 +19,7 @@ export const state = {
     orders: [],
     heldFood: null,
     platesOnCounter: [],
-    menu: ['hamburger', 'pizza', 'hotdog', 'taco', 'fish'], //ADD MORE FOOD
+    menu: [{'name': 'hamburger', 'price': 10}, {'name': 'pizza', 'price': 12}, {'name': 'hotdog', 'price': 8}, {'name': 'taco', 'price': 9}, {'name': 'fish', 'price': 15}], //ADD MORE FOOD
     foodIcons:{},
     models:{},
     penguins_name: ["Pingu", "kowalski", "Rico", "Skipper", "Soldato", "Gunter", "Cody", "Mumble", "Flipper"] // ADD MORE NAMES IF YOU WANT

@@ -412,17 +412,17 @@ export function createNameTag(name) {
     canvas.height = 64;
     const context = canvas.getContext('2d');
     
-    context.fillStyle = 'rgba(0, 0, 0, 0.6)';
-    context.fillRect(0, 0, 256, 64);
-    
     context.font = 'bold 36px "Segoe UI", sans-serif';
     context.fillStyle = 'white';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
+    context.strokeStyle = 'black';
+    context.lineWidth = 4;
+    context.strokeText(name, 128, 32);
     context.fillText(name, 128, 32);
 
     const texture = new THREE.CanvasTexture(canvas);
-    const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }); 
+    const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true, depthWrite: false }); 
     const sprite = new THREE.Sprite(material);
     sprite.scale.set(3.5, 0.8, 1);
     
