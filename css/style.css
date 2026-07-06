@@ -246,7 +246,7 @@ body, html{
 #start-day-btn{
     position: fixed;
     top: 20px;
-    right: 40px;
+    right: 35px;
     transform: translateX(-50%); 
     background-color: #0284c7; 
     color: white;
@@ -272,7 +272,7 @@ body, html{
 #timer-display {
     position: fixed;
     top: 20px;
-    right: 40px; 
+    right: 35px; 
     transform: translateX(-50%);
     background-color: rgba(0, 0, 0, 0.6); 
     backdrop-filter: blur(6px);
@@ -391,4 +391,24 @@ body, html{
 #earnings-display.money-up {
     color: #4ade80 !important; 
     transform: scale(1.1);       
+}
+
+#dayNumber {
+    position: fixed;
+    top: 20px;
+    left: 155px;
+    transform: translateX(-50%); 
+    background-color: #0284c7; 
+    color: white;
+    border: 3px solid #ffffff;
+    border-radius: 10px; 
+    padding: 12px 24px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    z-index: 10;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    transition: transform 0.3s, background-color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
