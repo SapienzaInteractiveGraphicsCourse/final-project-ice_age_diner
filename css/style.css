@@ -256,7 +256,7 @@ body, html{
     font-size: 1.2rem;
     font-weight: bold;
     cursor: pointer;
-    z-index: 100;
+    z-index: 10;
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     transition: transform 0.3s, background-color 0.3s;
     display: flex;
@@ -282,7 +282,7 @@ body, html{
     padding: 10px 25px;
     font-size: 1.5rem;
     font-weight: bold;
-    z-index: 100;
+    z-index: 10;
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
 }
@@ -307,7 +307,7 @@ body, html{
     border-radius: 15px;
     padding: 15px;
     overflow-y: auto; 
-    z-index: 90;
+    z-index: 10;
     display: flex;
     flex-direction: column;
 }
@@ -379,7 +379,7 @@ body, html{
     font-weight: bold;
     color: white;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-    z-index: 90;
+    z-index: 10;
     background-color: rgba(0, 0, 0, 0.5);
     padding: 8px 15px;
     border-radius: 10px;
