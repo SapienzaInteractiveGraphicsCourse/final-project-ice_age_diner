@@ -264,6 +264,90 @@ export function loadFoodModels() {
         state.models.taco = model;
         state.foodIcons.taco = create3DTo2DIcon(model);
     });
+
+    loader.load('models/food/bacon.glb', (gltf) => {
+        const model = gltf.scene;
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        state.models.bacon = model;
+        state.foodIcons.bacon = create3DTo2DIcon(model);
+    });
+
+    loader.load('models/food/cheese.glb', (gltf) => {
+        const model = gltf.scene;
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        state.models.cheese = model;
+        state.foodIcons.cheese = create3DTo2DIcon(model);
+    });
+
+    loader.load('models/food/chocolate.glb', (gltf) => {
+        const model = gltf.scene;
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        state.models.chocolate = model;
+        state.foodIcons.chocolate = create3DTo2DIcon(model);
+    });
+
+    loader.load('models/food/cupcake.glb', (gltf) => {
+        const model = gltf.scene;
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        state.models.cupcake = model;
+        state.foodIcons.cupcake = create3DTo2DIcon(model);
+    });
+
+    loader.load('models/food/meat-cooked.glb', (gltf) => {
+        const model = gltf.scene;
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        state.models.meat = model;
+        state.foodIcons.meat = create3DTo2DIcon(model);
+    });
+
+    loader.load('models/food/rice-ball.glb', (gltf) => {
+        const model = gltf.scene;
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        state.models.riceBall = model;
+        state.foodIcons.riceball = create3DTo2DIcon(model);
+    });
+
+    loader.load('models/food/turkey.glb', (gltf) => {
+        const model = gltf.scene;
+        model.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+        state.models.turkey = model;
+        state.foodIcons.turkey = create3DTo2DIcon(model);
+    });
 }
 
 export function create3DTo2DIcon(model) {

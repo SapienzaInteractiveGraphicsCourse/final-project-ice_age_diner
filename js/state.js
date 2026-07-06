@@ -19,7 +19,10 @@ export const state = {
     orders: [],
     heldFood: null,
     platesOnCounter: [],
-    menu: [{'name': 'hamburger', 'price': 10}, {'name': 'pizza', 'price': 12}, {'name': 'hotdog', 'price': 8}, {'name': 'taco', 'price': 9}, {'name': 'fish', 'price': 15}], //ADD MORE FOOD
+    menu: [{'name': 'hamburger', 'price': 10}, {'name': 'pizza', 'price': 12}, {'name': 'hotdog', 'price': 8},
+        {'name': 'taco', 'price': 9}, {'name': 'fish', 'price': 15}, {'name': 'bacon', 'price': 8},{'name': 'cheese', 'price': 5},
+        {'name': 'chocolate', 'price': 4}, {'name': 'cupcake', 'price': 3}, {'name': 'meat', 'price': 18}, {'name': 'riceball', 'price': 3},
+        {'name': 'turkey', 'price': 20}], //ADD MORE FOOD
     foodIcons:{},
     models:{},
     penguins_name: ["Pingu", "Kowalski", "Rico", "Skipper", "Soldato", "Gunter", "Cody", "Mumble", "Flipper"], // ADD MORE NAMES IF YOU WANT
