@@ -233,7 +233,17 @@ export function spawnPenguin(position, role){
         ];
         options.shirtColor = customerColors[Math.floor(Math.random() * customerColors.length)];
 
-        nameTag = state.penguins_name[Math.floor(Math.random() * state.penguins_name.length)];
+        const usedNames = penguins
+            .filter(p => p.mesh && p.mesh.userData && p.mesh.userData.role === 'customer' && p.mesh.userData.nameTag)
+            .map(p => p.mesh.userData.nameTag);
+
+        const availableNames = state.penguins_name.filter(name => !usedNames.includes(name));
+
+        if (availableNames.length > 0) {
+            nameTag = availableNames[Math.floor(Math.random() * availableNames.length)];
+        } else {
+            nameTag = state.penguins_name[Math.floor(Math.random() * state.penguins_name.length)];
+        }
     }
 
     const penguin = createPenguinModel(role, options);
@@ -600,12 +610,10 @@ function updateChefRoutine(chef){
                     state.scene.add(completedOrder);
 
                     completedOrder.position.set(-36, KITCHEN_POS.COUNTER.y + 4.6, chef.userData.targetCounterZ);
-                    //completedOrder.position.copy(counterSpot);
-                    //completedOrder.position.x = -36;
-                    //completedOrder.position.y = KITCHEN_POS.COUNTER.y + 4.6;
                     completedOrder.rotation.set(0, 0, 0);
                     completedOrder.scale.set(4,4,4);
                     chef.userData.currentOrder.status = 'ready';
+                    state.foodReadySound.play();
                 }
                 
                 if (state.orders.length > 0 && state.orders.some(order => order.status === 'pending')) {
@@ -802,6 +810,7 @@ function updateCustomerRoutine(customer) {
                     
                     if (mainDoor && mainDoor.userData.isOpen) {
                         customer.userData.timer = 60; 
+                        state.openingDoorSound.play();
                         customer.userData.state = 'WAIT_FOR_DOOR_ANIMATION';
                         customer.userData.doorWaypoints = null;
                     }
@@ -882,6 +891,7 @@ function updateCustomerRoutine(customer) {
             const alignPos = new THREE.Vector3(QUEUE_START_X, 0, CUSTOMER_POSITIONS.DOOR_INSIDE.z);
             if (moveTowards(customer, alignPos)) {
                 customer.userData.state = 'WALK_TO_WAITING';
+
             }
             break;
 
@@ -1089,10 +1099,12 @@ function updateCustomerRoutine(customer) {
                 customer.userData.order = state.menu[Math.floor(Math.random() * state.menu.length)].name;
                 customer.userData.isInteractable = true;
                 customer.userData.timer = ANGER_THRESHOLD * 2;
+                state.customerCallingSound.play();
                 customer.userData.state = 'READY_TO_ORDER';
                 updateBubble(customer, '!');
                 stopReadingMenu(customer);
                 startCallingWaiter(customer);
+
             }
             break;
 
@@ -1172,7 +1184,6 @@ function updateCustomerRoutine(customer) {
                 }
 
                 customer.userData.leaveWaypoints[0].y = 0;
-                //customer.position.y = 0;
 
                 if (typeof TWEEN !== 'undefined'){
                     new TWEEN.Tween(customer.position).to({ y: 0 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
@@ -1221,7 +1232,7 @@ function updateCustomerRoutine(customer) {
                 if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_INSIDE)){
                     customer.userData.subState = 'WAIT_FOR_DOOR';
                     const mainDoor = getMainDoor(customer);
-                    //if (mainDoor) animateInteractable(mainDoor, Math.PI/2, 'y');
+                    state.openingDoorSound.play();
                     customer.userData.timer = 60;
                 }
             }
@@ -1248,14 +1259,3 @@ function updateCustomerRoutine(customer) {
             break;
     }
 }
-
-/*export function testChefOrder() {
-    penguins.forEach(pData => {
-        const p = pData.mesh;
-        if (p.userData.role === 'chef' && p.userData.state === 'IDLE') {
-            console.log("CHEF: Ho ricevuto un ordine! Vado a prendere gli ingredienti.");
-            p.userData.state = 'WALK_FRIDGE';
-        }
-    });
-}
-window.testChefOrder = testChefOrder;*/

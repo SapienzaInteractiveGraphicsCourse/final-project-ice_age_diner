@@ -492,7 +492,18 @@ export function createPlate(foodName){
     }
     if (foodModel){
         const foodClone = foodModel.clone();
-        foodClone.position.y = 0.02;
+        if (foodName === 'pizza'){
+            const box = new THREE.Box3().setFromObject(foodClone);
+            const center = box.getCenter(new THREE.Vector3());
+            
+            foodClone.position.x = -center.x;
+            foodClone.position.z = -center.z;
+            foodClone.position.y = 0.08;
+        }
+        else {
+            foodClone.position.y = 0.02;
+        }
+        
         plateGroup.add(foodClone);
     }
     else{

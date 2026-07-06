@@ -117,6 +117,7 @@ function onMouseClick(event){
                         });
                         return;
                     }
+                    state.puttingPlateSound.play();
                     const plate = putDownPlate(waiter, interactionScene, clickedObj);
                     clickedObj.userData.plate = plate;
                     state.heldFood = null;
@@ -144,7 +145,7 @@ function onMouseClick(event){
                         console.log("Vassoio cliccato: trasferisco i piatti usando stackPlate!");
                         
                         waiter.remove(heldPlate);
-                        
+                        state.puttingPlateSound.play();
                         const platesToTray = [heldPlate];
                         for (let i = heldPlate.children.length - 1; i >= 0; i--) {
                             const child = heldPlate.children[i];
@@ -173,6 +174,28 @@ function onMouseClick(event){
                 
             }
             else if (clickedObj.userData.interactionType === 'chair' && !clickedObj.userData.isOccupied){
+
+                const currentTableId = clickedObj.userData.tableId;
+                let isTableOccupiedByAnother = false;
+
+                if (currentTableId) {
+                    interactionScene.traverse((child) => {
+                        if (child.userData && 
+                            child.userData.interactionType === 'chair' && 
+                            child.userData.tableId === currentTableId && 
+                            child !== clickedObj) { 
+                            
+                            if (child.userData.isOccupied) {
+                                isTableOccupiedByAnother = true;
+                            }
+                        }
+                    });
+                }
+
+                if (isTableOccupiedByAnother) {
+                    console.log("Table has already another customer.");
+                    return; 
+                }
                 const followingPenguinData = penguins.find(p => p.mesh && p.mesh.userData.state === 'WAIT_FOR_SEAT_ASSIGNMENT');
 
                 if (followingPenguinData && followingPenguinData.mesh){

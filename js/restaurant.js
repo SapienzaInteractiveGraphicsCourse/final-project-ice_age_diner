@@ -672,13 +672,14 @@ creaFarettoCentrale(66, 30, 0, 0);
         }
     ];
 
-    diamondLayout.forEach(group => {
-    loadFurniture(scene, 'models/furniture/RoundTable.glb', group.table.x, group.table.z, 2 * Math.PI, 0, 5.5);
-    loadFurniture(scene, 'models/furniture/menu2.glb', group.table.x, group.table.z-2.5, 0, 5.3, 1.5);
-    group.chairs.forEach(chairPos => {
-        loadFurniture(scene, 'models/furniture/chairModernCushion.glb', chairPos.x, chairPos.z, chairPos.rot, 0, 14, false, true);
+    diamondLayout.forEach((group, index) => {
+        const currentTableId = `table_${index}`;
+        loadFurniture(scene, 'models/furniture/RoundTable.glb', group.table.x, group.table.z, 2 * Math.PI, 0, 5.5);
+        loadFurniture(scene, 'models/furniture/menu2.glb', group.table.x, group.table.z-2.5, 0, 5.3, 1.5);
+        group.chairs.forEach(chairPos => {
+            loadFurniture(scene, 'models/furniture/chairModernCushion.glb', chairPos.x, chairPos.z, chairPos.rot, 0, 14, false, true, false, 0, currentTableId);
+        });
     });
-});
 
     loadEnvironment(scene, state.icebergs);
     animate(waiter, camera, state.icebergs);
