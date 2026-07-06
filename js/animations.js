@@ -559,9 +559,9 @@ export function pickUpPlate(penguin, plateGroup){
             .start();
     }
     else {
-        plateGroup.position.set(2.0, 2.0, 0.5);
+        plateGroup.position.set(2.0, 1.8, 0.5);
         new TWEEN.Tween(penguin.userData.rightFlipper.rotation)
-            .to({ x: 0, y: 0, z: -Math.PI/1.5 }, 300)
+            .to({ x: -Math.PI/2.2, y: 0, z: Math.PI/8 }, 300)
             .easing(TWEEN.Easing.Quadratic.Out)
             .start();
     }
@@ -713,6 +713,32 @@ export function animateChefCounterRelease(chef){
         .easing(TWEEN.Easing.Quadratic.Out)
         .delay(660)
         .start();
+}
+
+export function shakeHead(penguin, onComplete) {
+    const head = penguin.userData.head;
+    if (!head || penguin.userData.isShakingHead) return;
+
+    penguin.userData.isShakingHead = true;
+
+    const duration = 120; 
+    const angle = Math.PI / 6; 
+
+    const lookLeft = new TWEEN.Tween(head.rotation).to({ y: angle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+    const lookRight = new TWEEN.Tween(head.rotation).to({ y: -angle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+    const lookLeftAgain = new TWEEN.Tween(head.rotation).to({ y: angle }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+    const lookCenter = new TWEEN.Tween(head.rotation).to({ y: 0 }, duration).easing(TWEEN.Easing.Quadratic.InOut);
+
+    lookLeft.chain(lookRight);
+    lookRight.chain(lookLeftAgain);
+    lookLeftAgain.chain(lookCenter);
+
+    lookCenter.onComplete(() => {
+        penguin.userData.isShakingHead = false;
+        if (onComplete) onComplete();
+    });
+
+    lookLeft.start();
 }
 
 export function updateTweens(){

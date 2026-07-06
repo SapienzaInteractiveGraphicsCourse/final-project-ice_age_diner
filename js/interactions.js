@@ -1,4 +1,4 @@
-import { animateInteractable, pickUpPlate, putDownPlate, stackPlates, stopCallingWaiter, startEating, hideAngerSymbol, updateBubble } from './animations.js';
+import { animateInteractable, pickUpPlate, putDownPlate, stackPlates, stopCallingWaiter, startEating, hideAngerSymbol, updateBubble, shakeHead } from './animations.js';
 import { penguins, waitingQueue } from './penguin.js';
 import { state } from './state.js';
 
@@ -7,6 +7,7 @@ let mouse;
 let interactionCamera;
 let interactionScene;
 
+let xTexture =  null;
 // function to setup the raycasting and mouse click interactions
 export function setupInteractions(camera, scene){
     raycaster = new THREE.Raycaster();
@@ -105,6 +106,17 @@ function onMouseClick(event){
             else if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'WAIT_FOR_FOOD'){
                 if (waiter && waiter.userData.hasPlate){
                     console.log("Customer interaction: delivering food.");
+                    const customerOrder = clickedObj.userData.order;
+                    const plateName = waiter.userData.plate.userData.foodName;
+
+                    if (customerOrder !== plateName){
+                        console.log("The food on the plate does not match the customer's order.");
+                        updateBubble(clickedObj, 'X');
+                        shakeHead(clickedObj, () => {
+                            updateBubble(clickedObj, customerOrder);
+                        });
+                        return;
+                    }
                     const plate = putDownPlate(waiter, interactionScene, clickedObj);
                     clickedObj.userData.plate = plate;
                     state.heldFood = null;
