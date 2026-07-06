@@ -1,4 +1,4 @@
-import { animateInteractable, pickUpPlate, putDownPlate, stackPlates, stopCallingWaiter, startEating, hideAngerSymbol } from './animations.js';
+import { animateInteractable, pickUpPlate, putDownPlate, stackPlates, stopCallingWaiter, startEating, hideAngerSymbol, updateBubble } from './animations.js';
 import { penguins, waitingQueue } from './penguin.js';
 import { state } from './state.js';
 
@@ -67,12 +67,12 @@ function onMouseClick(event){
                 clickedObj.userData.state = 'WAIT_FOR_FOOD';
                 
                 hideAngerSymbol(clickedObj);
+                
                 clickedObj.userData.timer = 14400;
 
                 stopCallingWaiter(clickedObj);
-                if (clickedObj.userData.bubble) {
-                    clickedObj.remove(clickedObj.userData.bubble);
-                }
+                updateBubble(clickedObj, orderFood);
+                
                 return;
             }
             else if ((clickedObj.userData.interactionType === 'plate' || clickedObj.userData.interactionType === 'dirty_plate') && clickedObj.userData.isInteractable){ 

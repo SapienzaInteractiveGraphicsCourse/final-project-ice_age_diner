@@ -220,7 +220,7 @@ document.addEventListener("DOMContentLoaded", function (){
                 <div class="order-header">
                     <span style="font-weight: bold;"> ${customerName}</span>
                     <span class="order-food" style="display: flex; align-items: center; gap: 15px; font-weight: bold;">
-                        <img src="${imgSrc}" alt="${foodName}" style="width: 60px; height: 60px; object-fit: contain; transform: scale(1.6); filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.8)) brightness(1.2);">
+                        <img src="${imgSrc}" alt="${foodName}" style="width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.8)) brightness(1.2);">
                         ${foodName.toUpperCase()}
                     </span>
                 </div>

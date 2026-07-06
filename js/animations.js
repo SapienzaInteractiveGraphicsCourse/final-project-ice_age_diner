@@ -370,7 +370,7 @@ export function seatPenguin(penguin, chair){
     }
 }
 
-function createBubbleTexture(text) {
+function createBubbleTexture(textOrFood) {
     const canvas = document.createElement('canvas');
     canvas.width = 128; 
     canvas.height = 128;
@@ -381,28 +381,58 @@ function createBubbleTexture(text) {
     ctx.arc(64, 64, 55, 0, Math.PI*2);
     ctx.fill();
     
-    ctx.fillStyle = 'black';
-    ctx.font = 'bold 40px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, 64, 64);
+    ctx.strokeStyle = '#0ea5e9'; 
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    const texture = new THREE.CanvasTexture(canvas);
     
-    return new THREE.CanvasTexture(canvas);
+    if (state.foodIcons && state.foodIcons[textOrFood]) {
+        const img = new Image();
+        img.src = state.foodIcons[textOrFood]; 
+        
+        img.onload = () => {
+            const iconSize = 80; 
+            ctx.drawImage(img, 64 - iconSize/2, 64 - iconSize/2, iconSize, iconSize);
+            
+            texture.needsUpdate = true;
+        };
+    } else {
+        ctx.fillStyle = 'black';
+        ctx.font = 'bold 40px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(textOrFood || "", 64, 64);
+    }
+    
+    return texture;
 }
 
 export function updateBubble(customer, text) {
+    if (customer.userData.bubble && customer.userData.bubbleCurrentText === text) {
+        return; 
+    }
+    
+    customer.userData.bubbleCurrentText = text;
+
     if (!customer.userData.bubble){
-        const material = new THREE.SpriteMaterial({ map: createBubbleTexture(text) });
+        const material = new THREE.SpriteMaterial({ 
+            map: createBubbleTexture(text),
+            transparent: true,
+            depthTest: true,
+            depthWrite: false
+        });
         const sprite = new THREE.Sprite(material);
-        sprite.position.set(0, 6, 0); // above the penguin's head
+        sprite.position.set(0, 6, 0); 
         sprite.scale.set(3, 3, 3);    
         customer.add(sprite);
         customer.userData.bubble = sprite;
     }
-    else{
-        // if the bubble already exists, update its texture
+    else {
         customer.userData.bubble.material.map.dispose(); 
         customer.userData.bubble.material.map = createBubbleTexture(text);
+        
+        customer.userData.bubble.material.needsUpdate = true; 
     }
 }
 
