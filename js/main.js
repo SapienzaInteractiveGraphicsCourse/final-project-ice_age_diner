@@ -239,6 +239,10 @@ document.addEventListener("DOMContentLoaded", function (){
     window.addEventListener("earningsUpdated", function() {
         updateEarningsUI();
         
+        if (state.cashSound && state.cashSound.isPlaying) {
+            state.cashSound.stop();
+        }
+        state.cashSound.play();
         earningsDisplay.classList.add("money-up");
         
         setTimeout(() => {
@@ -257,6 +261,12 @@ function initAudio(){
 
     menuSound = new THREE.Audio(state.audioListener);
     gameSound = new THREE.Audio(state.audioListener);
+    state.cashSound = new THREE.Audio(state.audioListener);
+    state.closingDoorSound = new THREE.Audio(state.audioListener);
+    state.customerCallingSound = new THREE.Audio(state.audioListener);
+    state.foodReadySound = new THREE.Audio(state.audioListener);
+    state.openingDoorSound = new THREE.Audio(state.audioListener);
+    state.puttingPlateSound = new THREE.Audio(state.audioListener);
 
     const audioLoader = new THREE.AudioLoader();
     const currentVolume = document.getElementById("volume-slider").value/100;
@@ -264,7 +274,7 @@ function initAudio(){
     audioLoader.load("audio/menu_theme.mp3", function(buffer){
         menuSound.setBuffer(buffer);
         menuSound.setLoop(true);
-        menuSound.setVolume(currentVolume);
+        menuSound.setVolume(currentVolume * 0.7);
 
         if (!gameStarted) menuSound.play();
     });
@@ -272,10 +282,47 @@ function initAudio(){
     audioLoader.load("audio/restaurant_theme.mp3", function(buffer){
         gameSound.setBuffer(buffer);
         gameSound.setLoop(true);
-        gameSound.setVolume(currentVolume);
+        gameSound.setVolume(currentVolume * 0.4); 
 
         if (gameStarted && !gameSound.isPlaying) gameSound.play();
     });
+
+    audioLoader.load("audio/cash.mp3", function(buffer){
+        state.cashSound.setBuffer(buffer);
+        state.cashSound.setVolume(currentVolume);
+        state.cashSound.setLoop(false);
+    });
+
+    audioLoader.load("audio/closing_door.mp3", function(buffer){
+        state.closingDoorSound.setBuffer(buffer);
+        state.closingDoorSound.setVolume(currentVolume);
+        state.closingDoorSound.setLoop(false);
+    });
+
+    audioLoader.load("audio/customer_calling.mp3", function(buffer){
+        state.customerCallingSound.setBuffer(buffer);
+        state.customerCallingSound.setVolume(currentVolume);
+        state.customerCallingSound.setLoop(false);
+    });
+
+    audioLoader.load("audio/food_ready.mp3", function(buffer){
+        state.foodReadySound.setBuffer(buffer);
+        state.foodReadySound.setVolume(currentVolume);
+        state.foodReadySound.setLoop(false);
+    });
+
+    audioLoader.load("audio/opening_door.mp3", function(buffer){
+        state.openingDoorSound.setBuffer(buffer);
+        state.openingDoorSound.setVolume(currentVolume);
+        state.openingDoorSound.setLoop(false);
+    });
+
+    audioLoader.load("audio/putting_plate_on_table.mp3", function(buffer){
+        state.puttingPlateSound.setBuffer(buffer);
+        state.puttingPlateSound.setVolume(currentVolume);
+        state.puttingPlateSound.setLoop(false);
+    });
+
 
     audioInitialized = true;
 }
