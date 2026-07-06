@@ -5,6 +5,7 @@ export function loadEnvironment(scene, icebergsArray){
     water.rotation.x = -Math.PI/2;
     water.position.y = -2;
     water.frustumCulled = false; // Ensure the water is always rendered
+    water.receiveShadow = true;
     scene.add(water);
 
     createIcebergs(scene, icebergsArray, 20);
@@ -59,6 +60,8 @@ function createIcebergs(scene, icebergsArray, count) {
 
         geometry.computeVertexNormals();
         const iceberg = new THREE.Mesh(geometry, material);
+        iceberg.castShadow = true;
+        iceberg.receiveShadow = true;
 
         // Circular spwan
         const angle = Math.random() * Math.PI * 2;

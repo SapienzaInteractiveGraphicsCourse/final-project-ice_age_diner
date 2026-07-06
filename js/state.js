@@ -4,6 +4,8 @@ export const state = {
     camera: null,
     renderer: null,
     gameControls: null,
+    sunLight: null,
+    sunMesh: null,
 
     isPaused: false,
     dayInProgress: false,
@@ -25,7 +27,7 @@ export const state = {
         {'name': 'turkey', 'price': 20}], //ADD MORE FOOD
     foodIcons:{},
     models:{},
-    penguins_name: ["Pingu", "Kowalski", "Rico", "Skipper", "Soldato", "Gunter", "Cody", "Mumble", "Flipper"], // ADD MORE NAMES IF YOU WANT
+    penguins_name: ["Pingu", "Kowalski", "Rico", "Skipper", "Soldato", "Gunter", "Cody", "Mumble", "Flipper", "Bert"], // ADD MORE NAMES IF YOU WANT
 
     //SOUNDS
     cashSound: null,

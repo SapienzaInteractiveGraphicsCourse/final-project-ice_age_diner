@@ -284,20 +284,49 @@ export function buildRestaurant() {
     const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
     ceiling.rotation.x = Math.PI / 2;
     ceiling.position.y = height;
+    ceiling.castShadow = true;
+    ceiling.receiveShadow = true;
     scene.add(ceiling);
 
     // Light
-    const ambientLight = new THREE.AmbientLight(0xd0e3f0, 0.6);
+    const ambientLight = new THREE.AmbientLight(0xd0e3f0, 0.55);
     scene.add(ambientLight);
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 0.2);
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 0.35);
     hemiLight.position.set(0, height, 0);
     scene.add(hemiLight);
+
+    const sunLight = new THREE.DirectionalLight(0xff7700, 0);
+    sunLight.position.set(-500, -50, 0);
+    sunLight.castShadow = true;
+    const d = 150; 
+    sunLight.shadow.camera.left = -d;
+    sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d;
+    sunLight.shadow.camera.bottom = -d;
+    sunLight.shadow.camera.near = 0.5;
+    sunLight.shadow.camera.far = 1500;
+
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.bias = -0.0001;
+    sunLight.shadow.normalBias = 0.005;
+
+    scene.add(sunLight);
+    state.sunLight = sunLight;
+
+    const sunGeometry = new THREE.SphereGeometry(45, 32, 32);
+    const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xfff2ba });
+    const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
+    
+    sunMesh.position.copy(sunLight.position);
+    scene.add(sunMesh);
+    state.sunMesh = sunMesh;
 
     const lampGeometry = new THREE.CylinderGeometry(0.4, 0.5, 0.3, 8);
     const lampMaterial = new THREE.MeshBasicMaterial({ color: 0xffeebb });
 
-    const spotlightIntensity = 0.35; // Alzata leggermente l'intensità visto che sono più distanti
+    const spotlightIntensity = 0.35;
     
     const xDistance = 32;
     const zDistance = 22;
@@ -348,7 +377,7 @@ export function buildRestaurant() {
         miniLampMesh.position.set(lightX, lightY, zPos);
         scene.add(miniLampMesh);
 
-        const underCabinetSpot = new THREE.SpotLight(0xfff8f0, 2.0); // Intensità aumentata a 2.0 per un effetto marcato
+        const underCabinetSpot = new THREE.SpotLight(0xfff8f0, 2.0);
         underCabinetSpot.position.set(lightX, lightY - 0.05, zPos);
         
         underCabinetSpot.target.position.set(lightX, 0, zPos);
@@ -683,6 +712,12 @@ creaFarettoCentrale(66, 30, 0, 0);
 
     loadEnvironment(scene, state.icebergs);
     animate(waiter, camera, state.icebergs);
+    scene.traverse(function(child) {
+        if (child.isMesh && child.material === wallMaterial) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    });
 }
 
 function animate(waiter, camera, icebergs){

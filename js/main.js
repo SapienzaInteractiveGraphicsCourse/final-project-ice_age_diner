@@ -126,6 +126,45 @@ document.addEventListener("DOMContentLoaded", function (){
         let currentTime = state.dayDuration;
         updateTimerDisplay(currentTime);
 
+        // Solar cycle
+        let sunProgressTime = 0;
+        let lastFrameTime = performance.now();
+        
+        function animateSunCycle(now) {
+            if (!state.dayInProgress) return; 
+            
+            const deltaTime = (now - lastFrameTime) / 1000;
+            lastFrameTime = now;
+            
+            if (!state.isPaused && state.sunLight) {
+                sunProgressTime += deltaTime;
+                
+                const progress = Math.min(sunProgressTime / state.dayDuration, 1.0);
+                const sunAngle = progress * Math.PI;
+                const orbitRadius = 800;
+                
+                state.sunLight.position.x = -Math.cos(sunAngle) * orbitRadius;
+                state.sunLight.position.z = -Math.sin(sunAngle) * orbitRadius; 
+                state.sunLight.position.y = (Math.sin(sunAngle) * 400) + 10;
+                
+                const sunsetColor = new THREE.Color(0xff5500);
+                const halfdayColor = new THREE.Color(0xffffee);
+                const sunHeightFactor = Math.sin(sunAngle); 
+                
+                state.sunLight.color.lerpColors(sunsetColor, halfdayColor, sunHeightFactor);
+                state.sunLight.intensity = 0.1 + (sunHeightFactor*0.4);
+
+                if (state.sunMesh) {
+                    state.sunMesh.position.copy(state.sunLight.position);
+                }
+            }
+
+            requestAnimationFrame(animateSunCycle);
+        }
+        
+        lastFrameTime = performance.now();
+        requestAnimationFrame(animateSunCycle);
+
         dayInterval = setInterval(function(){
             if (!state.isPaused){
                 currentTime --;
@@ -323,7 +362,5 @@ function initAudio(){
         state.puttingPlateSound.setLoop(false);
     });
 
-
     audioInitialized = true;
 }
-
