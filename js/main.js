@@ -32,6 +32,12 @@ document.addEventListener("DOMContentLoaded", function (){
     const earningsDisplay = document.getElementById("earnings-display");
     const dayNumberDisplay = document.getElementById("dayNumber");
 
+    const summaryMenu = document.getElementById("summary-menu");
+    const summaryDayTitle = document.getElementById("summary-day-title");
+    const summaryItemsList = document.getElementById("summary-items-list");
+    const summaryTotalValue = document.getElementById("summary-total-value");
+    const btnContinue = document.getElementById("btn-continue");
+
     let dayInterval = null;
     [gameUI, inGameSettingsBtn, pauseMenu].forEach(el => {
         if (el) el.style.zIndex = '10';
@@ -118,11 +124,17 @@ document.addEventListener("DOMContentLoaded", function (){
         mainMenuContent.classList.remove("hidden-panel");
     });
 
+    btnContinue.addEventListener("click", function(){
+        summaryMenu.classList.add("hidden-panel");
+        startDayBtn.classList.remove("hidden-panel");
+    });
+
     startDayBtn.addEventListener("click", function(){
         state.dayInProgress = true;
         startDayBtn.classList.add("hidden-panel");
         timerDisplay.classList.remove("hidden-panel");
         ordersPanel.classList.remove("hidden-panel");
+        state.todaysOrders = [];
         state.dayNumber += 1;
         dayNumberDisplay.textContent = "Day " + state.dayNumber;
         timerValue.textContent = "05:00";
@@ -252,6 +264,7 @@ document.addEventListener("DOMContentLoaded", function (){
                 if (currentTime <= 0){
                     clearInterval(dayInterval);
                     endDay();
+                    showEndOfDaySummary();
                 }
             }
         }, 1000);
@@ -273,7 +286,6 @@ document.addEventListener("DOMContentLoaded", function (){
 
     function endDay(){
         state.dayInProgress = false;
-        startDayBtn.classList.remove("hidden-panel");
         timerDisplay.classList.add("hidden-panel");
         ordersPanel.classList.add("hidden-panel");
         penguins.forEach(p => {
@@ -369,6 +381,61 @@ document.addEventListener("DOMContentLoaded", function (){
     });
 
 
+
+    function showEndOfDaySummary() {
+    
+        summaryDayTitle.textContent = `End Day ${state.dayNumber}`;
+        summaryItemsList.innerHTML = "";
+        
+        let totalDayEarnings = 0;
+
+        state.todaysOrders.forEach(sale => {
+            totalDayEarnings += sale.price;
+
+            const row = document.createElement("div");
+            row.className = "summary-item-row";
+
+            const leftDiv = document.createElement("div");
+            leftDiv.className = "summary-item-left";
+
+            const iconContainer = document.createElement("div");
+            iconContainer.className = "summary-item-icon-container";
+            
+            if (state.foodIcons[sale.foodOrder]) {
+                const originalCanvas = state.foodIcons[sale.foodOrder].domElement || state.foodIcons[sale.foodOrder];
+                
+                const canvasClone = document.createElement("canvas");
+                canvasClone.width = 128;
+                canvasClone.height = 128;
+                const ctx = canvasClone.getContext("2d");
+                ctx.drawImage(originalCanvas, 0, 0);
+                
+                iconContainer.appendChild(canvasClone);
+            }
+
+            const nameSpan = document.createElement("span");
+            nameSpan.className = "summary-item-name";
+            nameSpan.textContent = sale.foodOrder;
+
+            leftDiv.appendChild(iconContainer);
+            leftDiv.appendChild(nameSpan);
+
+            const priceSpan = document.createElement("span");
+            priceSpan.className = "summary-item-price";
+            priceSpan.textContent = `+$${sale.price}`;
+
+            row.appendChild(leftDiv);
+            row.appendChild(priceSpan);
+
+            summaryItemsList.appendChild(row);
+        });
+
+        summaryTotalValue.textContent = totalDayEarnings;
+        
+        summaryMenu.classList.remove("hidden");
+    }
+
+
 });
 
 function initAudio(){
@@ -400,7 +467,7 @@ function initAudio(){
     audioLoader.load("audio/restaurant_theme.mp3", function(buffer){
         gameSound.setBuffer(buffer);
         gameSound.setLoop(true);
-        gameSound.setVolume(currentVolume * 0.4); 
+        gameSound.setVolume(currentVolume * 0.2); 
 
         if (gameStarted && !gameSound.isPlaying) gameSound.play();
     });

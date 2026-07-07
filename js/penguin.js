@@ -275,7 +275,7 @@ export function spawnPenguin(position, role){
     if (role === 'chef') penguin.userData.speed = 0.22;
     else if (role === 'dishwasher') penguin.userData.speed = 0.28;
     else if (role === 'customer') penguin.userData.speed = 0.25;
-    else penguin.userData.speed = 0.4;
+    else penguin.userData.speed = 1.2;
 
     penguin.userData.hasPlate = false;
 
@@ -1128,6 +1128,10 @@ function updateCustomerRoutine(customer) {
             }
             if (customer.userData.timer <= 0){
                 customer.userData.isInteractable = false;
+                if (customer.userData.bubble) {
+                    customer.remove(customer.userData.bubble);
+                    customer.userData.bubble = null;
+                }
                 customer.userData.state = 'LEAVING';
             }
             break;
@@ -1159,6 +1163,7 @@ function updateCustomerRoutine(customer) {
                 const orderIndex = state.menu.findIndex(food => food.name === foodOrder);
                 const price = state.menu[orderIndex].price;
                 state.earnings += price;
+                state.todaysOrders.push({ food: foodOrder, price: price });
                 customer.userData.state = 'LEAVING';
                 window.dispatchEvent(new Event('earningsUpdated'));
             } 

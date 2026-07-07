@@ -474,10 +474,6 @@ export function createPlate(foodName){
         plateGroup.userData.foodName = 'hamburger';
         foodModel = state.models.hamburger;
     }
-    else if (foodName === 'pizza' && state.models.pizza){
-        plateGroup.userData.foodName = 'pizza';
-        foodModel = state.models.pizza;
-    }
     else if (foodName === 'hotdog' && state.models.hotdog){
         plateGroup.userData.foodName = 'hotdog';
         foodModel = state.models.hotdog;
@@ -490,17 +486,9 @@ export function createPlate(foodName){
         plateGroup.userData.foodName = 'fish';
         foodModel = state.models.fish;
     }
-    else if (foodName === 'bacon' && state.models.bacon){
-        plateGroup.userData.foodName = 'bacon';
-        foodModel = state.models.bacon;
-    }
     else if (foodName === 'cheese' && state.models.cheese){
         plateGroup.userData.foodName = 'cheese';
         foodModel = state.models.cheese;
-    }
-    else if (foodName === 'chocolate' && state.models.chocolate){
-        plateGroup.userData.foodName = 'chocolate';
-        foodModel = state.models.chocolate;
     }
     else if (foodName === 'cupcake' && state.models.cupcake){
         plateGroup.userData.foodName = 'cupcake';
@@ -510,10 +498,6 @@ export function createPlate(foodName){
         plateGroup.userData.foodName = 'meat';
         foodModel = state.models.meat;
     }
-    else if (foodName === 'riceball' && state.models.riceBall){
-        plateGroup.userData.foodName = 'riceball';
-        foodModel = state.models.riceBall;
-    }
     else if (foodName === 'turkey' && state.models.turkey){
         plateGroup.userData.foodName = 'turkey';
         foodModel = state.models.turkey;
@@ -522,20 +506,8 @@ export function createPlate(foodName){
 
     if (foodModel){
         const foodClone = foodModel.clone();
-        if (foodName === 'pizza' || foodName === 'bacon'){
-            const box = new THREE.Box3().setFromObject(foodClone);
-            const center = box.getCenter(new THREE.Vector3());
-            
-            foodClone.position.x = -center.x;
-            foodClone.position.z = -center.z;
-            foodClone.position.y = 0.08;
-        }
-        if (foodName === 'riceball'){
-            foodClone.scale.set(3, 3, 3);
-        }
-        else {
-            foodClone.position.y = 0.02;
-        }
+        
+        foodClone.position.y = 0.02;
         
         plateGroup.add(foodClone);
     }
