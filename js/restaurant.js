@@ -9,6 +9,7 @@ import { animateIcebergs, updateTweens } from './animations.js';
 export function buildRestaurant() {
     state.colliders = [];
     state.icebergs = [];
+    state.spotLights = [];
 
     // Creation of the scene, camera, and renderer
     state.scene = new THREE.Scene();
@@ -46,10 +47,13 @@ export function buildRestaurant() {
     const depth = 90;
     const height = 30;
     const thickness = 1;
+    const structuralWallThickness = 2;
 
     const divisorWallX = -40;
     const kitchenWidth = (width/2) + divisorWallX;
     const mainRoomWidth = (width/2) - divisorWallX;
+
+    state.sunOrbitCenterX = divisorWallX + mainRoomWidth/2;
 
     const counterThickness = 1;
     const counterWidth = 8.0;
@@ -163,7 +167,7 @@ export function buildRestaurant() {
     scene.add(rightWall);
 
     // Kitchen wall
-    const kitchenWallGeometry = new THREE.PlaneGeometry(kitchenWidth + 2, height + 4);
+    const kitchenWallGeometry = new THREE.BoxGeometry(kitchenWidth + 2, height + 4, structuralWallThickness);
     applyContinuousUVs(kitchenWallGeometry);
 
     const kitchenBackWall = new THREE.Mesh(kitchenWallGeometry, wallMaterial);
@@ -240,7 +244,8 @@ export function buildRestaurant() {
         backWallShape.holes.push(hole);
     });
 
-    const backWallGeom = new THREE.ShapeGeometry(backWallShape);
+    const backWallGeom = new THREE.ExtrudeGeometry(backWallShape, { depth: structuralWallThickness, bevelEnabled: false });
+    backWallGeom.translate(0, 0, -structuralWallThickness/2);
     applyContinuousUVs(backWallGeom);
 
     const backWallMesh = new THREE.Mesh(backWallGeom, wallMaterial);
@@ -289,16 +294,47 @@ export function buildRestaurant() {
     scene.add(ceiling);
 
     // Light
-    const ambientLight = new THREE.AmbientLight(0xd0e3f0, 0.55);
+    const ambientLight = new THREE.AmbientLight(0xd0e3f0, 0.4);
     scene.add(ambientLight);
+    state.ambientLight = ambientLight;
 
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 0.35);
     hemiLight.position.set(0, height, 0);
     scene.add(hemiLight);
+    state.hemiLight = hemiLight;
+
+    const starsGeometry = new THREE.BufferGeometry();
+    const starsCount = 500;
+    const starPositions = new Float32Array(starsCount * 3);
+
+    for (let i=0; i<starsCount*3; i += 3) {
+        const theta = Math.random()*Math.PI;
+        const phi = Math.random()*Math.PI*2;
+        const radius = 700 + Math.random()*100;
+
+        starPositions[i] = radius*Math.sin(theta)*Math.cos(phi);
+        starPositions[i + 1] = Math.abs(radius * Math.cos(theta)) + 50;
+        starPositions[i + 2] = radius*Math.sin(theta)*Math.sin(phi);
+    }
+
+    starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    const starsMaterial = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 2.5,
+        sizeAttenuation: true,
+        transparent: true,
+        opacity: 0.0
+    });
+
+    state.starsMesh = new THREE.Points(starsGeometry, starsMaterial);
+    scene.add(state.starsMesh);
 
     const sunLight = new THREE.DirectionalLight(0xff7700, 0);
-    sunLight.position.set(-500, -50, 0);
+    sunLight.position.set(state.sunOrbitCenterX, -50, 0);
     sunLight.castShadow = true;
+    sunLight.target.position.set(state.sunOrbitCenterX, 0, 0);
+    scene.add(sunLight.target);
+
     const d = 150; 
     sunLight.shadow.camera.left = -d;
     sunLight.shadow.camera.right = d;
@@ -307,10 +343,10 @@ export function buildRestaurant() {
     sunLight.shadow.camera.near = 0.5;
     sunLight.shadow.camera.far = 1500;
 
-    sunLight.shadow.mapSize.width = 2048;
-    sunLight.shadow.mapSize.height = 2048;
-    sunLight.shadow.bias = -0.0001;
-    sunLight.shadow.normalBias = 0.005;
+    sunLight.shadow.mapSize.width = 4096;
+    sunLight.shadow.mapSize.height = 4096;
+    sunLight.shadow.bias = -0.0004;
+    sunLight.shadow.normalBias = 0.02;
 
     scene.add(sunLight);
     state.sunLight = sunLight;
@@ -326,14 +362,17 @@ export function buildRestaurant() {
     const lampGeometry = new THREE.CylinderGeometry(0.4, 0.5, 0.3, 8);
     const lampMaterial = new THREE.MeshBasicMaterial({ color: 0xffeebb });
 
-    const spotlightIntensity = 0.35;
+    const spotlightIntensity = 0.55;
     
-    const xDistance = 32;
-    const zDistance = 22;
-    let shadowLightCount = 0;
-
-    for (let x = -70; x <= 70; x += xDistance) {
-        for (let z = -35; z <= 35; z += zDistance) {
+    const xMin = -72;
+    const xMax = 78;  
+    const zMin = -42;
+    const zMax = 42;
+    const xDistance = 16; 
+    const zDistance = 14;
+    let shadowLightCount = 0; 
+    for (let x = xMin; x <= xMax; x += xDistance) {
+        for (let z = zMin; z <= zMax; z += zDistance) {
             const physicalLamp = new THREE.Mesh(lampGeometry, lampMaterial);
             physicalLamp.position.set(x, height - 0.05, z);
             scene.add(physicalLamp);
@@ -341,11 +380,11 @@ export function buildRestaurant() {
             const gridSpotlight = new THREE.SpotLight(0xfff0dd, spotlightIntensity);
             gridSpotlight.position.set(x, height - 0.2, z);
             gridSpotlight.target.position.set(x, 0, z);
-
-            gridSpotlight.angle = Math.PI / 2.5;
-            gridSpotlight.penumbra = 0.8;
-            gridSpotlight.distance = 55;
-            gridSpotlight.decay = 1.8; 
+            gridSpotlight.angle = Math.PI / 2.3;
+            gridSpotlight.penumbra = 1.0; 
+            gridSpotlight.distance = 65; 
+            gridSpotlight.decay = 2.0; 
+            gridSpotlight.userData.baseIntensity = spotlightIntensity; 
 
             if (shadowLightCount < 4 && (x === -6 || x === 26) && (z === -13 || z === 9)) {
                 gridSpotlight.castShadow = true;
@@ -360,6 +399,8 @@ export function buildRestaurant() {
 
             scene.add(gridSpotlight);
             scene.add(gridSpotlight.target);
+
+            state.spotLights.push(gridSpotlight);
         }
     }
 
@@ -383,14 +424,17 @@ export function buildRestaurant() {
         underCabinetSpot.target.position.set(lightX, 0, zPos);
 
         //light cone
-        underCabinetSpot.angle = Math.PI / 6.5;  
-        underCabinetSpot.penumbra = 0.3;         
-        underCabinetSpot.distance = 20;          
-        underCabinetSpot.decay = 1.2;            
-        underCabinetSpot.castShadow = false; 
+        underCabinetSpot.angle = Math.PI / 6.5;
+        underCabinetSpot.penumbra = 0.3;
+        underCabinetSpot.distance = 20;
+        underCabinetSpot.decay = 1.2;
+        underCabinetSpot.castShadow = false;
+        underCabinetSpot.userData.baseIntensity = 2.0;
 
         scene.add(underCabinetSpot);
         scene.add(underCabinetSpot.target);
+        
+        state.spotLights.push(underCabinetSpot);
     });
 
     // Camera controls
@@ -606,6 +650,7 @@ function creaFarettoCentrale(x, y, z, targetZ) {
     luce.penumbra = 0.7;
     luce.distance = 15;
     luce.castShadow = true;
+    luce.userData.baseIntensity = 5.0;
 
     const targetLuce = new THREE.Object3D();
     targetLuce.position.set(77, 21, targetZ);
@@ -613,6 +658,7 @@ function creaFarettoCentrale(x, y, z, targetZ) {
     luce.target = targetLuce;
 
     scene.add(luce);
+    state.spotLights.push(luce);
 }
 
 creaFarettoCentrale(66, 30, 0, 0);
@@ -718,6 +764,20 @@ creaFarettoCentrale(66, 30, 0, 0);
             child.receiveShadow = true;
         }
     });
+
+    if (state.spotLights && Array.isArray(state.spotLights)) {
+        state.spotLights.forEach(spot => {
+            const base = spot.userData.baseIntensity ?? 1.0;
+            spot.intensity = base * 0.2; 
+        });
+    }
+
+    if (state.sunLight) {
+        state.sunLight.intensity = 0.15;
+    }
+    if (state.ambientLight) {
+        state.ambientLight.intensity = 0.6;
+    }
 }
 
 function animate(waiter, camera, icebergs){

@@ -150,8 +150,8 @@ export function createWindowFrame(w, h, r, frameThick, depth, material) {
         color: 0xccffff,
         transparent: true,
         opacity: 0.35,
-        roughness: 0.1,
-        metalness: 0.9,
+        roughness: 0.5,
+        metalness: 0.0,
         side: THREE.DoubleSide,
         depthWrite: false
     });

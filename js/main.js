@@ -139,23 +139,98 @@ document.addEventListener("DOMContentLoaded", function (){
             if (!state.isPaused && state.sunLight) {
                 sunProgressTime += deltaTime;
                 
-                const progress = Math.min(sunProgressTime / state.dayDuration, 1.0);
-                const sunAngle = progress * Math.PI;
+                let rawProgress = sunProgressTime / state.dayDuration;
+                let progress = Math.min(rawProgress, 1.0);
+                
+                const sunAngle = progress * (Math.PI * 1.15); 
                 const orbitRadius = 800;
-                
-                state.sunLight.position.x = -Math.cos(sunAngle) * orbitRadius;
-                state.sunLight.position.z = -Math.sin(sunAngle) * orbitRadius; 
-                state.sunLight.position.y = (Math.sin(sunAngle) * 400) + 10;
-                
-                const sunsetColor = new THREE.Color(0xff5500);
-                const halfdayColor = new THREE.Color(0xffffee);
-                const sunHeightFactor = Math.sin(sunAngle); 
-                
-                state.sunLight.color.lerpColors(sunsetColor, halfdayColor, sunHeightFactor);
-                state.sunLight.intensity = 0.1 + (sunHeightFactor*0.4);
+                const orbitHeight = 400;
+                const centerX = state.sunOrbitCenterX ?? 0;
 
+                state.sunLight.position.x = centerX;
+                state.sunLight.position.z = Math.cos(sunAngle) * orbitRadius;
+                state.sunLight.position.y = (Math.sin(sunAngle) * orbitHeight) + 10;
+                
+                const colorSunriseSky = new THREE.Color(0xffe4b5);
+                const colorSunriseSun = new THREE.Color(0xfff5e6);
+                
+                const colorHalfdaySky = new THREE.Color(0x87ceeb);
+                const colorHalfdaySun = new THREE.Color(0xffffee);
+                
+                const colorSunsetSky = new THREE.Color(0xde6b48);
+                const colorSunsetSun = new THREE.Color(0xff5500);
+                
+                const colorNightSky = new THREE.Color(0x0a0a1a);
+                const colorNightSun = new THREE.Color(0x000000);
+                
+                let currentSkyColor = new THREE.Color();
+                let currentSunColor = new THREE.Color();
+                let sunIntensity = 0;
+                let targetSpotIntensity = 0;
+
+                if (progress < 0.25) {
+                    let t = progress / 0.25;
+                    currentSkyColor.lerpColors(colorSunriseSky, colorHalfdaySky, t);
+                    currentSunColor.lerpColors(colorSunriseSun, colorHalfdaySun, t);
+                    
+                    sunIntensity = THREE.MathUtils.lerp(0.15, 1.0, t);
+                    targetSpotIntensity = THREE.MathUtils.lerp(0.2, 0.02, t); 
+                } 
+                else if (progress < 0.75) {
+                    let t = (progress - 0.25) / 0.5;
+                    currentSkyColor.lerpColors(colorHalfdaySky, colorSunsetSky, t);
+                    currentSunColor.lerpColors(colorHalfdaySun, colorSunsetSun, t);
+                    
+                    sunIntensity = THREE.MathUtils.lerp(1.0, 0.4, t);
+                    targetSpotIntensity = THREE.MathUtils.lerp(0.02, 0.4, t); 
+                } 
+                else {
+                    let t = (progress - 0.75) / 0.25;
+                    currentSkyColor.lerpColors(colorSunsetSky, colorNightSky, t);
+                    currentSunColor.lerpColors(colorSunsetSun, colorNightSun, t);
+                    
+                    sunIntensity = THREE.MathUtils.lerp(0.4, 0.0, t); 
+                    targetSpotIntensity = THREE.MathUtils.lerp(0.4, 0.8, t); 
+                }
+
+                state.sunLight.color.copy(currentSunColor);
+                state.sunLight.intensity = sunIntensity;
                 if (state.sunMesh) {
                     state.sunMesh.position.copy(state.sunLight.position);
+                    state.sunMesh.material.color.copy(currentSunColor);
+                }
+
+                if (state.spotLights && Array.isArray(state.spotLights)) {
+                    state.spotLights.forEach(spot => {
+                        const base = spot.userData.baseIntensity ?? 1.0;
+                        spot.intensity = base*targetSpotIntensity;
+                    });
+                }
+
+                if (state.starsMesh) {
+                    if (progress > 0.7){
+                        state.starsMesh.visible = true;
+                        const starFade = (progress - 0.7) / 0.3;
+                        state.starsMesh.material.opacity = starFade;
+                    }
+                    else{
+                        state.starsMesh.material.opacity = 0;
+                        state.starsMesh.visible = false;
+                    }
+                }
+
+                if (state.ambientLight){
+                    let ambientNight = new THREE.Color(0x0f111a);
+                    state.ambientLight.color.lerpColors(currentSkyColor, ambientNight, progress>0.8 ? (progress - 0.8)/0.2 : 0);
+                    state.ambientLight.intensity = THREE.MathUtils.lerp(0.6, 0.15, progress);
+                }
+
+                if (state.hemiLight){
+                    state.hemiLight.color.copy(currentSkyColor);
+                }
+
+                if (state.scene && state.scene.background && state.scene.background.isColor){
+                    state.scene.background.copy(currentSkyColor);
                 }
             }
 
