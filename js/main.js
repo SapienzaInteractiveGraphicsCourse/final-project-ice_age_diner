@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", function (){
     const timerValue = document.getElementById("timer-value");
     const ordersPanel = document.getElementById("orders-panel");
     const earningsDisplay = document.getElementById("earnings-display");
+    const dayNumberDisplay = document.getElementById("dayNumber");
 
     let dayInterval = null;
     [gameUI, inGameSettingsBtn, pauseMenu].forEach(el => {
@@ -43,6 +44,7 @@ document.addEventListener("DOMContentLoaded", function (){
         startMenu.classList.add("hidden");
         //gameUI.classList.add("visible");
         inGameSettingsBtn.classList.remove("hidden-panel");
+        dayNumberDisplay.classList.remove("hidden-panel");
 
         //to avoid starting the game multiple times
         if (!gameStarted) {
@@ -121,6 +123,8 @@ document.addEventListener("DOMContentLoaded", function (){
         startDayBtn.classList.add("hidden-panel");
         timerDisplay.classList.remove("hidden-panel");
         ordersPanel.classList.remove("hidden-panel");
+        state.dayNumber += 1;
+        dayNumberDisplay.textContent = "Day " + state.dayNumber;
         timerValue.textContent = "05:00";
 
         let currentTime = state.dayDuration;

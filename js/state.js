@@ -13,6 +13,7 @@ export const state = {
     dayInProgress: false,
     dayDuration: 300, // 5 minutes
     earnings: 0,
+    dayNumber: 0,
 
     audioListener: null,
 
