@@ -190,7 +190,7 @@ document.addEventListener("DOMContentLoaded", function (){
                     currentSunColor.lerpColors(colorSunriseSun, colorHalfdaySun, t);
                     
                     sunIntensity = THREE.MathUtils.lerp(0.15, 1.0, t);
-                    targetSpotIntensity = THREE.MathUtils.lerp(0.2, 0.02, t); 
+                    targetSpotIntensity = THREE.MathUtils.lerp(0.3, 0.05, t); 
                 } 
                 else if (progress < 0.75) {
                     let t = (progress - 0.25) / 0.5;
@@ -198,7 +198,7 @@ document.addEventListener("DOMContentLoaded", function (){
                     currentSunColor.lerpColors(colorHalfdaySun, colorSunsetSun, t);
                     
                     sunIntensity = THREE.MathUtils.lerp(1.0, 0.4, t);
-                    targetSpotIntensity = THREE.MathUtils.lerp(0.02, 0.4, t); 
+                    targetSpotIntensity = THREE.MathUtils.lerp(0.05, 0.55, t); 
                 } 
                 else {
                     let t = (progress - 0.75) / 0.25;
@@ -206,7 +206,7 @@ document.addEventListener("DOMContentLoaded", function (){
                     currentSunColor.lerpColors(colorSunsetSun, colorNightSun, t);
                     
                     sunIntensity = THREE.MathUtils.lerp(0.4, 0.0, t); 
-                    targetSpotIntensity = THREE.MathUtils.lerp(0.4, 0.8, t); 
+                    targetSpotIntensity = THREE.MathUtils.lerp(0.55, 0.9, t); 
                 }
 
                 state.sunLight.color.copy(currentSunColor);
@@ -214,6 +214,22 @@ document.addEventListener("DOMContentLoaded", function (){
                 if (state.sunMesh) {
                     state.sunMesh.position.copy(state.sunLight.position);
                     state.sunMesh.material.color.copy(currentSunColor);
+                }
+
+                const moonAngle = sunAngle + Math.PI;
+                const rawMoonSin = Math.sin(moonAngle);
+                const moonHeightFactor = Math.max(0, rawMoonSin);
+                const moonPeakIntensity = 0.65;
+
+                if (state.moonLight){
+                    state.moonLight.position.x = centerX;
+                    state.moonLight.position.z = Math.cos(moonAngle)*orbitRadius*0.6;
+                    state.moonLight.position.y = (rawMoonSin*orbitHeight*0.5) + 10;
+                    state.moonLight.intensity = moonHeightFactor*moonPeakIntensity;
+
+                    if (state.moonMesh){
+                        state.moonMesh.position.copy(state.moonLight.position);
+                    }
                 }
 
                 if (state.spotLights && Array.isArray(state.spotLights)) {
@@ -238,11 +254,12 @@ document.addEventListener("DOMContentLoaded", function (){
                 if (state.ambientLight){
                     let ambientNight = new THREE.Color(0x0f111a);
                     state.ambientLight.color.lerpColors(currentSkyColor, ambientNight, progress>0.8 ? (progress - 0.8)/0.2 : 0);
-                    state.ambientLight.intensity = THREE.MathUtils.lerp(0.6, 0.15, progress);
+                    state.ambientLight.intensity = THREE.MathUtils.lerp(0.6, 0.22, progress) + (moonHeightFactor * 0.18);
                 }
 
                 if (state.hemiLight){
                     state.hemiLight.color.copy(currentSkyColor);
+                    state.hemiLight.intensity = THREE.MathUtils.lerp(0.35, 0.18, progress) + (moonHeightFactor * 0.1);
                 }
 
                 if (state.scene && state.scene.background && state.scene.background.isColor){

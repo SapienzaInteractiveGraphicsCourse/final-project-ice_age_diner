@@ -16,7 +16,6 @@ export function buildRestaurant() {
     state.scene.background = new THREE.Color(0x87ceeb);
 
     state.camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
-
     const scene = state.scene;
     const camera = state.camera;
 
@@ -63,11 +62,6 @@ export function buildRestaurant() {
     const divisorWallThickness = 5;
     const textureLoader = new THREE.TextureLoader();
 
-    const iceFloorTexture = textureLoader.load('textures/Fabric081B_1K-JPG_Color.jpg');
-    iceFloorTexture.wrapS = THREE.RepeatWrapping;
-    iceFloorTexture.wrapT = THREE.RepeatWrapping;
-    iceFloorTexture.repeat.set(6, 5);
-
     // One texture for every wall
     const WALL_TILE = 10;
     const iceWallTexture = textureLoader.load('textures/Tiles019_1K-JPG_Color.jpg');
@@ -110,25 +104,33 @@ export function buildRestaurant() {
         uv.needsUpdate = true;
     }
 
+    //Floor
+    const iceFloorTexture = textureLoader.load('textures/Fabric081B_1K-JPG_Color.jpg');
+    iceFloorTexture.wrapS = THREE.RepeatWrapping;
+    iceFloorTexture.wrapT = THREE.RepeatWrapping;
+    iceFloorTexture.repeat.set(6, 5);
+    const iceRoughnessTexture = textureLoader.load('textures/Ice003_1K-JPG_Roughness.jpg'); 
+    iceRoughnessTexture.wrapS = THREE.RepeatWrapping;
+    iceRoughnessTexture.wrapT = THREE.RepeatWrapping;
+    iceRoughnessTexture.repeat.set(6, 5);
+
     const floorGeometry = new THREE.BoxGeometry(width + 0.5, thickness, depth + 0.5);
     const floorMaterial = new THREE.MeshPhysicalMaterial({
         map: iceFloorTexture,
-        roughness: 0.2,
-        metalness: 0.0,
-        clearcoat: 0.8,
-        clearcoatRoughness: 0.15
+        roughnessMap: iceRoughnessTexture,
+        roughness: 1.0,
+        metalness: 0.1,
+        clearcoat: 0.6,
+        clearcoatRoughness: 0.25
         /*transmission: 0.3,
         ior: 1.31,
         thickness: 2.0*/
     });
 
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.position.y = -thickness/2;
+    floor.position.y = -thickness / 2;
     floor.receiveShadow = true;
     scene.add(floor);
-
-    //function for adding a reflective floor IT'S TO POWERFUL, NEED TO BE FIXED
-    //addReflectiveFloor(scene, width, depth);
 
     // Left wall
     const sideWallGeometry = new THREE.PlaneGeometry(depth + 2, height + 4);
@@ -287,10 +289,10 @@ export function buildRestaurant() {
         metalness: 0.1
     });
     const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
-    ceiling.rotation.x = Math.PI / 2;
+    ceiling.rotation.x = Math.PI/2;
     ceiling.position.y = height;
     ceiling.castShadow = true;
-    ceiling.receiveShadow = true;
+    ceiling.receiveShadow = false;
     scene.add(ceiling);
 
     // Light
@@ -359,49 +361,88 @@ export function buildRestaurant() {
     scene.add(sunMesh);
     state.sunMesh = sunMesh;
 
+    // Moon
+    const moonLight = new THREE.DirectionalLight(0xaac8ff, 0);
+    moonLight.position.set(state.sunOrbitCenterX, -50, 0);
+    moonLight.castShadow = true;
+    moonLight.target.position.set(state.sunOrbitCenterX, 0, 0);
+    scene.add(moonLight.target);
+
+    moonLight.shadow.camera.left = -d;
+    moonLight.shadow.camera.right = d;
+    moonLight.shadow.camera.top = d;
+    moonLight.shadow.camera.bottom = -d;
+    moonLight.shadow.camera.near = 0.5;
+    moonLight.shadow.camera.far = 1500;
+    moonLight.shadow.mapSize.width = 2048;
+    moonLight.shadow.mapSize.height = 2048;
+    moonLight.shadow.bias = -0.0004;
+    moonLight.shadow.normalBias = 0.02;
+
+    scene.add(moonLight);
+    state.moonLight = moonLight;
+
+    const moonGeometry = new THREE.SphereGeometry(28, 24, 24);
+    const moonMaterial = new THREE.MeshBasicMaterial({ color: 0xdfe8ff });
+    const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
+    moonMesh.position.copy(moonLight.position);
+    scene.add(moonMesh);
+    state.moonMesh = moonMesh;
+
     const lampGeometry = new THREE.CylinderGeometry(0.4, 0.5, 0.3, 8);
     const lampMaterial = new THREE.MeshBasicMaterial({ color: 0xffeebb });
 
-    const spotlightIntensity = 0.55;
+    const spotlightIntensity = 0.6;
     
     const xMin = -72;
     const xMax = 78;  
     const zMin = -42;
     const zMax = 42;
-    const xDistance = 16; 
-    const zDistance = 14;
-    let shadowLightCount = 0; 
-    for (let x = xMin; x <= xMax; x += xDistance) {
-        for (let z = zMin; z <= zMax; z += zDistance) {
+    const fixtureXDistance = 16;
+    const fixtureZDistance = 14;
+
+    let shadowLightCount = 0;
+    let xIndex = 0;
+
+    for (let x = xMin; x <= xMax; x += fixtureXDistance) {
+        let zIndex = 0;
+        for (let z = zMin; z <= zMax; z += fixtureZDistance) {
             const physicalLamp = new THREE.Mesh(lampGeometry, lampMaterial);
             physicalLamp.position.set(x, height - 0.05, z);
             scene.add(physicalLamp);
 
-            const gridSpotlight = new THREE.SpotLight(0xfff0dd, spotlightIntensity);
-            gridSpotlight.position.set(x, height - 0.2, z);
-            gridSpotlight.target.position.set(x, 0, z);
-            gridSpotlight.angle = Math.PI / 2.3;
-            gridSpotlight.penumbra = 1.0; 
-            gridSpotlight.distance = 65; 
-            gridSpotlight.decay = 2.0; 
-            gridSpotlight.userData.baseIntensity = spotlightIntensity; 
+            const isLightCell = (xIndex % 2 === 0) && (zIndex % 2 === 0);
 
-            if (shadowLightCount < 4 && (x === -6 || x === 26) && (z === -13 || z === 9)) {
-                gridSpotlight.castShadow = true;
-                gridSpotlight.shadow.mapSize.width = 1024;
-                gridSpotlight.shadow.mapSize.height = 1024;
-                gridSpotlight.shadow.bias = -0.001;
-                shadowLightCount++;
+            if (isLightCell) {
+                const gridSpotlight = new THREE.SpotLight(0xfff0dd, spotlightIntensity);
+                gridSpotlight.position.set(x, height - 0.2, z);
+                gridSpotlight.target.position.set(x, 0, z);
+                gridSpotlight.angle = Math.PI / 2.1;
+                gridSpotlight.penumbra = 1.0; 
+                gridSpotlight.distance = 90; 
+                gridSpotlight.decay = 1.4; 
+                gridSpotlight.userData.baseIntensity = spotlightIntensity; 
+
+                if (shadowLightCount < 4 && (x === -8 || x === 24) && (z === -14 || z === 14)) {
+                    gridSpotlight.castShadow = true;
+                    gridSpotlight.shadow.mapSize.width = 1024;
+                    gridSpotlight.shadow.mapSize.height = 1024;
+                    gridSpotlight.shadow.bias = -0.001;
+                    shadowLightCount++;
+                }
+                else{
+                    gridSpotlight.castShadow = false;
+                }
+
+                scene.add(gridSpotlight);
+                scene.add(gridSpotlight.target);
+
+                state.spotLights.push(gridSpotlight);
             }
-            else{
-                gridSpotlight.castShadow = false;
-            }
 
-            scene.add(gridSpotlight);
-            scene.add(gridSpotlight.target);
-
-            state.spotLights.push(gridSpotlight);
+            zIndex++;
         }
+        xIndex++;
     }
 
     //under cabinets lights

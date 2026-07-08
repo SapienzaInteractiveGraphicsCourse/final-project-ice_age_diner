@@ -62,13 +62,8 @@ export function createPenguinModel(role, options = {}){
     const pocketMat = new THREE.MeshStandardMaterial({color: 0xcccccc, roughness: 0.8});
 
     // Body
-    let bodyMat = blackMat;
-    if (role === 'customer' && options.shirtColor !== undefined) {
-        bodyMat = new THREE.MeshStandardMaterial({color: options.shirtColor, roughness: 0.7});
-    }
-
     const bodyGeo = new THREE.SphereGeometry(1, 32, 32);
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    const body = new THREE.Mesh(bodyGeo, blackMat);
     body.scale.set(1.3, 1.4, 1.2);
     body.position.y = 1.5;
     penguinGroup.add(body);
@@ -80,6 +75,7 @@ export function createPenguinModel(role, options = {}){
     belly.position.set(0, 1.4, 0.47);
     penguinGroup.add(belly);
 
+    // Head
     const headGroup = new THREE.Group();
     headGroup.position.set(0, 3.0, 0);
     const headGeo = new THREE.SphereGeometry(0.8, 16, 16);
@@ -117,16 +113,15 @@ export function createPenguinModel(role, options = {}){
     penguinGroup.add(headGroup);
 
     // Flippers
-    const flipperMat = (role === 'dishwasher') ? yellowGlovesMat : blackMat;
     const flipperGeo = new THREE.SphereGeometry(0.3, 16, 16);
 
-    const leftFlipper = new THREE.Mesh(flipperGeo, flipperMat);
+    const leftFlipper = new THREE.Mesh(flipperGeo, blackMat);
     leftFlipper.scale.set(1, 2.5, 0.5);
     leftFlipper.position.set(-1.2, 1.8, 0);
     leftFlipper.rotation.z = -Math.PI/6;
     penguinGroup.add(leftFlipper);
 
-    const rightFlipper = new THREE.Mesh(flipperGeo, flipperMat);
+    const rightFlipper = new THREE.Mesh(flipperGeo, blackMat);
     rightFlipper.scale.set(1, 2.5, 0.5);
     rightFlipper.position.set(1.2, 1.8, 0);
     rightFlipper.rotation.z = Math.PI/6;
@@ -145,8 +140,34 @@ export function createPenguinModel(role, options = {}){
     rightFoot.rotation.y = Math.PI/10;
     penguinGroup.add(rightFoot);
 
-    // Chef outfit
-    if (role === 'chef') {
+    if (role === 'customer' && options.shirtColor !== undefined) {
+        const shirtMat = new THREE.MeshStandardMaterial({
+            color: options.shirtColor, 
+            roughness: 0.7, 
+            side: THREE.DoubleSide
+        });
+
+        const shirtBodyGeo = new THREE.SphereGeometry(1.02, 32, 32, 0, Math.PI * 2, 0, Math.PI / 1.9);
+        const shirtBody = new THREE.Mesh(shirtBodyGeo, shirtMat);
+        shirtBody.scale.set(1.3, 1.4, 1.2);
+        shirtBody.position.y = 1.5;
+        penguinGroup.add(shirtBody);
+
+        const shirtBellyGeo = new THREE.SphereGeometry(0.81, 32, 16, 0, Math.PI * 2, 0, Math.PI / 1.9);
+        const shirtBelly = new THREE.Mesh(shirtBellyGeo, shirtMat);
+        shirtBelly.scale.set(1.2, 1.35, 0.99);
+        shirtBelly.position.set(0, 1.4, 0.47);
+        penguinGroup.add(shirtBelly);
+
+        const sleeveGeo = new THREE.SphereGeometry(0.31, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+        const leftSleeve = new THREE.Mesh(sleeveGeo, shirtMat);
+        leftFlipper.add(leftSleeve);
+
+        const rightSleeve = new THREE.Mesh(sleeveGeo, shirtMat);
+        rightFlipper.add(rightSleeve);
+    }
+    else if (role === 'chef') {
+        // Hat
         const hatGroup = new THREE.Group();        
         const hatBaseGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.4, 16);
         const hatBase = new THREE.Mesh(hatBaseGeo, whiteMat);
@@ -160,40 +181,113 @@ export function createPenguinModel(role, options = {}){
 
         penguinGroup.add(hatGroup);
 
-        // White apron
-        const apronGeo = new THREE.BoxGeometry(0.9, 1.1, 0.05);
+        // Apron
+        const apronGeo = new THREE.BoxGeometry(1.6, 1.6, 0.05); 
         const apron = new THREE.Mesh(apronGeo, whiteMat);
-        apron.position.set(0, 1.3, 1.38);
+        apron.position.set(0, 1.0, 1.48);
+        apron.rotation.x = 0.05; 
         penguinGroup.add(apron);
 
-        const pocketGeo = new THREE.BoxGeometry(0.4, 0.25, 0.02);
+        // Pocket
+        const pocketGeo = new THREE.BoxGeometry(0.5, 0.35, 0.02);
         const pocket = new THREE.Mesh(pocketGeo, pocketMat);
-        pocket.position.set(0, 1.1, 1.41);
+        pocket.position.set(0, 0.75, 1.51); 
+        pocket.rotation.x = 0.05;
         penguinGroup.add(pocket);
-    }
 
-    // Dishwasher helper outfit
-    if (role === 'dishwasher') {
-        const bandanaGeo = new THREE.TorusGeometry(0.78, 0.08, 8, 24);
+        // Strings around the neck
+        const leftNeckCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-0.55, 1.75, 1.48),
+            new THREE.Vector3(-0.85, 2.2, 0.9),
+            new THREE.Vector3(-0.95, 2.65, 0.15),
+            new THREE.Vector3(-0.55, 2.8, -0.45),
+            new THREE.Vector3(-0.05, 2.75, -0.6)
+        ]);
+        const leftNeckStrapGeo = new THREE.TubeGeometry(leftNeckCurve, 20, 0.035, 8, false);
+        const leftNeckStrap = new THREE.Mesh(leftNeckStrapGeo, whiteMat);
+        penguinGroup.add(leftNeckStrap);
+
+        const rightNeckCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0.55, 1.75, 1.48), 
+            new THREE.Vector3(0.85, 2.2, 0.9),   
+            new THREE.Vector3(0.95, 2.65, 0.15), 
+            new THREE.Vector3(0.55, 2.8, -0.45),
+            new THREE.Vector3(0.05, 2.75, -0.6)  
+        ]);
+        const rightNeckStrapGeo = new THREE.TubeGeometry(rightNeckCurve, 20, 0.035, 8, false);
+        const rightNeckStrap = new THREE.Mesh(rightNeckStrapGeo, whiteMat);
+        penguinGroup.add(rightNeckStrap);
+
+        // Neck knot
+        const neckKnotGeo = new THREE.SphereGeometry(0.08, 8, 8);
+        const neckKnot = new THREE.Mesh(neckKnotGeo, whiteMat);
+        neckKnot.position.set(0, 2.75, -0.65); 
+        penguinGroup.add(neckKnot);
+
+        // Strings around the waist
+        const leftWaistCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-0.75, 1.3, 1.48),
+            new THREE.Vector3(-1.1, 1.3, 1.0),
+            new THREE.Vector3(-1.28, 1.3, 0.2),
+            new THREE.Vector3(-1.0, 1.3, -0.8),
+            new THREE.Vector3(-0.05, 1.3, -1.25)
+        ]);
+        const leftWaistStrapGeo = new THREE.TubeGeometry(leftWaistCurve, 20, 0.035, 8, false);
+        const leftWaistStrap = new THREE.Mesh(leftWaistStrapGeo, whiteMat);
+        penguinGroup.add(leftWaistStrap);
+
+        const rightWaistCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0.75, 1.3, 1.48),   
+            new THREE.Vector3(1.1, 1.3, 1.0),     
+            new THREE.Vector3(1.28, 1.3, 0.2),    
+            new THREE.Vector3(1.0, 1.3, -0.8),    
+            new THREE.Vector3(0.05, 1.3, -1.25)   
+        ]);
+        const rightWaistStrapGeo = new THREE.TubeGeometry(rightWaistCurve, 20, 0.035, 8, false);
+        const rightWaistStrap = new THREE.Mesh(rightWaistStrapGeo, whiteMat);
+        penguinGroup.add(rightWaistStrap);
+
+        // Knot behind the back
+        const knotGeo = new THREE.ConeGeometry(0.06, 0.25, 4);
+        
+        const waistKnot1 = new THREE.Mesh(knotGeo, whiteMat);
+        waistKnot1.position.set(-0.1, 1.35, -1.25);
+        waistKnot1.rotation.z = Math.PI / 4;
+        waistKnot1.rotation.x = -Math.PI / 6; 
+        penguinGroup.add(waistKnot1);
+
+        const waistKnot2 = new THREE.Mesh(knotGeo, whiteMat);
+        waistKnot2.position.set(0.1, 1.35, -1.25);
+        waistKnot2.rotation.z = -Math.PI / 4;
+        waistKnot2.rotation.x = -Math.PI / 6;
+        penguinGroup.add(waistKnot2);
+    }
+    else if (role === 'dishwasher') {
+        // Dishwasher helper outfit
+        leftFlipper.material = yellowGlovesMat;
+        rightFlipper.material = yellowGlovesMat;
+
+        const bandanaGeo = new THREE.TorusGeometry(0.72, 0.07, 8, 24);
         const bandana = new THREE.Mesh(bandanaGeo, redOutfitMat);
-        bandana.position.set(0, 3.4, 0);
+        bandana.position.set(0, 3.65, 0);
         bandana.rotation.x = Math.PI/2;
         penguinGroup.add(bandana);
 
         const knotGeo = new THREE.ConeGeometry(0.08, 0.25, 4);
         const knot1 = new THREE.Mesh(knotGeo, redOutfitMat);
-        knot1.position.set(-0.1, 3.4, -0.78);
-        knot1.rotation.z = Math.PI / 4;
+        knot1.position.set(-0.1, 3.65, -0.73);
+        knot1.rotation.z = Math.PI/4;
+        knot1.rotation.x = -Math.PI/6;
         penguinGroup.add(knot1);
 
         const knot2 = new THREE.Mesh(knotGeo, redOutfitMat);
-        knot2.position.set(0.1, 3.4, -0.78);
+        knot2.position.set(0.1, 3.65, -0.73);
         knot2.rotation.z = -Math.PI / 4;
+        knot2.rotation.x = -Math.PI / 6;
         penguinGroup.add(knot2);
-    }
-
-    // Waiter outfit
-    if (role === 'waiter') {
+    } 
+    else if (role === 'waiter') {
+        // Waiter outfit
         const bowtieGroup = new THREE.Group();
         const centerGeo = new THREE.SphereGeometry(0.07, 8, 8);
         const center = new THREE.Mesh(centerGeo, redOutfitMat);
@@ -241,7 +335,8 @@ export function spawnPenguin(position, role){
 
         if (availableNames.length > 0) {
             nameTag = availableNames[Math.floor(Math.random() * availableNames.length)];
-        } else {
+        }
+        else{
             nameTag = state.penguins_name[Math.floor(Math.random() * state.penguins_name.length)];
         }
     }
@@ -357,8 +452,6 @@ export function updateRoutines(){
     if (state.dayInProgress) {
         updateCustomerSpawn();
     }
-    
-
     
     penguins.forEach(penData => {
         const penguin = penData.mesh;

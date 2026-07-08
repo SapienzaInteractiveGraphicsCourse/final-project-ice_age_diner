@@ -78,26 +78,57 @@ export function startReadingMenu(penguin){
     if (penguin.userData.isReadingMenu) return;
     penguin.userData.isReadingMenu = true;
 
+    let nearestMenu = null;
+    let minDistance = 15;
+    
+    const penguinWorldPos = new THREE.Vector3();
+    penguin.getWorldPosition(penguinWorldPos);
+
+    state.scene.traverse((child) => {
+        const hasMenuName = child.name && child.name.toLowerCase().includes('menu');
+        
+        if (hasMenuName && (child.type === 'Group' || child.type === 'Mesh')) {
+            const childWorldPos = new THREE.Vector3();
+            child.getWorldPosition(childWorldPos);
+            
+            const dist = penguinWorldPos.distanceTo(childWorldPos);
+            
+            if (dist < minDistance) {
+                minDistance = dist;
+                nearestMenu = child;
+            }
+        }
+    });
+
+    if (nearestMenu) {
+        let menuToGrab = nearestMenu;
+        if (nearestMenu.parent && (nearestMenu.parent.name === 'Scene' || nearestMenu.parent.name === 'OSG_Scene')) {
+            menuToGrab = nearestMenu.parent;
+        }
+
+        penguin.userData.menu = menuToGrab; 
+        penguin.userData.menuOriginalParent = menuToGrab.parent; 
+        penguin.userData.menuOriginalPos = menuToGrab.position.clone();
+        penguin.userData.menuOriginalRot = menuToGrab.rotation.clone();
+        
+        if (menuToGrab.parent) menuToGrab.parent.remove(menuToGrab);
+        penguin.add(menuToGrab);
+        
+        const scaleFactor = 1.5 / 2.2; 
+        menuToGrab.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        menuToGrab.position.set(0, 1.8, 1.2);
+        menuToGrab.rotation.set(Math.PI / 3, Math.PI, 0);
+    }
+
     const leftFlipper = penguin.userData.leftFlipper;
     const rightFlipper = penguin.userData.rightFlipper;
     const head = penguin.userData.head;
 
-    new TWEEN.Tween(leftFlipper.rotation)
-        .to({ x: -Math.PI/2.3, y: 0, z: -Math.PI/10 }, 400)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .start();
+    new TWEEN.Tween(leftFlipper.rotation).to({ x: -Math.PI/2.3, y: 0, z: -Math.PI/10 }, 400).easing(TWEEN.Easing.Quadratic.Out).start();
+    new TWEEN.Tween(rightFlipper.rotation).to({ x: -Math.PI/2.3, y: 0, z: Math.PI/10 }, 400).easing(TWEEN.Easing.Quadratic.Out).start();
 
-    new TWEEN.Tween(rightFlipper.rotation)
-        .to({ x: -Math.PI/2.3, y: 0, z: Math.PI/10 }, 400)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .start();
-
-    // Small held downward tilt of the head only, like looking down at a page
     if (head){
-        new TWEEN.Tween(head.rotation)
-            .to({ x: 0.35 }, 400)
-            .easing(TWEEN.Easing.Quadratic.Out)
-            .start();
+        new TWEEN.Tween(head.rotation).to({ x: 0.35 }, 400).easing(TWEEN.Easing.Quadratic.Out).start();
     }
 }
 
@@ -105,10 +136,30 @@ export function stopReadingMenu(penguin){
     if (!penguin.userData.isReadingMenu) return;
     penguin.userData.isReadingMenu = false;
 
-    const head = penguin.userData.head;
-    if (head){
-        new TWEEN.Tween(head.rotation).to({ x: 0 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
+    if (penguin.userData.menu) {
+        const menuToDrop = penguin.userData.menu;
+        penguin.remove(menuToDrop);
+        
+        if (penguin.userData.menuOriginalParent) {
+            penguin.userData.menuOriginalParent.add(menuToDrop);
+        }
+        else{
+            state.scene.add(menuToDrop);
+        }
+
+        if (penguin.userData.menuOriginalPos) menuToDrop.position.copy(penguin.userData.menuOriginalPos);
+        if (penguin.userData.menuOriginalRot) menuToDrop.rotation.copy(penguin.userData.menuOriginalRot);
+        
+        menuToDrop.scale.set(1.5, 1.5, 1.5); 
+
+        penguin.userData.menu = null;
+        penguin.userData.menuOriginalParent = null;
+        penguin.userData.menuOriginalPos = null;
+        penguin.userData.menuOriginalRot = null;
     }
+
+    const head = penguin.userData.head;
+    if (head) new TWEEN.Tween(head.rotation).to({ x: 0 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
 
     const leftFlipper = penguin.userData.leftFlipper;
     const rightFlipper = penguin.userData.rightFlipper;

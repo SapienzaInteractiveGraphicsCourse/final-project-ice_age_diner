@@ -6,6 +6,14 @@ export function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, op
 
     loader.load(path, (gltf) => {
         const model = gltf.scene;
+        
+        // --- MODIFICA CHIAVE ---
+        // Estraiamo il nome dal path (es. 'models/furniture/menu2.glb' diventa 'menu2')
+        // e lo assegniamo al modello così la funzione di lettura può trovarlo
+        const fileName = path.split('/').pop().split('.')[0];
+        model.name = fileName;
+        // -----------------------
+
         console.log(model)
         model.position.set(x, y, z);
         model.rotation.y = rotation;
@@ -15,6 +23,7 @@ export function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, op
         }
 
         model.scale.set(scale, scale, scale);
+        
         if (interactable_chair) {
                 model.userData.isInteractable = true;
                 model.userData.interactionType = 'chair';
@@ -62,7 +71,7 @@ export function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, op
         scene.add(model);
 
         state.colliders.push(model);
-        console.log(`Furniture loaded: ${path}`);
+        console.log(`Furniture loaded: ${path} as ${model.name}`); // Piccolo aggiornamento al log
     }, undefined, (error) => {
         console.error(`Loading error ${path}:`, error);
     });
@@ -198,7 +207,7 @@ export function loadFoodModels() {
         model.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
-                child.receiveShadow = true;
+                child.receiveShadow = false;
             }
         });
         
@@ -210,7 +219,7 @@ export function loadFoodModels() {
         model.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
-                child.receiveShadow = true;
+                child.receiveShadow = false;
             }
         });
         state.models.hamburger = model;
@@ -222,7 +231,7 @@ export function loadFoodModels() {
         model.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
-                child.receiveShadow = true;
+                child.receiveShadow = false;
             }
         });
         state.models.hotdog = model;
@@ -234,7 +243,7 @@ export function loadFoodModels() {
         model.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
-                child.receiveShadow = true;
+                child.receiveShadow = false;
             }
         });
         state.models.fish = model;
@@ -246,7 +255,7 @@ export function loadFoodModels() {
         model.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
-                child.receiveShadow = true;
+                child.receiveShadow = false;
             }
         });
         state.models.taco = model;
@@ -258,7 +267,7 @@ export function loadFoodModels() {
         model.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
-                child.receiveShadow = true;
+                child.receiveShadow = false;
             }
         });
         state.models.cheese = model;
@@ -270,7 +279,7 @@ export function loadFoodModels() {
         model.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
-                child.receiveShadow = true;
+                child.receiveShadow = false;
             }
         });
         state.models.cupcake = model;
@@ -282,7 +291,7 @@ export function loadFoodModels() {
         model.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
-                child.receiveShadow = true;
+                child.receiveShadow = false;
             }
         });
         state.models.meat = model;
@@ -294,7 +303,7 @@ export function loadFoodModels() {
         model.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
-                child.receiveShadow = true;
+                child.receiveShadow = false;
             }
         });
         state.models.turkey = model;

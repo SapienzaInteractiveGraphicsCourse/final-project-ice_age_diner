@@ -6,6 +6,8 @@ export const state = {
     gameControls: null,
     sunLight: null,
     sunMesh: null,
+    moonLight: null,
+    moonMesh: null,
     spotLights: [],
     starsMesh: null,
 
