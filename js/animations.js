@@ -850,6 +850,22 @@ export function triggerAngerFlap(penguin) {
     flapRight.start();
 }
 
+export function updateClockHands(elapsedSeconds) {
+    const clock = state.models.clock;
+    if (!clock || !clock.userData.hourHand || !clock.userData.minuteHand) return;
+
+    const startHour = 7; 
+    const totalGameHours = 14; 
+    const dayDuration = state.dayDuration; 
+
+    const t = Math.min(Math.max(elapsedSeconds, 0), dayDuration);
+
+    const currentHour = startHour + (t / dayDuration) * totalGameHours;
+
+    clock.userData.hourHand.rotation.z = -(currentHour / 12) * Math.PI * 2;
+    clock.userData.minuteHand.rotation.z = -(currentHour % 1) * Math.PI * 2;
+}
+
 export function updateTweens(){
     if (typeof TWEEN !== 'undefined') {
         TWEEN.update();

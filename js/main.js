@@ -2,6 +2,7 @@ import { state } from './state.js';
 import { buildRestaurant } from './restaurant.js';
 import { loadFoodModels } from './furniture.js';
 import { penguins } from './penguin.js';
+import {updateClockHands} from './animations.js';
 
 let gameStarted = false;
 let menuSound, gameSound;
@@ -160,6 +161,8 @@ document.addEventListener("DOMContentLoaded", function (){
             
             if (!state.isPaused && state.sunLight) {
                 sunProgressTime += deltaTime;
+
+                updateClockHands(sunProgressTime);
                 
                 let rawProgress = sunProgressTime / state.dayDuration;
                 let progress = Math.min(rawProgress, 1.0);

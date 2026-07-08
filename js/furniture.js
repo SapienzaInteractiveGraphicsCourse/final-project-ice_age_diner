@@ -7,12 +7,21 @@ export function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, op
     loader.load(path, (gltf) => {
         const model = gltf.scene;
         
-        // --- MODIFICA CHIAVE ---
-        // Estraiamo il nome dal path (es. 'models/furniture/menu2.glb' diventa 'menu2')
-        // e lo assegniamo al modello così la funzione di lettura può trovarlo
         const fileName = path.split('/').pop().split('.')[0];
         model.name = fileName;
-        // -----------------------
+        
+        if (fileName === 'Clock') {
+            model.traverse((child) => {
+                console.log(`part of the clock: ${child.name}`);
+                if (child.name === 'Analog_clock_Circle001-Mesh_1') {
+                    model.userData.hourHand = child;
+                }
+                if (child.name === 'Analog_clock_Circle001-Mesh_2') {
+                    model.userData.minuteHand = child;
+                }
+            });
+            state.models.clock = model; 
+        }
 
         console.log(model)
         model.position.set(x, y, z);
