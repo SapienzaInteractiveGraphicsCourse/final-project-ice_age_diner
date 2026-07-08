@@ -4,7 +4,7 @@ import {
     resetFlippers, animateChefFridgeReach, animateChefStove, setChefPickupPose,
     setChefCarryPose, animateChefCounterRelease, stackPlates, pickUpPlate, getFreeCounterSpot,
     startReadingMenu, stopReadingMenu, startCallingWaiter, stopCallingWaiter,
-    stopEating, showAngerSymbol, hideAngerSymbol, createNameTag
+    stopEating, showAngerSymbol, hideAngerSymbol, createNameTag, triggerAngerFlap
 } from './animations.js';
 import { checkCollision } from './controlWaiter.js';
 
@@ -1048,6 +1048,10 @@ function updateCustomerRoutine(customer) {
                 showAngerSymbol(customer);
             }
 
+            if (customer.userData.timer <= ANGER_THRESHOLD && (ANGER_THRESHOLD - customer.userData.timer) % 600 === 0) {
+                triggerAngerFlap(customer);
+            }
+
             if (customer.userData.timer <= 0) {
                 removeFromQueue(customer);
                 customer.userData.isInteractable = false;
@@ -1103,6 +1107,11 @@ function updateCustomerRoutine(customer) {
                 updateBubble(customer, '!!!');
                 showAngerSymbol(customer);
             }
+
+            if (customer.userData.timer <= ANGER_THRESHOLD && (ANGER_THRESHOLD - customer.userData.timer) % 600 === 0) {
+                triggerAngerFlap(customer);
+            }
+
             if (customer.userData.timer <= 0){
                 customer.userData.isInteractable = false;
                 customer.userData.state ='LEAVING';
@@ -1208,6 +1217,11 @@ function updateCustomerRoutine(customer) {
                 updateBubble(customer, '!!!');
                 showAngerSymbol(customer);
             }
+
+            if (customer.userData.timer <= ANGER_THRESHOLD && (ANGER_THRESHOLD - customer.userData.timer) % 600 === 0) {
+                triggerAngerFlap(customer);
+            }
+
             if (customer.userData.timer <= 0){
                 customer.userData.isInteractable = false;
                 customer.userData.state = 'LEAVING';
@@ -1220,6 +1234,11 @@ function updateCustomerRoutine(customer) {
                 updateBubble(customer, '!!!');
                 showAngerSymbol(customer);
             }
+
+            if (customer.userData.timer <= ANGER_THRESHOLD && (ANGER_THRESHOLD - customer.userData.timer) % 600 === 0) {
+                triggerAngerFlap(customer);
+            }
+            
             if (customer.userData.timer <= 0){
                 customer.userData.isInteractable = false;
                 if (customer.userData.bubble) {

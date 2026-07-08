@@ -808,6 +808,48 @@ export function shakeHead(penguin, onComplete) {
     lookLeft.start();
 }
 
+export function triggerAngerFlap(penguin) {
+    if (penguin.userData.isFlappingAngry) return;
+    penguin.userData.isFlappingAngry = true;
+
+    if (penguin.userData.callWaiterTween) {
+        penguin.userData.callWaiterTween.stop();
+        penguin.userData.callWaiterTween = null;
+    }
+
+    const left = penguin.userData.leftFlipper;
+    const right = penguin.userData.rightFlipper;
+
+    const origLeft = { x: left.rotation.x, y: left.rotation.y, z: left.rotation.z };
+    const origRight = { x: right.rotation.x, y: right.rotation.y, z: right.rotation.z };
+
+    const flapDuration = 90;
+    
+    const flapLeft = new TWEEN.Tween(left.rotation)
+        .to({ x: 0, z: -Math.PI / 1.5 }, flapDuration)
+        .yoyo(true)
+        .repeat(5);
+
+    const flapRight = new TWEEN.Tween(right.rotation)
+        .to({ x: 0, z: Math.PI / 1.5 }, flapDuration)
+        .yoyo(true)
+        .repeat(5)
+        .onComplete(() => {
+            penguin.userData.isFlappingAngry = false;
+            
+            new TWEEN.Tween(left.rotation).to(origLeft, 200).start();
+            new TWEEN.Tween(right.rotation).to(origRight, 200).onComplete(() => {
+                if (penguin.userData.isCallingWaiter) {
+                    penguin.userData.isCallingWaiter = false; 
+                    startCallingWaiter(penguin);
+                }
+            }).start();
+        });
+
+    flapLeft.start();
+    flapRight.start();
+}
+
 export function updateTweens(){
     if (typeof TWEEN !== 'undefined') {
         TWEEN.update();
