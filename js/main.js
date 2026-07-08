@@ -98,6 +98,12 @@ document.addEventListener("DOMContentLoaded", function (){
 
             pauseMenu.classList.add("hidden-panel");
             inGameSettingsBtn.classList.add("hidden-panel");
+            earningsDisplay.classList.add("hidden-panel");
+            dayNumberDisplay.classList.add("hidden-panel");
+            timerDisplay.classList.add("hidden-panel");
+            ordersPanel.classList.add("hidden-panel");
+            startDayBtn.classList.add("hidden-panel");
+
 
             startMenu.classList.remove("hidden");
 
@@ -400,7 +406,7 @@ document.addEventListener("DOMContentLoaded", function (){
 
 
     function showEndOfDaySummary() {
-    
+        
         summaryDayTitle.textContent = `End Day ${state.dayNumber}`;
         summaryItemsList.innerHTML = "";
         
@@ -418,21 +424,26 @@ document.addEventListener("DOMContentLoaded", function (){
             const iconContainer = document.createElement("div");
             iconContainer.className = "summary-item-icon-container";
             
-            if (state.foodIcons[sale.foodOrder]) {
-                const originalCanvas = state.foodIcons[sale.foodOrder].domElement || state.foodIcons[sale.foodOrder];
+            const foodKey = sale.food.toLowerCase();
+            const imageBase64 = state.foodIcons[foodKey] || state.foodIcons[sale.food];
+            
+            if (imageBase64) {
+                const imgElement = document.createElement("img");
+                imgElement.src = imageBase64;
                 
-                const canvasClone = document.createElement("canvas");
-                canvasClone.width = 128;
-                canvasClone.height = 128;
-                const ctx = canvasClone.getContext("2d");
-                ctx.drawImage(originalCanvas, 0, 0);
+                imgElement.style.width = "45px";
+                imgElement.style.height = "45px";
+                imgElement.style.objectFit = "contain";
+                imgElement.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+                imgElement.style.borderRadius = "6px";
+                imgElement.style.display = "block";
                 
-                iconContainer.appendChild(canvasClone);
+                iconContainer.appendChild(imgElement);
             }
 
             const nameSpan = document.createElement("span");
             nameSpan.className = "summary-item-name";
-            nameSpan.textContent = sale.foodOrder;
+            nameSpan.textContent = sale.food;
 
             leftDiv.appendChild(iconContainer);
             leftDiv.appendChild(nameSpan);
@@ -449,7 +460,7 @@ document.addEventListener("DOMContentLoaded", function (){
 
         summaryTotalValue.textContent = totalDayEarnings;
         
-        summaryMenu.classList.remove("hidden");
+        summaryMenu.classList.remove("hidden-panel");
     }
 
 
