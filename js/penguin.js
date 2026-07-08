@@ -31,7 +31,7 @@ export const CUSTOMER_POSITIONS = {
     DESPAWN: new THREE.Vector3(124, 0, 10)
 };
 
-const ANGER_THRESHOLD = 7200;
+const ANGER_THRESHOLD = 1500;
 
 const QUEUE_START_X = 74;
 const QUEUE_START_Z = 36;
@@ -1182,7 +1182,7 @@ function updateCustomerRoutine(customer) {
             chairOccuppied.userData.isInteractable = false;
 
             customer.userData.state = 'THINKING';
-            customer.userData.timer = 500;
+            customer.userData.timer = 250;
             updateBubble(customer, '...');
             startReadingMenu(customer);
             break;
