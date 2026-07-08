@@ -142,7 +142,7 @@ function onMouseClick(event){
                     const heldPlate = waiter.userData.plate;
                     
                     if (heldPlate.userData.interactionType === 'dirty_plate') {
-                        console.log("Vassoio cliccato: trasferisco i piatti usando stackPlate!");
+                        console.log("tray interaction: putting down dirty plate on tray.");
                         
                         waiter.remove(heldPlate);
                         state.puttingPlateSound.play();

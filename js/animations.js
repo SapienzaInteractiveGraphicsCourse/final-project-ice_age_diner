@@ -619,9 +619,9 @@ export function pickUpPlate(penguin, plateGroup){
     penguin.add(plateGroup);
 
     if (penguin.userData.role === 'chef'){
-        plateGroup.position.set(1.5, 2.4, 1.5);
+        plateGroup.position.set(2.3, 2.4, 0.4);
         new TWEEN.Tween(penguin.userData.rightFlipper.rotation)
-            .to({ x: Math.PI/2, y: Math.PI/2, z: Math.PI/4 }, 300)
+            .to({ x: Math.PI/2, y: Math.PI/2, z: Math.PI/2.8 }, 300)
             .easing(TWEEN.Easing.Quadratic.Out)
             .start();
     }

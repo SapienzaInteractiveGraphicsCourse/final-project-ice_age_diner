@@ -791,6 +791,7 @@ function updateDishwasherRoutine(dishwasher) {
                     });
                     
                     pickUpPlate(dishwasher, plateStack);
+                    targetTray.userData.stackCount = 0;
                     
                 }
 
