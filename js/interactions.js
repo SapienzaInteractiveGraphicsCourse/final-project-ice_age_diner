@@ -178,6 +178,30 @@ function onMouseClick(event){
             }
             else if (clickedObj.userData.interactionType === 'chair' && !clickedObj.userData.isOccupied){
 
+                const forwardDir = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), clickedObj.rotation.y).normalize();
+                const tablePos = clickedObj.position.clone().add(forwardDir.multiplyScalar(7.0));
+                
+                let isTableDirty = false;
+                interactionScene.traverse((child) => {
+                    if (child.userData && child.userData.interactionType === 'dirty_plate' && child.parent === interactionScene) {
+                        const platePos = new THREE.Vector3();
+                        child.getWorldPosition(platePos);
+                        
+                        const dx = platePos.x - tablePos.x;
+                        const dz = platePos.z - tablePos.z;
+                        const dist = Math.sqrt(dx * dx + dz * dz);
+                        
+                        if (dist < 6.0) {
+                            isTableDirty = true;
+                        }
+                    }
+                });
+
+                if (isTableDirty) {
+                    showWarningPopup("Clean the table first!");
+                    return;
+                }
+
                 const currentTableId = clickedObj.userData.tableId;
                 let isTableOccupiedByAnother = false;
 
@@ -196,6 +220,7 @@ function onMouseClick(event){
                 }
 
                 if (isTableOccupiedByAnother) {
+                    showWarningPopup("Table has already another customer.");
                     console.log("Table has already another customer.");
                     return; 
                 }
