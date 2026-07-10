@@ -31,7 +31,7 @@ export const CUSTOMER_POSITIONS = {
     DESPAWN: new THREE.Vector3(124, 0, 10)
 };
 
-const ANGER_THRESHOLD = 1500;
+const ANGER_THRESHOLD = 1200;
 
 const QUEUE_START_X = 74;
 const QUEUE_START_Z = 36;
@@ -367,10 +367,10 @@ export function spawnPenguin(position, role){
         penguin.userData.plate = null;
     }
 
-    if (role === 'chef') penguin.userData.speed = 0.22;
+    if (role === 'chef') penguin.userData.speed = 0.28;
     else if (role === 'dishwasher') penguin.userData.speed = 0.28;
     else if (role === 'customer') penguin.userData.speed = 0.25;
-    else penguin.userData.speed = 1.2;
+    else penguin.userData.speed = 1.6;
 
     penguin.userData.hasPlate = false;
 
@@ -585,7 +585,6 @@ function updateMainDoorState() {
     else if (!shouldBeOpen && mainDoor.userData.isOpen) {
         mainDoor.userData.isOpen = false;
         animateInteractable(mainDoor, mainDoor.userData.originalRotation, mainDoor.userData.rotationAxis || 'y');
-        state.closingDoorSound.play();
     }
 }
 

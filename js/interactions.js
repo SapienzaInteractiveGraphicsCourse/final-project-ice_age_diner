@@ -57,7 +57,7 @@ function onMouseClick(event){
                     clickedObj.userData.bubble = null;
                 }
                 
-                clickedObj.userData.timer = 3000;
+                clickedObj.userData.timer = 3600;
                 clickedObj.userData.state = 'WAIT_FOR_SEAT_ASSIGNMENT';
                 clickedObj.userData.isInteractable = false;
             }
@@ -69,7 +69,7 @@ function onMouseClick(event){
                 
                 hideAngerSymbol(clickedObj);
                 
-                clickedObj.userData.timer = 3000;
+                clickedObj.userData.timer = 3600;
 
                 stopCallingWaiter(clickedObj);
                 updateBubble(clickedObj, orderFood);
