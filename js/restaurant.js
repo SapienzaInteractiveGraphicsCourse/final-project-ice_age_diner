@@ -746,7 +746,7 @@ creaFarettoCentrale(66, 30, 0, 0);
     loadFurniture(scene, 'models/furniture/SmallStackofPaper.glb', 55, 35, -2*Math.PI, 5.9, 20);
     loadFurniture(scene, 'models/furniture/lampRoundTable.glb', 55, 43, -2*Math.PI, 5.5, 17);
     loadFurniture(scene, 'models/furniture/pottedPlant.glb', 57, 39, -2*Math.PI, 5, 7);
-    loadFurniture(scene, 'models/furniture/DeskCorner.glb', 45, 30, Math.PI/2, 0, 14);
+    loadFurniture(scene, 'models/furniture/deskCorner.glb', 45, 30, Math.PI/2, 0, 14);
 
 
     //loadFurniture(scene, 'models/furniture/menu2.glb', 0, 0, 0, 5.3, 1.5);
