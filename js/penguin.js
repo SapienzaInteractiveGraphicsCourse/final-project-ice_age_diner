@@ -565,7 +565,7 @@ function updateMainDoorState() {
         // Condizioni per aprire in uscita (solo quando il pinguino è nei pressi della porta)
         const isLeaving = (
             s === 'LEAVING' && (
-                mesh.userData.subState === 'WALK_TO_DOOR_INSIDE' || 
+                mesh.userData.subState === ('WALK_TO_DOOR_INSIDE' && mesh.position.distanceTo(CUSTOMER_POSITIONS.DOOR_INSIDE) < 5) || 
                 mesh.userData.subState === 'WAIT_FOR_DOOR' || 
                 mesh.userData.subState === 'WALK_TO_DOOR_OUTSIDE' || 
                 (mesh.userData.subState === 'WALK_TO_DESPAWN' && mesh.position.distanceTo(CUSTOMER_POSITIONS.DOOR_OUTSIDE) < 5)
@@ -1040,7 +1040,7 @@ function updateCustomerRoutine(customer) {
             if (!customer.userData.isInteractable) {
                 customer.userData.isInteractable = true;
                 customer.userData.interactionType = 'customer';
-                customer.userData.timer = ANGER_THRESHOLD*2;
+                customer.userData.timer = 3600;
             }
 
             customer.userData.timer--;
@@ -1202,7 +1202,7 @@ function updateCustomerRoutine(customer) {
             if (customer.userData.timer <= 0) {
                 customer.userData.order = state.menu[Math.floor(Math.random() * state.menu.length)].name;
                 customer.userData.isInteractable = true;
-                customer.userData.timer = ANGER_THRESHOLD * 2;
+                customer.userData.timer = 3600;
                 state.customerCallingSound.play();
                 customer.userData.state = 'READY_TO_ORDER';
                 updateBubble(customer, '!');
@@ -1350,9 +1350,12 @@ function updateCustomerRoutine(customer) {
             else if (customer.userData.subState === 'WALK_TO_DOOR_INSIDE') {
                 if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_INSIDE)){
                     const mainDoor = getMainDoor(customer);
-                    if (!mainDoor.userData.isOpen){
+                    if (!mainDoor || !mainDoor.userData.isOpen){
                         customer.userData.subState = 'WAIT_FOR_DOOR';
                         customer.userData.timer = 60;
+                    }
+                    else {
+                        customer.userData.subState = 'WALK_TO_DOOR_OUTSIDE';
                     }
                 }
             }

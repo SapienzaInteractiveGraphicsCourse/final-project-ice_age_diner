@@ -866,6 +866,55 @@ export function updateClockHands(elapsedSeconds) {
     clock.userData.minuteHand.rotation.z = -(currentHour % 1) * Math.PI * 2;
 }
 
+export function showWarningPopup(message) {
+    // Rimuove eventuali popup precedenti per non sovrapporli
+    const existingPopup = document.getElementById('warning-popup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+
+    const popup = document.createElement('div');
+    popup.id = 'warning-popup';
+    popup.textContent = message;
+    
+    // Stile del popup: Solo testo con contorno scuro (niente sfondo o bordi)
+    Object.assign(popup.style, {
+        position: 'fixed',
+        top: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        background: 'transparent',
+        color: '#ffffff', // Testo bianco
+        // Crea un contorno nero netto e una leggera ombra per risaltare sul 3D
+        textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 4px 10px rgba(0,0,0,0.8)',
+        fontFamily: '"Segoe UI", Tahoma, sans-serif',
+        fontWeight: 'bold',
+        fontSize: '1.5rem',
+        letterSpacing: '1px',
+        pointerEvents: 'none', // Assicura che la scritta non blocchi i tuoi click dietro di essa
+        zIndex: '1000',
+        opacity: '0',
+        transition: 'opacity 0.3s ease, top 0.3s ease'
+    });
+
+    document.body.appendChild(popup);
+
+    // Animazione di comparsa
+    setTimeout(() => {
+        popup.style.opacity = '1';
+        popup.style.top = '40px';
+    }, 10);
+
+    // Animazione di scomparsa e rimozione
+    setTimeout(() => {
+        popup.style.opacity = '0';
+        popup.style.top = '20px';
+        setTimeout(() => {
+            if (popup.parentNode) popup.remove();
+        }, 300);
+    }, 2500); // Rimane visibile per 2.5 secondi
+}
+
 export function updateTweens(){
     if (typeof TWEEN !== 'undefined') {
         TWEEN.update();
