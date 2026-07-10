@@ -1350,9 +1350,11 @@ function updateCustomerRoutine(customer) {
             }
             else if (customer.userData.subState === 'WALK_TO_DOOR_INSIDE') {
                 if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_INSIDE)){
-                    customer.userData.subState = 'WAIT_FOR_DOOR';
                     const mainDoor = getMainDoor(customer);
-                    customer.userData.timer = 60;
+                    if (!mainDoor.userData.isOpen){
+                        customer.userData.subState = 'WAIT_FOR_DOOR';
+                        customer.userData.timer = 60;
+                    }
                 }
             }
             else if (customer.userData.subState === 'WAIT_FOR_DOOR') {
