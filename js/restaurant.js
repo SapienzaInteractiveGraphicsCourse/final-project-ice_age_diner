@@ -713,7 +713,7 @@ creaFarettoCentrale(66, 30, 0, 0);
     loadFurniture(scene, 'models/furniture/Whiteboard.glb', -78, -14, 2*Math.PI, 8, 0.08);
     loadFurniture(scene, 'models/furniture/JarShelf.glb', -78, -29, -Math.PI/2, 10, 9);
     loadFurniture(scene, 'models/furniture/OilBarrels.glb', -71, 30, Math.PI, 0, 90);
-    loadFurniture(scene, 'models/furniture/OilBarrels.glb', -75, 34, 0, 0, 70);
+    loadFurniture(scene, 'models/furniture/Trashcan100.glb', -70, 27, 0, 0, 5);
     loadFurniture(scene, 'models/furniture/coffee_menu.glb', -55, 40, -Math.PI, 13, 10);
 
     //main room decorations
@@ -723,7 +723,7 @@ creaFarettoCentrale(66, 30, 0, 0);
     loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', 75, -32, Math.PI/2, 10, 10);
 
     loadFurniture(scene, 'models/furniture/welcome_sign_restaurant-v1.glb', -30, 24, Math.PI, 0, 8);
-    loadFurniture(scene, 'models/furniture/Clock.glb', -35, 27, Math.PI/2, 12, 0.65);
+    loadFurniture(scene, 'models/furniture/AnalogClock.glb', -33, 27, -2*Math.PI, 10, 0.3);
 
 
     loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', -33, 37, Math.PI/2, 10, 10);
@@ -791,7 +791,7 @@ creaFarettoCentrale(66, 30, 0, 0);
     diamondLayout.forEach((group, index) => {
         const currentTableId = `table_${index}`;
         loadFurniture(scene, 'models/furniture/RoundTable.glb', group.table.x, group.table.z, 2 * Math.PI, 0, 5.5);
-        loadFurniture(scene, 'models/furniture/menu2.glb', group.table.x, group.table.z-2.5, 0, 5.3, 1.5);
+        loadFurniture(scene, 'models/furniture/menu100.glb', group.table.x, group.table.z-2.5, 0, 5.3, 1.5);
         group.chairs.forEach(chairPos => {
             loadFurniture(scene, 'models/furniture/chairModernCushion.glb', chairPos.x, chairPos.z, chairPos.rot, 0, 14, false, true, false, 0, currentTableId);
         });
