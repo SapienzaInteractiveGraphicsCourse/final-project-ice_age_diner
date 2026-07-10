@@ -577,6 +577,7 @@ function updateMainDoorState() {
 
     if (shouldBeOpen && !mainDoor.userData.isOpen) {
         mainDoor.userData.isOpen = true;
+        state.openingDoorSound.play();
         let angleToOpen = mainDoor.userData.openAngle !== undefined ? mainDoor.userData.openAngle : -Math.PI/2; 
         const targetRotationY = mainDoor.userData.originalRotation + angleToOpen;
         animateInteractable(mainDoor, targetRotationY, mainDoor.userData.rotationAxis || 'y');
@@ -584,6 +585,7 @@ function updateMainDoorState() {
     else if (!shouldBeOpen && mainDoor.userData.isOpen) {
         mainDoor.userData.isOpen = false;
         animateInteractable(mainDoor, mainDoor.userData.originalRotation, mainDoor.userData.rotationAxis || 'y');
+        state.closingDoorSound.play();
     }
 }
 
@@ -1350,7 +1352,6 @@ function updateCustomerRoutine(customer) {
                 if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_INSIDE)){
                     customer.userData.subState = 'WAIT_FOR_DOOR';
                     const mainDoor = getMainDoor(customer);
-                    state.openingDoorSound.play();
                     customer.userData.timer = 60;
                 }
             }
