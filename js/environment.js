@@ -1,3 +1,5 @@
+import { state } from './state.js';
+
 export function loadEnvironment(scene, icebergsArray){
     const waterGeometry = new THREE.PlaneGeometry(500, 500);
     const waterMaterial = new THREE.MeshStandardMaterial({ color: 0x0077be, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
@@ -94,4 +96,112 @@ function createIcebergs(scene, icebergsArray, count) {
             radius: collisionRadius
         });
     }
+}
+
+const STARS_COUNT = 500;
+const SHADOW_EXTENT = 150;
+
+export function createSkyAndLights(scene, options = {}){
+    const orbitCenterX = options.orbitCenterX ?? 0;
+    const roomHeight = options.roomHeight ?? 30;
+
+    state.sunOrbitCenterX = orbitCenterX;
+
+    createAmbientLights(scene, roomHeight);
+    createStars(scene);
+    createSun(scene, orbitCenterX);
+    createMoon(scene, orbitCenterX);
+}
+
+function createAmbientLights(scene, roomHeight){
+    const ambientLight = new THREE.AmbientLight(0xd0e3f0, 0.4);
+    scene.add(ambientLight);
+    state.ambientLight = ambientLight;
+
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 0.35);
+    hemiLight.position.set(0, roomHeight, 0);
+    scene.add(hemiLight);
+    state.hemiLight = hemiLight;
+}
+
+function createStars(scene){
+    const starsGeometry = new THREE.BufferGeometry();
+    const starPositions = new Float32Array(STARS_COUNT * 3);
+
+    for (let i = 0; i < STARS_COUNT * 3; i += 3) {
+        const theta = Math.random() * Math.PI;
+        const phi = Math.random() * Math.PI * 2;
+        const radius = 700 + Math.random() * 100;
+
+        starPositions[i]     = radius * Math.sin(theta) * Math.cos(phi);
+        starPositions[i + 1] = Math.abs(radius * Math.cos(theta)) + 50;
+        starPositions[i + 2] = radius * Math.sin(theta) * Math.sin(phi);
+    }
+
+    starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+
+    const starsMaterial = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 2.5,
+        sizeAttenuation: true,
+        transparent: true,
+        opacity: 0.0
+    });
+
+    state.starsMesh = new THREE.Points(starsGeometry, starsMaterial);
+    scene.add(state.starsMesh);
+}
+
+function setupShadowCamera(light, mapSize){
+    light.castShadow = true;
+
+    light.shadow.camera.left   = -SHADOW_EXTENT;
+    light.shadow.camera.right  =  SHADOW_EXTENT;
+    light.shadow.camera.top    =  SHADOW_EXTENT;
+    light.shadow.camera.bottom = -SHADOW_EXTENT;
+    light.shadow.camera.near   = 0.5;
+    light.shadow.camera.far    = 1500;
+
+    light.shadow.mapSize.width  = mapSize;
+    light.shadow.mapSize.height = mapSize;
+    light.shadow.bias = -0.0004;
+    light.shadow.normalBias = 0.02;
+}
+
+function createSun(scene, orbitCenterX){
+    const sunLight = new THREE.DirectionalLight(0xff7700, 0);
+    sunLight.position.set(orbitCenterX, -50, 0);
+    sunLight.target.position.set(orbitCenterX, 0, 0);
+    scene.add(sunLight.target);
+
+    setupShadowCamera(sunLight, 4096);
+
+    scene.add(sunLight);
+    state.sunLight = sunLight;
+
+    const sunGeometry = new THREE.SphereGeometry(45, 32, 32);
+    const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xfff2ba });
+    const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
+    sunMesh.position.copy(sunLight.position);
+    scene.add(sunMesh);
+    state.sunMesh = sunMesh;
+}
+
+function createMoon(scene, orbitCenterX){
+    const moonLight = new THREE.DirectionalLight(0xaac8ff, 0);
+    moonLight.position.set(orbitCenterX, -50, 0);
+    moonLight.target.position.set(orbitCenterX, 0, 0);
+    scene.add(moonLight.target);
+
+    setupShadowCamera(moonLight, 2048);
+
+    scene.add(moonLight);
+    state.moonLight = moonLight;
+
+    const moonGeometry = new THREE.SphereGeometry(28, 24, 24);
+    const moonMaterial = new THREE.MeshBasicMaterial({ color: 0xdfe8ff });
+    const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
+    moonMesh.position.copy(moonLight.position);
+    scene.add(moonMesh);
+    state.moonMesh = moonMesh;
 }

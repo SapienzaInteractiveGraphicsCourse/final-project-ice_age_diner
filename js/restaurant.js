@@ -3,7 +3,7 @@ import { setupInteractions } from './interactions.js';
 import { spawnPenguin, KITCHEN_POS, updateRoutines } from './penguin.js';
 import { setupControls, updateMovement } from './controlWaiter.js';
 import { loadDoor, loadFurniture, createWindowFrame, createProceduralClock } from './furniture.js';
-import { loadEnvironment } from './environment.js';
+import { loadEnvironment, createSkyAndLights } from './environment.js';
 import { animateIcebergs, updateTweens } from './animations.js';
 
 export function buildRestaurant() {
@@ -295,99 +295,8 @@ export function buildRestaurant() {
     ceiling.receiveShadow = false;
     scene.add(ceiling);
 
-    // Light
-    const ambientLight = new THREE.AmbientLight(0xd0e3f0, 0.4);
-    scene.add(ambientLight);
-    state.ambientLight = ambientLight;
-
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 0.35);
-    hemiLight.position.set(0, height, 0);
-    scene.add(hemiLight);
-    state.hemiLight = hemiLight;
-
-    const starsGeometry = new THREE.BufferGeometry();
-    const starsCount = 500;
-    const starPositions = new Float32Array(starsCount * 3);
-
-    for (let i=0; i<starsCount*3; i += 3) {
-        const theta = Math.random()*Math.PI;
-        const phi = Math.random()*Math.PI*2;
-        const radius = 700 + Math.random()*100;
-
-        starPositions[i] = radius*Math.sin(theta)*Math.cos(phi);
-        starPositions[i + 1] = Math.abs(radius * Math.cos(theta)) + 50;
-        starPositions[i + 2] = radius*Math.sin(theta)*Math.sin(phi);
-    }
-
-    starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    const starsMaterial = new THREE.PointsMaterial({
-        color: 0xffffff,
-        size: 2.5,
-        sizeAttenuation: true,
-        transparent: true,
-        opacity: 0.0
-    });
-
-    state.starsMesh = new THREE.Points(starsGeometry, starsMaterial);
-    scene.add(state.starsMesh);
-
-    const sunLight = new THREE.DirectionalLight(0xff7700, 0);
-    sunLight.position.set(state.sunOrbitCenterX, -50, 0);
-    sunLight.castShadow = true;
-    sunLight.target.position.set(state.sunOrbitCenterX, 0, 0);
-    scene.add(sunLight.target);
-
-    const d = 150; 
-    sunLight.shadow.camera.left = -d;
-    sunLight.shadow.camera.right = d;
-    sunLight.shadow.camera.top = d;
-    sunLight.shadow.camera.bottom = -d;
-    sunLight.shadow.camera.near = 0.5;
-    sunLight.shadow.camera.far = 1500;
-
-    sunLight.shadow.mapSize.width = 4096;
-    sunLight.shadow.mapSize.height = 4096;
-    sunLight.shadow.bias = -0.0004;
-    sunLight.shadow.normalBias = 0.02;
-
-    scene.add(sunLight);
-    state.sunLight = sunLight;
-
-    const sunGeometry = new THREE.SphereGeometry(45, 32, 32);
-    const sunMaterial = new THREE.MeshBasicMaterial({ color: 0xfff2ba });
-    const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
-    
-    sunMesh.position.copy(sunLight.position);
-    scene.add(sunMesh);
-    state.sunMesh = sunMesh;
-
-    // Moon
-    const moonLight = new THREE.DirectionalLight(0xaac8ff, 0);
-    moonLight.position.set(state.sunOrbitCenterX, -50, 0);
-    moonLight.castShadow = true;
-    moonLight.target.position.set(state.sunOrbitCenterX, 0, 0);
-    scene.add(moonLight.target);
-
-    moonLight.shadow.camera.left = -d;
-    moonLight.shadow.camera.right = d;
-    moonLight.shadow.camera.top = d;
-    moonLight.shadow.camera.bottom = -d;
-    moonLight.shadow.camera.near = 0.5;
-    moonLight.shadow.camera.far = 1500;
-    moonLight.shadow.mapSize.width = 2048;
-    moonLight.shadow.mapSize.height = 2048;
-    moonLight.shadow.bias = -0.0004;
-    moonLight.shadow.normalBias = 0.02;
-
-    scene.add(moonLight);
-    state.moonLight = moonLight;
-
-    const moonGeometry = new THREE.SphereGeometry(28, 24, 24);
-    const moonMaterial = new THREE.MeshBasicMaterial({ color: 0xdfe8ff });
-    const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
-    moonMesh.position.copy(moonLight.position);
-    scene.add(moonMesh);
-    state.moonMesh = moonMesh;
+    // Lights
+    createSkyAndLights(scene, { orbitCenterX: state.sunOrbitCenterX, roomHeight: height });
 
     const lampGeometry = new THREE.CylinderGeometry(0.4, 0.5, 0.3, 8);
     const lampMaterial = new THREE.MeshBasicMaterial({ color: 0xffeebb });
@@ -574,8 +483,6 @@ export function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/carton.glb', -54, -40, 0, 2, 5.5);
     loadFurniture(scene, 'models/furniture/carton-small.glb', -51, -40, 0, 2, 5.5);
 
-
-
     //superior, from left to right
     loadFurniture(scene, 'models/furniture/WallShelf.glb', -76, 21.3, 3*Math.PI/2, 15.5, 5);
 
@@ -628,9 +535,7 @@ export function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/Crystal0.glb', -45, -30, Math.PI/2, 30, 1, 0, 0, 0, Math.PI);
     loadFurniture(scene, 'models/furniture/Crystal1.glb', -40, -25, Math.PI/2, 30, 1, 0, 0, 0, Math.PI);
 
-    
     //front
-    
     //door wall 1
     loadFurniture(scene, 'models/furniture/Crystal3.glb', -33, -11, -Math.PI/2, 30, 0.5, false, false, false, Math.PI);
     loadFurniture(scene, 'models/furniture/Crystal2.glb', -33, -15, -Math.PI/2, 30, 0.7, false, false, false, Math.PI);
@@ -650,7 +555,6 @@ export function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/Crystal1.glb', 77, -35, Math.PI/2, 30, 1, 0, 0, 0, Math.PI);
     loadFurniture(scene, 'models/furniture/Crystal2.glb', 77, -40, Math.PI/2, 30, 1, 0, 0, 0, Math.PI);
     loadFurniture(scene, 'models/furniture/Crystal3.glb', 77, -45, Math.PI/2, 30, 1, 0, 0, 0, Math.PI);
-
 
     //kitchen wall 2
     loadFurniture(scene, 'models/furniture/Crystal3.glb', -33, 11, -Math.PI/2, 30, 0.5, false, false, false, Math.PI);
