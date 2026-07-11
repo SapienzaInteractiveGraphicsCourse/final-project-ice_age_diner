@@ -48,9 +48,6 @@ function onMouseClick(event){
             if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'WAIT_FOR_WAITER'){
                 console.log("Customer interaction: calling waiter for customer.");
                 
-                if (state.someone_is_leaving){
-                    showWarningPopup("Please wait for the customer to leave and make sure the table is cleaned .");
-                }
                 const queueIdx = waitingQueue.indexOf(clickedObj);
                 if (queueIdx !== -1) waitingQueue.splice(queueIdx, 1);
 
