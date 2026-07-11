@@ -693,6 +693,44 @@ export function putDownPlate(waiter, scene, customer){
     return plate;
 }
 
+const COUNTER_TOP_X = -36;
+const COUNTER_TOP_Y = 4.6;
+export function putPlateOnCounter(waiter, scene, counterBase){
+    const plate = waiter.userData.plate;
+    if (!plate) return null;
+    if (plate.userData.interactionType !== 'plate') return null;
+
+    const spot = getFreeCounterSpot(counterBase);
+
+    waiter.remove(plate);
+    scene.add(plate);
+
+    plate.position.set(COUNTER_TOP_X, counterBase.y + COUNTER_TOP_Y, spot.z);
+    plate.rotation.set(0, 0, 0);
+    plate.scale.set(4, 4, 4);
+
+    plate.userData.isInteractable = true;
+    plate.userData.interactionType = 'plate';
+
+    new TWEEN.Tween(waiter.userData.rightFlipper.rotation)
+        .to({ x: 0, y: 0, z: Math.PI/6 }, 300)
+        .easing(TWEEN.Easing.Quadratic.In)
+        .start();
+
+    waiter.userData.hasPlate = false;
+    waiter.userData.plate = null;
+
+    return plate;
+}
+
+export function animateChefTrashToss(chef){
+    const right = chef.userData.rightFlipper;
+
+    new TWEEN.Tween(right.rotation).to({ x: -Math.PI/1.6, y: 0, z: Math.PI/8 }, 240).easing(TWEEN.Easing.Quadratic.Out).start();
+
+    new TWEEN.Tween(right.rotation).to({ x: Math.PI/5, y: 0, z: Math.PI/6 }, 180).easing(TWEEN.Easing.Quadratic.In).delay(270).start();
+}
+
 export function stackPlates(baseObject, newPlate) {
     if (baseObject.userData.stackCount === undefined) {
         baseObject.userData.stackCount = 0; 
@@ -716,13 +754,12 @@ export function stackPlates(baseObject, newPlate) {
         
         newPlate.position.set(0, localBaseY + (baseObject.userData.stackCount * localThickness), 0);
         
-    } else {
-        
+    }
+    else{
         newPlate.scale.set(1, 1, 1);
         
-        const plateThickness = 0.03; 
-        const altezza = (baseObject.userData.stackCount + 1) * plateThickness;
-        newPlate.position.set(0, altezza, 0);
+        const plateThickness = 0.03;
+        newPlate.position.set(0, (baseObject.userData.stackCount + 1)*plateThickness, 0);
     }
     
     baseObject.userData.stackCount++;

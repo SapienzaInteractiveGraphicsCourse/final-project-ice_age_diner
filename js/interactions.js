@@ -1,5 +1,5 @@
-import { animateInteractable, pickUpPlate, putDownPlate, stackPlates, stopCallingWaiter, startEating, hideAngerSymbol, updateBubble, shakeHead, showWarningPopup } from './animations.js';
-import { penguins, waitingQueue } from './penguin.js';
+import { animateInteractable, pickUpPlate, putDownPlate, putPlateOnCounter, stackPlates, stopCallingWaiter, startEating, hideAngerSymbol, updateBubble, shakeHead, showWarningPopup } from './animations.js';
+import { penguins, waitingQueue, KITCHEN_POS } from './penguin.js';
 import { state } from './state.js';
 
 let raycaster;
@@ -60,7 +60,6 @@ function onMouseClick(event){
                 clickedObj.userData.timer = 3600;
                 clickedObj.userData.state = 'WAIT_FOR_SEAT_ASSIGNMENT';
                 clickedObj.userData.isInteractable = false;
-                updateBubble(clickedObj, 'chair');
             }
             else if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'READY_TO_ORDER'){
                 console.log("Customer interaction: ready to order.");
@@ -138,6 +137,21 @@ function onMouseClick(event){
                     startEating(clickedObj);
                 }
             }
+            else if (clickedObj.userData.interactionType === 'counter'){
+                if (waiter && waiter.userData.hasPlate){
+                    const heldPlate = waiter.userData.plate;
+
+                    if (heldPlate.userData.interactionType === 'plate'){
+                        console.log("Counter interaction: putting the plate back on the counter.");
+                        state.puttingPlateSound.play();
+                        putPlateOnCounter(waiter, interactionScene, KITCHEN_POS.COUNTER);
+                        state.heldFood = null;
+                    }
+                    else {
+                        showWarningPopup("Dirty plates go on the tray, not on the counter.");
+                    }
+                }
+            }
             else if (clickedObj.userData.interactionType === 'tray' && clickedObj.userData.isInteractable){
                 if (waiter && waiter.userData.hasPlate) {
                     const heldPlate = waiter.userData.plate;
@@ -169,7 +183,8 @@ function onMouseClick(event){
                             .start();
                     }
                 
-                }else {
+                }
+                else {
                     console.log("problem with tray interaction: waiter doesn't have a plate or the plate is not dirty.");
                 }
                 

@@ -4,7 +4,8 @@ import {
     resetFlippers, animateChefFridgeReach, animateChefStove, setChefPickupPose,
     setChefCarryPose, animateChefCounterRelease, stackPlates, pickUpPlate, getFreeCounterSpot,
     startReadingMenu, stopReadingMenu, startCallingWaiter, stopCallingWaiter,
-    stopEating, showAngerSymbol, hideAngerSymbol, createNameTag, triggerAngerFlap
+    stopEating, showAngerSymbol, hideAngerSymbol, createNameTag, triggerAngerFlap,
+    animateChefTrashToss
 } from './animations.js';
 import {
     configureCollisions, moveTowards, isAreaFree,
@@ -18,6 +19,7 @@ export let lastSpawnTime = 0;
 
 export const KITCHEN_POS = {
     FRIDGE: new THREE.Vector3(-65, 0, 24),
+    TRASH: new THREE.Vector3(-64, 0, 27),
     STOVE: new THREE.Vector3(-65, 0, 4.5),
     COUNTER: new THREE.Vector3(-42, 0, 0),
     IDLE_CHEF: new THREE.Vector3(-55, 0, 5),
@@ -36,6 +38,8 @@ export const CUSTOMER_POSITIONS = {
 };
 
 const ANGER_THRESHOLD = 1200;
+const CUSTOMER_SPEED = 0.25;
+const CUSTOMER_ANGRY_SPEED = 0.42;
 
 const QUEUE_START_X = 74;
 const QUEUE_START_Z = 36;
@@ -335,23 +339,61 @@ export function createPenguinModel(role, options = {}){
 
         penguinGroup.add(hatGroup);
 
-        // Apron
-        const apronGeo = new THREE.BoxGeometry(1.6, 1.6, 0.05); 
-        const apron = new THREE.Mesh(apronGeo, whiteMat);
-        apron.position.set(0, 1.0, 1.48);
-        apron.rotation.x = 0.05; 
-        penguinGroup.add(apron);
+        const APRON_R = 0.84;
+        const APRON_CENTER = new THREE.Vector3(0, 1.4, 0.47);
+        const APRON_SCALE = new THREE.Vector3(1.2, 1.35, 0.99);
 
-        // Pocket
-        const pocketGeo = new THREE.BoxGeometry(0.5, 0.35, 0.02);
+        const apronMat = new THREE.MeshStandardMaterial({
+            color: 0xf7f4ec,
+            roughness: 0.95,
+            metalness: 0.0,
+            side: THREE.DoubleSide,
+            flatShading: true
+        });
+
+        const apronTrimMat = new THREE.MeshStandardMaterial({
+            color: 0xd8d3c6,
+            roughness: 0.95,
+            metalness: 0.0,
+            side: THREE.DoubleSide,
+            flatShading: true
+        });
+
+        const makeApronPanel = (radius, halfWidth, thetaFrom, thetaTo, material) => {
+            const geo = new THREE.SphereGeometry(
+                radius, 14, 8,
+                Math.PI/2 - halfWidth, halfWidth * 2,
+                thetaFrom, thetaTo - thetaFrom
+            );
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.scale.copy(APRON_SCALE);
+            mesh.position.copy(APRON_CENTER);
+            return mesh;
+        };
+
+        const apronBib = makeApronPanel(APRON_R, 0.62, 0.87, 1.62, apronMat);
+        penguinGroup.add(apronBib);
+        const apronSkirt = makeApronPanel(APRON_R + 0.02, 0.97, 1.58, 2.45, apronMat);
+        penguinGroup.add(apronSkirt);
+        const apronTopHem = makeApronPanel(APRON_R + 0.01, 0.63, 0.86, 0.93, apronTrimMat);
+        penguinGroup.add(apronTopHem);
+        const apronBottomHem = makeApronPanel(APRON_R + 0.03, 0.98, 2.37, 2.46, apronTrimMat);
+        penguinGroup.add(apronBottomHem);
+
+        const pocketGeo = new THREE.BoxGeometry(0.6, 0.42, 0.03);
         const pocket = new THREE.Mesh(pocketGeo, pocketMat);
-        pocket.position.set(0, 0.75, 1.51); 
-        pocket.rotation.x = 0.05;
+        pocket.position.set(0, 1.0, 1.27);
+        pocket.rotation.x = 0.36;
         penguinGroup.add(pocket);
 
-        // Strings around the neck
+        const pocketSeamGeo = new THREE.BoxGeometry(0.02, 0.42, 0.02);
+        const pocketSeam = new THREE.Mesh(pocketSeamGeo, apronTrimMat);
+        pocketSeam.position.set(0, 1.0, 1.29);
+        pocketSeam.rotation.x = 0.36;
+        penguinGroup.add(pocketSeam);
+
         const leftNeckCurve = new THREE.CatmullRomCurve3([
-            new THREE.Vector3(-0.55, 1.75, 1.48),
+            new THREE.Vector3(-0.45, 2.13, 0.99),
             new THREE.Vector3(-0.85, 2.2, 0.9),
             new THREE.Vector3(-0.95, 2.65, 0.15),
             new THREE.Vector3(-0.55, 2.8, -0.45),
@@ -362,7 +404,7 @@ export function createPenguinModel(role, options = {}){
         penguinGroup.add(leftNeckStrap);
 
         const rightNeckCurve = new THREE.CatmullRomCurve3([
-            new THREE.Vector3(0.55, 1.75, 1.48), 
+            new THREE.Vector3(0.45, 2.13, 0.99), 
             new THREE.Vector3(0.85, 2.2, 0.9),   
             new THREE.Vector3(0.95, 2.65, 0.15), 
             new THREE.Vector3(0.55, 2.8, -0.45),
@@ -380,7 +422,7 @@ export function createPenguinModel(role, options = {}){
 
         // Strings around the waist
         const leftWaistCurve = new THREE.CatmullRomCurve3([
-            new THREE.Vector3(-0.75, 1.3, 1.48),
+            new THREE.Vector3(-0.83, 1.39, 0.94),
             new THREE.Vector3(-1.1, 1.3, 1.0),
             new THREE.Vector3(-1.28, 1.3, 0.2),
             new THREE.Vector3(-1.0, 1.3, -0.8),
@@ -391,7 +433,7 @@ export function createPenguinModel(role, options = {}){
         penguinGroup.add(leftWaistStrap);
 
         const rightWaistCurve = new THREE.CatmullRomCurve3([
-            new THREE.Vector3(0.75, 1.3, 1.48),   
+            new THREE.Vector3(0.83, 1.39, 0.94),   
             new THREE.Vector3(1.1, 1.3, 1.0),     
             new THREE.Vector3(1.28, 1.3, 0.2),    
             new THREE.Vector3(1.0, 1.3, -0.8),    
@@ -529,7 +571,7 @@ export function spawnPenguin(position, role){
 
     if (role === 'chef') penguin.userData.speed = 0.28;
     else if (role === 'dishwasher') penguin.userData.speed = 0.28;
-    else if (role === 'customer') penguin.userData.speed = 0.25;
+    else if (role === 'customer') penguin.userData.speed = CUSTOMER_SPEED;
     else penguin.userData.speed = 1.6;
 
     penguin.userData.hasPlate = false;
@@ -608,7 +650,6 @@ export function getActiveCustomerCount(){
 }
 
 let _dayWasInProgress = false;
-
 export function updateRoutines(){
     if (_dayWasInProgress && !state.dayInProgress){
         closeRestaurantForTheDay();
@@ -636,6 +677,20 @@ export function updateRoutines(){
     state.someone_is_leaving = leavingQueue.length > 0;
     watchdogDoorLane(isUsingDoor);
     updateMainDoorState();
+}
+
+function findLeftoverPlate(){
+    if (!state.scene) return null;
+
+    return state.scene.children.find(child =>
+        child.userData &&
+        child.userData.interactionType === 'plate' &&
+        child.userData.isInteractable === true
+    ) || null;
+}
+
+function shouldCleanLeftovers(){
+    return !state.dayInProgress && getActiveCustomerCount() === 0;
 }
 
 function getFridgeDoor(chef) {
@@ -751,6 +806,91 @@ function updateChefRoutine(chef){
                     chef.userData.currentOrder = nextOrder;
                     chef.userData.state = 'WALK_FRIDGE';
                 }
+            }
+            else if (shouldCleanLeftovers()) {
+                const leftover = findLeftoverPlate();
+                if (leftover) {
+                    chef.userData.leftoverPlate = leftover;
+                    chef.userData.state = 'WALK_TO_LEFTOVER';
+                }
+            }
+            break;
+
+        case 'WALK_TO_LEFTOVER': {
+            const leftover = chef.userData.leftoverPlate;
+            if (!leftover || leftover.parent !== state.scene) {
+                chef.userData.leftoverPlate = null;
+                chef.userData.state = 'WALK_IDLE';
+                break;
+            }
+
+            const pickSpot = new THREE.Vector3(KITCHEN_POS.COUNTER.x, 0, leftover.position.z);
+            if (moveTowards(chef, pickSpot)) {
+                chef.rotation.y = Math.PI / 2;
+                chef.userData.timer = 40;
+                chef.userData.state = 'ACTION_TAKE_LEFTOVER';
+            }
+            break;
+        }
+
+        case 'ACTION_TAKE_LEFTOVER': {
+            chef.userData.timer--;
+            setChefPickupPose(chef);
+
+            if (chef.userData.timer <= 0){
+                const leftover = chef.userData.leftoverPlate;
+
+                if (leftover && leftover.parent === state.scene){
+                    const zIdx = state.platesOnCounter.findIndex(
+                        z => Math.abs(z - leftover.position.z) < 0.01
+                    );
+                    if (zIdx > -1) state.platesOnCounter.splice(zIdx, 1);
+
+                    state.scene.remove(leftover);
+                    leftover.userData.isInteractable = false;
+                    leftover.name = 'plate';
+                    pickUpPlate(chef, leftover);
+
+                    chef.userData.state = 'WALK_TO_TRASH';
+                }
+                else{
+                    chef.userData.leftoverPlate = null;
+                    chef.userData.state = 'WALK_IDLE';
+                }
+            }
+            break;
+        }
+
+        case 'WALK_TO_TRASH':
+            if (chef.userData.hasPlate) setChefCarryPose(chef);
+
+            if (moveTowards(chef, KITCHEN_POS.TRASH)) {
+                chef.rotation.y = -Math.PI / 2;
+                chef.userData.timer = 50;
+                chef.userData.state = 'ACTION_TRASH';
+            }
+            break;
+
+        case 'ACTION_TRASH':
+            chef.userData.timer--;
+            if (chef.userData.timer === 40) {
+                animateChefTrashToss(chef);
+            }
+
+            if (chef.userData.timer === 22) {
+                const plate = chef.userData.plate;
+                if (plate) {
+                    chef.remove(plate);
+                    state.scene.remove(plate);
+                }
+                chef.userData.hasPlate = false;
+                chef.userData.plate = null;
+                chef.userData.leftoverPlate = null;
+            }
+
+            if (chef.userData.timer <= 0) {
+                resetFlippers(chef);
+                chef.userData.state = 'IDLE';
             }
             break;
 
@@ -1201,6 +1341,7 @@ function updateCustomerRoutine(customer) {
 
             if (customer.userData.timer <= 0) {
                 customer.userData.isInteractable = false;
+                customer.userData.leftAngry = true;
                 customer.userData.state = 'LEAVING';
                 break;
             }
@@ -1340,6 +1481,7 @@ function updateCustomerRoutine(customer) {
 
             if (customer.userData.timer <= 0){
                 customer.userData.isInteractable = false;
+                customer.userData.leftAngry = true;
                 customer.userData.state = 'LEAVING';
             }
             break;
@@ -1357,6 +1499,7 @@ function updateCustomerRoutine(customer) {
             
             if (customer.userData.timer <= 0){
                 customer.userData.isInteractable = false;
+                customer.userData.leftAngry = true;
                 if (customer.userData.bubble) {
                     customer.remove(customer.userData.bubble);
                     customer.userData.bubble = null;
@@ -1403,8 +1546,12 @@ function updateCustomerRoutine(customer) {
                 removeFromQueue(customer);
                 if (!leavingQueue.includes(customer)) leavingQueue.push(customer);
 
-                const chair = customer.userData.seat;
+                if (Array.isArray(state.orders)){
+                    state.orders = state.orders.filter(o => o.customer !== customer);
+                }
 
+                customer.userData.speed = customer.userData.leftAngry ? CUSTOMER_ANGRY_SPEED : CUSTOMER_SPEED;
+                const chair = customer.userData.seat;
                 if (chair){
                     const sideDir = new THREE.Vector3(1, 0, 0).applyQuaternion(chair.quaternion).normalize();
                     const backDir = new THREE.Vector3(0, 0, -1).applyQuaternion(chair.quaternion).normalize();
