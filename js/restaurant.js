@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { setupInteractions } from './interactions.js';
 import { spawnPenguin, KITCHEN_POS, updateRoutines } from './penguin.js';
 import { setupControls, updateMovement } from './controlWaiter.js';
-import { loadDoor, loadFurniture, createWindowFrame } from './furniture.js';
+import { loadDoor, loadFurniture, createWindowFrame, createProceduralClock } from './furniture.js';
 import { loadEnvironment } from './environment.js';
 import { animateIcebergs, updateTweens } from './animations.js';
 
@@ -723,8 +723,7 @@ creaFarettoCentrale(66, 30, 0, 0);
     loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', 75, -32, Math.PI/2, 10, 10);
 
     loadFurniture(scene, 'models/furniture/welcome_sign_restaurant-v1.glb', -30, 24, Math.PI, 0, 8);
-    loadFurniture(scene, 'models/furniture/AnalogClock.glb', -33, 27, -2*Math.PI, 10, 0.3);
-
+    createProceduralClock(scene, -33, 15, 27,  Math.PI/2, 0.6);
 
     loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', -33, 37, Math.PI/2, 10, 10);
     loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', -33, -37, -Math.PI/2, 10, 10);
