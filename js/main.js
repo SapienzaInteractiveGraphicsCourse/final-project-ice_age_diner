@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { buildRestaurant } from './restaurant.js';
 import { loadFoodModels } from './furniture.js';
-import { penguins } from './penguin.js';
+import { closeRestaurantForTheDay, getActiveCustomerCount } from './penguin.js';
 import {updateClockHands} from './animations.js';
 
 let gameStarted = false;
@@ -43,6 +43,7 @@ document.addEventListener("DOMContentLoaded", function (){
     const btnContinue = document.getElementById("btn-continue");
 
     let dayInterval = null;
+    let closingWatcher = null;
     [gameUI, inGameSettingsBtn, pauseMenu].forEach(el => {
         if (el) el.style.zIndex = '10';
     });
@@ -308,7 +309,6 @@ document.addEventListener("DOMContentLoaded", function (){
                 if (currentTime <= 0){
                     clearInterval(dayInterval);
                     endDay();
-                    showEndOfDaySummary();
                 }
             }
         }, 1000);
@@ -331,17 +331,28 @@ document.addEventListener("DOMContentLoaded", function (){
     function endDay(){
         state.dayInProgress = false;
         timerDisplay.classList.add("hidden-panel");
-        ordersPanel.classList.add("hidden-panel");
-        penguins.forEach(p => {
-            if (p.mesh){
-                const pen = p.mesh;
-                if (pen.userData.role === 'customer'){
-                    pen.userData.state = 'LEAVING';
-                }
-            }
-        });
-        state.orders = [];
-        console.log("Day ended. Total earnings: $" + state.earnings);
+
+        closeRestaurantForTheDay();
+
+        console.log("Day ended. Total earnings so far: $" + state.earnings);
+
+        waitForLastCustomer();
+    }
+
+    function waitForLastCustomer(){
+        if (closingWatcher) clearInterval(closingWatcher);
+
+        closingWatcher = setInterval(function(){
+            if (state.isPaused) return;
+            if (getActiveCustomerCount() > 0) return;
+
+            clearInterval(closingWatcher);
+            closingWatcher = null;
+
+            ordersPanel.classList.add("hidden-panel");
+            state.orders = [];
+            showEndOfDaySummary();
+        }, 250);
     }
 
     function updateOrdersUI() {

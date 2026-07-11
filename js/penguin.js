@@ -8,7 +8,7 @@ import {
 } from './animations.js';
 import {
     configureCollisions, moveTowards, isAreaFree,
-    acquireDoorLane, releaseDoorLane, watchdogDoorLane
+    acquireDoorLane, releaseDoorLane, getDoorLaneOwner, watchdogDoorLane
 } from './collisions.js';
 export { moveTowards };
 
@@ -19,7 +19,7 @@ export let lastSpawnTime = 0;
 export const KITCHEN_POS = {
     FRIDGE: new THREE.Vector3(-65, 0, 24),
     STOVE: new THREE.Vector3(-65, 0, 4.5),
-    COUNTER: new THREE.Vector3(-42, 0, 3),
+    COUNTER: new THREE.Vector3(-42, 0, 0),
     IDLE_CHEF: new THREE.Vector3(-55, 0, 5),
     IDLE_WAITER: new THREE.Vector3(-10, 0, 10),
     IDLE_DISHWASHER: new THREE.Vector3(-55, 0, -18),
@@ -121,8 +121,85 @@ function canEnter(customer){
 }
 
 function canExit(customer){
-    if (leavingQueue[0] !== customer) return false;
+    if (getDoorLaneOwner() === customer) return true;
+
+    const ready = leavingQueue.find(c => c.userData.subState === 'AWAIT_DOOR_LANE');
+    if (ready !== customer) return false;
+
     return acquireDoorLane(customer);
+}
+
+const LEAVE_STALL_LIMIT = 480;
+function updateLeaveStallWatch(customer){
+    const ud = customer.userData;
+
+    if (!ud.leaveStallPos){
+        ud.leaveStallPos = customer.position.clone();
+        ud.leaveStallSub = ud.subState;
+        ud.leaveStallTimer = 0;
+        return;
+    }
+
+    if (ud.subState !== ud.leaveStallSub){
+        ud.leaveStallSub = ud.subState;
+        ud.leaveStallTimer = 0;
+        ud.leaveStallPos.copy(customer.position);
+        return;
+    }
+
+    if (ud.subState === 'AWAIT_DOOR_LANE') return;
+
+    if (customer.position.distanceTo(ud.leaveStallPos) > 0.2){
+        ud.leaveStallTimer = 0;
+        ud.leaveStallPos.copy(customer.position);
+        return;
+    }
+
+    ud.leaveStallTimer++;
+    if (ud.leaveStallTimer > LEAVE_STALL_LIMIT){
+        ud.leaveStallTimer = 0;
+        forceLeavingProgress(customer);
+    }
+}
+
+function forceLeavingProgress(customer){
+    const ud = customer.userData;
+
+    switch (ud.subState){
+        case 'BACK_AWAY_FROM_TABLE':
+            if (ud.seat){
+                ud.seat.userData.isOccupied = false;
+                ud.seat.userData.isInteractable = true;
+                ud.seat = null;
+            }
+            ud.subState = 'AWAIT_DOOR_LANE';
+            break;
+
+        case 'LEAVE_QUEUE_SIDESTEP':
+            ud.subState = 'WALK_TO_AISLE';
+            break;
+
+        case 'WALK_TO_AISLE':
+            ud.subState = ud.exitFromQueue ? 'WALK_TO_DOOR_INSIDE' : 'WALK_DOWN_AISLE';
+            break;
+
+        case 'WALK_DOWN_AISLE':
+            ud.subState = 'WALK_TO_DOOR_INSIDE';
+            break;
+
+        case 'WALK_TO_DOOR_INSIDE':
+            ud.subState = 'WAIT_FOR_DOOR';
+            ud.timer = 60;
+            break;
+
+        case 'WALK_TO_DOOR_OUTSIDE':
+            ud.subState = 'WALK_TO_DESPAWN';
+            break;
+
+        case 'WALK_TO_DESPAWN':
+            despawnCustomer(customer);
+            break;
+    }
 }
 
 export function createPenguinModel(role, options = {}){
@@ -475,7 +552,69 @@ export function removeFromQueue(customer){
     }
 }
 
+function removeBubble(customer){
+    if (customer.userData.bubble){
+        customer.remove(customer.userData.bubble);
+        customer.userData.bubble = null;
+    }
+}
+
+function despawnCustomer(customer){
+    hideAngerSymbol(customer);
+    removeBubble(customer);
+    stopCallingWaiter(customer);
+
+    releaseDoorLane(customer);
+    removeFromQueue(customer);
+
+    const lIdx = leavingQueue.indexOf(customer);
+    if (lIdx > -1) leavingQueue.splice(lIdx, 1);
+
+    const pIdx = penguins.findIndex(p => p.mesh === customer);
+    if (pIdx > -1) penguins.splice(pIdx, 1);
+
+    state.scene.remove(customer);
+}
+
+export function closeRestaurantForTheDay(){
+    const customers = penguins
+        .filter(p => p.mesh && p.mesh.userData.role === 'customer')
+        .map(p => p.mesh);
+
+    customers.forEach(customer => {
+        const ud = customer.userData;
+
+        if (ud.state === 'LEAVING') return;
+        if (ud.seat) return;
+
+        if (ud.hasEnteredInside){
+            hideAngerSymbol(customer);
+            removeBubble(customer);
+            stopCallingWaiter(customer);
+            stopReadingMenu(customer);
+
+            ud.isInteractable = false;
+            ud.subState = undefined;
+            ud.state = 'LEAVING';
+        }
+        else{
+            despawnCustomer(customer);
+        }
+    });
+}
+
+export function getActiveCustomerCount(){
+    return penguins.filter(p => p.mesh && p.mesh.userData.role === 'customer').length;
+}
+
+let _dayWasInProgress = false;
+
 export function updateRoutines(){
+    if (_dayWasInProgress && !state.dayInProgress){
+        closeRestaurantForTheDay();
+    }
+    _dayWasInProgress = !!state.dayInProgress;
+
     if (state.dayInProgress) {
         updateCustomerSpawn();
     }
@@ -1296,6 +1435,8 @@ function updateCustomerRoutine(customer) {
                 }
             }
 
+            updateLeaveStallWatch(customer);
+
             if (customer.userData.subState === 'BACK_AWAY_FROM_TABLE'){
                 const currentTarget = customer.userData.leaveWaypoints[customer.userData.leaveWpIdx];
 
@@ -1373,16 +1514,7 @@ function updateCustomerRoutine(customer) {
             }
             else if (customer.userData.subState === 'WALK_TO_DESPAWN'){
                 if (moveTowards(customer, CUSTOMER_POSITIONS.DESPAWN)){
-                    hideAngerSymbol(customer);
-                    state.scene.remove(customer);
-
-                    const pIdx = penguins.findIndex(p => p.mesh === customer);
-                    if (pIdx > -1) penguins.splice(pIdx, 1);
-
-                    const lIdx = leavingQueue.indexOf(customer);
-                    if (lIdx > -1) leavingQueue.splice(lIdx, 1);
-
-                    releaseDoorLane(customer);
+                    despawnCustomer(customer);
                 }
             }
             break;
