@@ -116,19 +116,17 @@ export function startReadingMenu(penguin){
         
         const scaleFactor = 1.5 / 2.2; 
         menuToGrab.scale.set(scaleFactor, scaleFactor, scaleFactor);
-        menuToGrab.position.set(0, 1.8, 1.2);
-        menuToGrab.rotation.set(Math.PI / 3, Math.PI, 0);
+        menuToGrab.position.set(0.8, 1.5, 1.1);
+        menuToGrab.rotation.set(Math.PI / 3, Math.PI + 0.3, 0);
     }
 
-    const leftFlipper = penguin.userData.leftFlipper;
     const rightFlipper = penguin.userData.rightFlipper;
     const head = penguin.userData.head;
 
-    new TWEEN.Tween(leftFlipper.rotation).to({ x: -Math.PI/2.3, y: 0, z: -Math.PI/10 }, 400).easing(TWEEN.Easing.Quadratic.Out).start();
-    new TWEEN.Tween(rightFlipper.rotation).to({ x: -Math.PI/2.3, y: 0, z: Math.PI/10 }, 400).easing(TWEEN.Easing.Quadratic.Out).start();
+    new TWEEN.Tween(rightFlipper.rotation).to({ x: -Math.PI/2.5, y: -Math.PI/8, z: Math.PI/8 }, 400).easing(TWEEN.Easing.Quadratic.Out).start();
 
     if (head){
-        new TWEEN.Tween(head.rotation).to({ x: 0.35 }, 400).easing(TWEEN.Easing.Quadratic.Out).start();
+        new TWEEN.Tween(head.rotation).to({ x: 0.35, y: 0.35 }, 400).easing(TWEEN.Easing.Quadratic.Out).start();
     }
 }
 
@@ -159,7 +157,7 @@ export function stopReadingMenu(penguin){
     }
 
     const head = penguin.userData.head;
-    if (head) new TWEEN.Tween(head.rotation).to({ x: 0 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
+    if (head) new TWEEN.Tween(head.rotation).to({ x: 0, y: 0 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
 
     const leftFlipper = penguin.userData.leftFlipper;
     const rightFlipper = penguin.userData.rightFlipper;
