@@ -6,22 +6,6 @@ export function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, op
 
     loader.load(path, (gltf) => {
         const model = gltf.scene;
-        
-        const fileName = path.split('/').pop().split('.')[0];
-        model.name = fileName;
-        
-        if (fileName === 'Clock') {
-            model.traverse((child) => {
-                console.log(`part of the clock: ${child.name}`);
-                if (child.name === 'Analog_clock_Circle001-Mesh_1') {
-                    model.userData.hourHand = child;
-                }
-                if (child.name === 'Analog_clock_Circle001-Mesh_2') {
-                    model.userData.minuteHand = child;
-                }
-            });
-            state.models.clock = model; 
-        }
 
         console.log(model)
         model.position.set(x, y, z);
@@ -356,4 +340,72 @@ export function create3DTo2DIcon(model) {
     tempRenderer.dispose();
 
     return dataURL; 
+}
+
+export function createProceduralClock(scene, x, y, z, rotation, scale) {
+    const clockGroup = new THREE.Group();
+    clockGroup.name = 'AnalogClock';
+
+    const rimGeom = new THREE.CylinderGeometry(5.5, 5.5, 1, 32);
+    const rimMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.7 });
+    const rim = new THREE.Mesh(rimGeom, rimMat);
+    rim.rotation.x = Math.PI / 2; 
+    clockGroup.add(rim);
+
+    const faceGeom = new THREE.CylinderGeometry(5, 5, 1.1, 32);
+    const faceMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+    const face = new THREE.Mesh(faceGeom, faceMat);
+    face.rotation.x = Math.PI / 2;
+    clockGroup.add(face);
+
+    const tickMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    for (let i = 0; i < 12; i++) {
+        const isMainHour = (i % 3 === 0);
+        const tickGeom = new THREE.BoxGeometry(isMainHour ? 0.4 : 0.2, isMainHour ? 1.5 : 1, 1.2);
+        const tick = new THREE.Mesh(tickGeom, tickMat);
+        
+        const angle = (i / 12) * Math.PI * 2;
+        tick.position.set(Math.sin(angle) * 4.2, Math.cos(angle) * 4.2, 0);
+        tick.rotation.z = -angle;
+        
+        clockGroup.add(tick);
+    }
+
+    const hourMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    const hourHandGeom = new THREE.BoxGeometry(0.6, 3.0, 1.3);
+    hourHandGeom.translate(0, 1.5, 0); 
+    const hourHand = new THREE.Mesh(hourHandGeom, hourMat);
+    clockGroup.add(hourHand);
+
+    const minHandGeom = new THREE.BoxGeometry(0.3, 4.5, 1.4);
+    minHandGeom.translate(0, 2.25, 0); 
+    const minHand = new THREE.Mesh(minHandGeom, hourMat);
+    clockGroup.add(minHand);
+
+    const pinGeom = new THREE.CylinderGeometry(0.5, 0.5, 1.5, 16);
+    const pinMat = new THREE.MeshStandardMaterial({ color: 0xcc0000 });
+    const pin = new THREE.Mesh(pinGeom, pinMat);
+    pin.rotation.x = -Math.PI / 2;
+    clockGroup.add(pin);
+
+    clockGroup.position.set(x, y, z);
+    clockGroup.rotation.y = rotation;
+    clockGroup.scale.set(scale, scale, scale);
+
+    clockGroup.userData.hourHand = hourHand;
+    clockGroup.userData.minuteHand = minHand;
+    state.models.clock = clockGroup;
+
+    clockGroup.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    });
+
+    scene.add(clockGroup);
+    state.colliders.push(clockGroup);
+    console.log(`Procedural clock created at ${x}, ${y}, ${z}`);
+    
+    return clockGroup;
 }
