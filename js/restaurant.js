@@ -716,8 +716,6 @@ creaFarettoCentrale(66, 30, 0, 0);
     loadFurniture(scene, 'models/furniture/Trashcan100.glb', -70, 27, 0, 0, 5);
     loadFurniture(scene, 'models/furniture/coffee_menu.glb', -55, 40, -Math.PI, 13, 10);
 
-    //main room decorations
-    //parametri: vai a destra, vai indietro, rotazione, altezza, quanto piccolo
     loadFurniture(scene, 'models/furniture/theBedroomHanger.glb', 79, 0, Math.PI/2, 10, 10);
     loadFurniture(scene, 'models/furniture/LittleBookcase.glb', 76, -16, Math.PI/2, 5.5, 11);
     loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', 75, -32, Math.PI/2, 10, 10);
