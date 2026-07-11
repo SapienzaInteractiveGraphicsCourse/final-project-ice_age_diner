@@ -435,8 +435,6 @@ document.addEventListener("DOMContentLoaded", function (){
         }, 1000);
     });
 
-
-
     function showEndOfDaySummary() {
         
         summaryDayTitle.textContent = `End Day ${state.dayNumber}`;
@@ -493,8 +491,6 @@ document.addEventListener("DOMContentLoaded", function (){
         summaryTotalValue.textContent = totalDayEarnings;
         summaryMenu.classList.remove("hidden-panel");
     }
-
-
 });
 
 function initAudio(){

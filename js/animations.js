@@ -1,5 +1,6 @@
 import { moveTowards } from "./penguin.js";
 import { state } from './state.js';
+import { resolveDockCollision } from './environment.js';
 
 export function startWalking(penguin){
     if (penguin.userData.isWalking) return;
@@ -364,6 +365,8 @@ export function animateIcebergs(icebergsArray) {
         icebergMesh.position.x += data.driftX;
         icebergMesh.position.z += data.driftZ;
 
+        resolveDockCollision(data);
+
         // Calculate euclidean distance between the iceberg and the scene
         const x = icebergMesh.position.x;
         const z = icebergMesh.position.z;
@@ -695,6 +698,7 @@ export function putDownPlate(waiter, scene, customer){
 
 const COUNTER_TOP_X = -36;
 const COUNTER_TOP_Y = 4.6;
+
 export function putPlateOnCounter(waiter, scene, counterBase){
     const plate = waiter.userData.plate;
     if (!plate) return null;
@@ -758,8 +762,9 @@ export function stackPlates(baseObject, newPlate) {
     else{
         newPlate.scale.set(1, 1, 1);
         
-        const plateThickness = 0.03;
-        newPlate.position.set(0, (baseObject.userData.stackCount + 1)*plateThickness, 0);
+        const plateThickness = 0.03; 
+        const altezza = (baseObject.userData.stackCount + 1) * plateThickness;
+        newPlate.position.set(0, altezza, 0);
     }
     
     baseObject.userData.stackCount++;
@@ -822,27 +827,10 @@ export function animateChefCounterRelease(chef){
     //const finalReleaseAngle = -Math.PI/2.5 + (Math.PI/4);
     const finalReleaseAngle = -0.3;
 
-    new TWEEN.Tween(chef.userData.leftFlipper.rotation)
-        .to({ x: finalReleaseAngle, y: 0, z: -Math.PI/16 }, 400)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .start();
-
-    new TWEEN.Tween(chef.userData.rightFlipper.rotation)
-        .to({ x: finalReleaseAngle, y: 0, z: Math.PI/16 }, 400)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .start();
-
-    new TWEEN.Tween(chef.userData.leftFlipper.rotation)
-        .to({ x: 0, y: 0, z: -Math.PI/6 }, 300)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .delay(660)
-        .start();
-
-    new TWEEN.Tween(chef.userData.rightFlipper.rotation)
-        .to({ x: 0, y: 0, z: Math.PI/6 }, 300)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .delay(660)
-        .start();
+    new TWEEN.Tween(chef.userData.leftFlipper.rotation).to({ x: finalReleaseAngle, y: 0, z: -Math.PI/16 }, 400).easing(TWEEN.Easing.Quadratic.Out).start();
+    new TWEEN.Tween(chef.userData.rightFlipper.rotation).to({ x: finalReleaseAngle, y: 0, z: Math.PI/16 }, 400).easing(TWEEN.Easing.Quadratic.Out).start();
+    new TWEEN.Tween(chef.userData.leftFlipper.rotation).to({ x: 0, y: 0, z: -Math.PI/6 }, 300).easing(TWEEN.Easing.Quadratic.Out).delay(660).start();
+    new TWEEN.Tween(chef.userData.rightFlipper.rotation).to({ x: 0, y: 0, z: Math.PI/6 }, 300).easing(TWEEN.Easing.Quadratic.Out).delay(660).start();
 }
 
 export function shakeHead(penguin, onComplete) {
@@ -887,16 +875,8 @@ export function triggerAngerFlap(penguin) {
     const origRight = { x: right.rotation.x, y: right.rotation.y, z: right.rotation.z };
 
     const flapDuration = 90;
-    
-    const flapLeft = new TWEEN.Tween(left.rotation)
-        .to({ x: 0, z: -Math.PI / 1.5 }, flapDuration)
-        .yoyo(true)
-        .repeat(5);
-
-    const flapRight = new TWEEN.Tween(right.rotation)
-        .to({ x: 0, z: Math.PI / 1.5 }, flapDuration)
-        .yoyo(true)
-        .repeat(5)
+    const flapLeft = new TWEEN.Tween(left.rotation).to({ x: 0, z: -Math.PI / 1.5 }, flapDuration).yoyo(true).repeat(5);
+    const flapRight = new TWEEN.Tween(right.rotation).to({ x: 0, z: Math.PI / 1.5 }, flapDuration).yoyo(true).repeat(5)
         .onComplete(() => {
             penguin.userData.isFlappingAngry = false;
             

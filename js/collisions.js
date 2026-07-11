@@ -73,10 +73,7 @@ function _buildNavGrid(){
             let isBlocked = false;
 
             for (const box of rawBoxes){
-                if (
-                    wx >= box.min.x - NAV_AGENT_RADIUS && wx <= box.max.x + NAV_AGENT_RADIUS &&
-                    wz >= box.min.z - NAV_AGENT_RADIUS && wz <= box.max.z + NAV_AGENT_RADIUS
-                ){
+                if (wx >= box.min.x - NAV_AGENT_RADIUS && wx <= box.max.x + NAV_AGENT_RADIUS &&wz >= box.min.z - NAV_AGENT_RADIUS && wz <= box.max.z + NAV_AGENT_RADIUS){
                     isBlocked = true;
                     break;
                 }
@@ -108,10 +105,7 @@ function _worldToCell(grid, x, z){
 
 function _cellToWorld(grid, c, r){
     return new THREE.Vector3(
-        grid.bounds.minX + (c + 0.5) * grid.cellSize,
-        0,
-        grid.bounds.minZ + (r + 0.5) * grid.cellSize
-    );
+        grid.bounds.minX + (c + 0.5) * grid.cellSize,0,grid.bounds.minZ + (r + 0.5) * grid.cellSize);
 }
 
 function _isCellBlocked(grid, c, r){
@@ -502,7 +496,8 @@ export function moveTowards(penguin, targetPos, ignoreCollision=false, ignoreSta
                 nav.path = _findPath(penguin.position, targetPos);
                 nav.wpIndex = 0;
                 nav.replanCooldown = 20;
-            } else {
+            } 
+            else{
                 nav.replanCooldown--;
             }
             if (typeof stopWalking !== 'undefined') stopWalking(penguin);

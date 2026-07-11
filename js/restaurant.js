@@ -423,7 +423,6 @@ export function buildRestaurant() {
     loadDoor(scene, 'models/furniture/doorway.glb', width/2, 0, 10, -Math.PI/2, 15);
     //load of tray
     loadFurniture(scene, 'models/food/plate-rectangle.glb', -36, -18 , 0, 4.5, 10, false, false, true);
-    
 
     //KITCHEN
 
@@ -465,7 +464,6 @@ export function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/wine-white.glb', -70, -40, 0, 2, 5.5);
     loadFurniture(scene, 'models/furniture/wine-white.glb', -68, -40, 0, 2, 5.5);
     loadFurniture(scene, 'models/furniture/Crate.glb', -63, -40, 0, 2, 2);
-
 
     loadFurniture(scene, 'models/furniture/bookcaseClosedWide.glb', -59, -40, 2*Math.PI, 0, 18);
     //lev0
@@ -578,37 +576,34 @@ export function buildRestaurant() {
 
     loadFurniture(scene, 'models/furniture/LOGO.glb', 77, 0, -Math.PI/2, 20, 9, 0, 0, 0, 0);
 
-    //TRADURRE IN INGLESE
-function creaFarettoCentrale(x, y, z, targetZ) {
-    const farettoGeometry = new THREE.CylinderGeometry(0.3, 0.4, 1.2, 16);
-    const farettoMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, metalness: 0.8 });
-    const farettoMesh = new THREE.Mesh(farettoGeometry, farettoMaterial);
-    
-    farettoMesh.position.set(x, y, z);
-    farettoMesh.lookAt(77, 21, targetZ);
-    farettoMesh.rotateX(Math.PI / 2);
-    scene.add(farettoMesh);
+    //Light directed towards the logo in the main room
+    function createCentralSpotlight(x, y, z, targetZ){
+        const fixtureGeometry = new THREE.CylinderGeometry(0.3, 0.4, 1.2, 16);
+        const fixtureMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, metalness: 0.8 });
+        const fixtureMesh = new THREE.Mesh(fixtureGeometry, fixtureMaterial);
 
-    const luce = new THREE.SpotLight(0xffffff, 5);
-    luce.position.set(x, y, z);
-    luce.angle = Math.PI / 2;
-    luce.penumbra = 0.7;
-    luce.distance = 15;
-    luce.castShadow = true;
-    luce.userData.baseIntensity = 5.0;
+        fixtureMesh.position.set(x, y, z);
+        fixtureMesh.lookAt(77, 21, targetZ);
+        fixtureMesh.rotateX(Math.PI / 2);
+        scene.add(fixtureMesh);
 
-    const targetLuce = new THREE.Object3D();
-    targetLuce.position.set(77, 21, targetZ);
-    scene.add(targetLuce);
-    luce.target = targetLuce;
+        const light = new THREE.SpotLight(0xffffff, 5);
+        light.position.set(x, y, z);
+        light.angle = Math.PI / 2;
+        light.penumbra = 0.7;
+        light.distance = 15;
+        light.castShadow = true;
+        light.userData.baseIntensity = 5.0;
 
-    scene.add(luce);
-    state.spotLights.push(luce);
-}
+        const lightTarget = new THREE.Object3D();
+        lightTarget.position.set(77, 21, targetZ);
+        scene.add(lightTarget);
+        light.target = lightTarget;
 
-creaFarettoCentrale(66, 30, 0, 0);
-
-
+        scene.add(light);
+        state.spotLights.push(light);
+    }
+    createCentralSpotlight(66, 30, 0, 0);
 
     //kitchen decorations
     loadFurniture(scene, 'models/furniture/kitchenCoffeeMachine.glb', -75, -5, Math.PI/2, 5.5);
@@ -648,10 +643,6 @@ creaFarettoCentrale(66, 30, 0, 0);
     loadFurniture(scene, 'models/furniture/lampRoundTable.glb', 55, 43, -2*Math.PI, 5.5, 17);
     loadFurniture(scene, 'models/furniture/pottedPlant.glb', 57, 39, -2*Math.PI, 5, 7);
     loadFurniture(scene, 'models/furniture/deskCorner.glb', 45, 30, Math.PI/2, 0, 14);
-
-
-    //loadFurniture(scene, 'models/furniture/menu2.glb', 0, 0, 0, 5.3, 1.5);
-    
  
     //tables and chairs
     const diamondLayout = [
