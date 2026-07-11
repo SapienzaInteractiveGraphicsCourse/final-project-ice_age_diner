@@ -585,6 +585,16 @@ export function createPlate(foodName){
     plateGroup.userData.isInteractable = false;
     plateGroup.userData.interactionType = 'plate';
     plateGroup.scale.set(2,2,2);
+
+    // Anche piatti e cibo proiettano ombra (sul bancone, sui tavoli, e mentre
+    // vengono trasportati dai pinguini).
+    plateGroup.traverse(child => {
+        if (child.isMesh){
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    });
+
     return plateGroup;
 }
 
@@ -771,25 +781,31 @@ export function setChefCarryPose(chef){
 
 // One-shot tween sequence for setting the plate down on the counter and
 // bringing the flippers back to rest
-export function animateChefCounterRelease(chef, callback) {
-    const duration = 300;
-    
-    stopWalking(chef);
+export function animateChefCounterRelease(chef){
+    //const finalReleaseAngle = -Math.PI/2.5 + (Math.PI/4);
+    const finalReleaseAngle = -0.3;
 
-    // Left flipper goind down
-    const leftArmDown = new TWEEN.Tween(chef.userData.leftFlipper.rotation).to({ x: 0, y: 0, z: 0 }, duration).easing(TWEEN.Easing.Quadratic.Out);
-        
-    // Animazione braccio destro che scende
-    const rightArmDown = new TWEEN.Tween(chef.userData.rightFlipper.rotation)
-        .to({ x: 0, y: 0, z: 0 }, duration)
-        .easing(TWEEN.Easing.Quadratic.Out);
+    new TWEEN.Tween(chef.userData.leftFlipper.rotation)
+        .to({ x: finalReleaseAngle, y: 0, z: -Math.PI/16 }, 400)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .start();
 
-    leftArmDown.start();
-    rightArmDown.start();
+    new TWEEN.Tween(chef.userData.rightFlipper.rotation)
+        .to({ x: finalReleaseAngle, y: 0, z: Math.PI/16 }, 400)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .start();
 
-    setTimeout(() => {
-        if(callback) callback();
-    }, duration + 50);
+    new TWEEN.Tween(chef.userData.leftFlipper.rotation)
+        .to({ x: 0, y: 0, z: -Math.PI/6 }, 300)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .delay(660)
+        .start();
+
+    new TWEEN.Tween(chef.userData.rightFlipper.rotation)
+        .to({ x: 0, y: 0, z: Math.PI/6 }, 300)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .delay(660)
+        .start();
 }
 
 export function shakeHead(penguin, onComplete) {

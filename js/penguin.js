@@ -385,6 +385,12 @@ export function createPenguinModel(role, options = {}){
         penguinGroup.add(bowtieGroup);
     }
 
+    penguinGroup.traverse(child => {
+        if (child.isMesh){
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    });
     penguinGroup.scale.set(2.2, 2.2, 2.2);
     penguinGroup.userData.head = headGroup;
     penguinGroup.userData.leftFlipper = leftFlipper;
