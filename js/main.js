@@ -105,7 +105,6 @@ document.addEventListener("DOMContentLoaded", function (){
             ordersPanel.classList.add("hidden-panel");
             startDayBtn.classList.add("hidden-panel");
 
-
             startMenu.classList.remove("hidden");
 
             setTimeout(function(){
@@ -462,7 +461,6 @@ document.addEventListener("DOMContentLoaded", function (){
         });
 
         summaryTotalValue.textContent = totalDayEarnings;
-        
         summaryMenu.classList.remove("hidden-panel");
     }
 

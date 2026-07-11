@@ -19,7 +19,7 @@ export let lastSpawnTime = 0;
 export const KITCHEN_POS = {
     FRIDGE: new THREE.Vector3(-65, 0, 24),
     STOVE: new THREE.Vector3(-65, 0, 4.5),
-    COUNTER: new THREE.Vector3(-42, 0, 0),
+    COUNTER: new THREE.Vector3(-42, 0, 3),
     IDLE_CHEF: new THREE.Vector3(-55, 0, 5),
     IDLE_WAITER: new THREE.Vector3(-10, 0, 10),
     IDLE_DISHWASHER: new THREE.Vector3(-55, 0, -18),
