@@ -79,45 +79,63 @@ export function startReadingMenu(penguin){
     penguin.userData.isReadingMenu = true;
 
     let nearestMenu = null;
-    let minDistance = 15;
-    
-    const penguinWorldPos = new THREE.Vector3();
-    penguin.getWorldPosition(penguinWorldPos);
+    let minDistance = 40; 
+
+    const searchPos = new THREE.Vector3();
+    penguin.getWorldPosition(searchPos);
 
     state.scene.traverse((child) => {
-        const hasMenuName = child.name && child.name.toLowerCase().includes('menu');
-        
-        if (hasMenuName && (child.type === 'Group' || child.type === 'Mesh')) {
-            const childWorldPos = new THREE.Vector3();
-            child.getWorldPosition(childWorldPos);
+        if (child.name && child.name.toLowerCase().includes('menu')) {
             
-            const dist = penguinWorldPos.distanceTo(childWorldPos);
-            
-            if (dist < minDistance) {
-                minDistance = dist;
-                nearestMenu = child;
+            let isHeld = false;
+            let curr = child;
+            while (curr) {
+                if (curr.userData && curr.userData.role) { 
+                    isHeld = true;
+                    break;
+                }
+                curr = curr.parent;
+            }
+
+            if (!isHeld) {
+                const childWorldPos = new THREE.Vector3();
+                child.getWorldPosition(childWorldPos);
+                
+                const dist = searchPos.distanceTo(childWorldPos);
+                
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    nearestMenu = child;
+                }
             }
         }
     });
 
     if (nearestMenu) {
         let menuToGrab = nearestMenu;
-        if (nearestMenu.parent && (nearestMenu.parent.name === 'Scene' || nearestMenu.parent.name === 'OSG_Scene')) {
-            menuToGrab = nearestMenu.parent;
+        
+        let curr = nearestMenu;
+        while (curr && curr.parent && curr.parent !== state.scene && curr.parent.type !== 'Scene') {
+            curr = curr.parent;
         }
+        menuToGrab = curr; 
 
         penguin.userData.menu = menuToGrab; 
         penguin.userData.menuOriginalParent = menuToGrab.parent; 
         penguin.userData.menuOriginalPos = menuToGrab.position.clone();
         penguin.userData.menuOriginalRot = menuToGrab.rotation.clone();
+        penguin.userData.menuOriginalScale = menuToGrab.scale.clone();
         
         if (menuToGrab.parent) menuToGrab.parent.remove(menuToGrab);
         penguin.add(menuToGrab);
         
-        const scaleFactor = 1.5 / 2.2; 
-        menuToGrab.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        const orig = penguin.userData.menuOriginalScale;
+        menuToGrab.scale.set(orig.x / 2.2, orig.y / 2.2, orig.z / 2.2);
+        
         menuToGrab.position.set(0.8, 1.5, 1.1);
         menuToGrab.rotation.set(Math.PI / 3, Math.PI + 0.3, 0);
+    } else {
+        console.warn("Attention: No menu found nearby for the penguin to read.");
     }
 
     const rightFlipper = penguin.userData.rightFlipper;

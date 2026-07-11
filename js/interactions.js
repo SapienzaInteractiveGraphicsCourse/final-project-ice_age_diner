@@ -60,6 +60,7 @@ function onMouseClick(event){
                 clickedObj.userData.timer = 3600;
                 clickedObj.userData.state = 'WAIT_FOR_SEAT_ASSIGNMENT';
                 clickedObj.userData.isInteractable = false;
+                updateBubble(clickedObj, 'chair');
             }
             else if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'READY_TO_ORDER'){
                 console.log("Customer interaction: ready to order.");

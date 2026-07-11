@@ -10,6 +10,9 @@ export function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, op
         console.log(model)
         model.position.set(x, y, z);
         model.rotation.y = rotation;
+
+        const fileName = path.split('/').pop().split('.')[0];
+        model.name = fileName;
         
         if (upsideDownRotation !== 0) {
             model.rotation.x = upsideDownRotation;
@@ -21,7 +24,6 @@ export function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, op
                 model.userData.isInteractable = true;
                 model.userData.interactionType = 'chair';
                 model.userData.isOccupied = false;  
-                state.foodIcons.chair =create3DTo2DIcon(model);
         }
         if (tray) {
             model.userData.isInteractable = true;
@@ -65,7 +67,7 @@ export function loadFurniture(scene, path, x, z, rotation, y = 0, scale = 13, op
         scene.add(model);
 
         state.colliders.push(model);
-        console.log(`Furniture loaded: ${path} as ${model.name}`); // Piccolo aggiornamento al log
+        console.log(`Furniture loaded: ${path} as ${model.name}`); 
     }, undefined, (error) => {
         console.error(`Loading error ${path}:`, error);
     });
@@ -302,6 +304,11 @@ export function loadFoodModels() {
         });
         state.models.turkey = model;
         state.foodIcons.turkey = create3DTo2DIcon(model);
+    });
+
+    loader.load('models/furniture/chairModernCushion.glb', (gltf) => {
+        const model = gltf.scene;
+        state.foodIcons.chair = create3DTo2DIcon(model);
     });
 }
 
