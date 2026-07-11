@@ -21,6 +21,9 @@ document.addEventListener("DOMContentLoaded", function (){
     const settingsPanel = document.getElementById("settings-panel");
 
     const inGameSettingsBtn = document.getElementById("in-game-settings-btn");
+    const tutorialBtn = document.getElementById("tutorial-btn");
+    const tutorialMenu = document.getElementById("tutorial-menu");
+    const btnCloseTutorial = document.getElementById("btn-close-tutorial");
     const pauseMenu = document.getElementById("pause-menu");
     const btnResume = document.getElementById("btn-resume");
     const btnQuit = document.getElementById("btn-quit");
@@ -49,9 +52,9 @@ document.addEventListener("DOMContentLoaded", function (){
     btnStart.addEventListener("click", function (){
         loadFoodModels();
         startMenu.classList.add("hidden");
-        //gameUI.classList.add("visible");
         inGameSettingsBtn.classList.remove("hidden-panel");
         dayNumberDisplay.classList.remove("hidden-panel");
+        tutorialBtn.classList.remove("hidden-panel");
 
         //to avoid starting the game multiple times
         if (!gameStarted) {
@@ -128,6 +131,22 @@ document.addEventListener("DOMContentLoaded", function (){
     btnBack.addEventListener("click", function(){
         settingsPanel.classList.add("hidden-panel");
         mainMenuContent.classList.remove("hidden-panel");
+    });
+
+    tutorialBtn.addEventListener("click", function() {
+        tutorialMenu.classList.remove("hidden-panel");
+
+        if (!state.isPaused) {
+            state.isPaused = true;
+        }
+    });
+
+    btnCloseTutorial.addEventListener("click", function() {
+        tutorialMenu.classList.add("hidden-panel");
+        
+        if (state.isPaused && pauseMenu.classList.contains("hidden-panel")) {
+            state.isPaused = false;
+        }
     });
 
     btnContinue.addEventListener("click", function(){
