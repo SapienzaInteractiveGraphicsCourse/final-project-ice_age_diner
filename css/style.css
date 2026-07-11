@@ -523,7 +523,7 @@ body, html{
     border: 3px solid #ffffff;
     font-size: 1.8rem;
     cursor: pointer;
-    z-index: 100;
+    z-index: 10;
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     transition: transform 0.3s, background-color 0.3s;
     display: flex;

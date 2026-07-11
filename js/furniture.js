@@ -306,10 +306,6 @@ export function loadFoodModels() {
         state.foodIcons.turkey = create3DTo2DIcon(model);
     });
 
-    loader.load('models/furniture/chairModernCushion.glb', (gltf) => {
-        const model = gltf.scene;
-        state.foodIcons.chair = create3DTo2DIcon(model);
-    });
 }
 
 export function create3DTo2DIcon(model) {
