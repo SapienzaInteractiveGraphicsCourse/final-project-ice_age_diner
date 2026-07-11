@@ -934,7 +934,6 @@ function updateChefRoutine(chef){
             animateChefStove(chef, chef.userData.timer);
 
             if (chef.userData.timer <= 0) {
-                //resetFlippers(chef);
                 chef.userData.state = 'ACTION_PICK_PLATE';
                 chef.userData.timer = 50; 
             }

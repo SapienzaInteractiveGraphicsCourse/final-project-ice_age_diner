@@ -92,6 +92,7 @@ export function loadDoor(scene, path, x, y, z, rotation, scale = 10){
         const hingeGroup = new THREE.Group();
         hingeGroup.position.set(x, y, z);
         hingeGroup.rotation.y = rotation;
+        //move the hinge group to the left by half the width of the door to align it with the hinge
         hingeGroup.translateX(-(size.x * scale) / 2);
         hingeGroup.scale.set(scale, scale, scale);
 
