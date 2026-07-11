@@ -547,7 +547,7 @@ body, html{
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 200; /* Stesso z-index del pause-menu per stare sopra a tutto */
+    z-index: 200; 
     opacity: 1;
     visibility: visible;
     transition: opacity 0.4s ease, visibility 0.4s ease;
@@ -591,5 +591,5 @@ body, html{
 }
 
 .tutorial-list strong {
-    color: #fcd34d; /* Riprende il colore dorato usato per il cibo negli ordini */
+    color: #fcd34d; 
 }
