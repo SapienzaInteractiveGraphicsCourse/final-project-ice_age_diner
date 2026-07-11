@@ -620,7 +620,7 @@ export function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', 75, -32, Math.PI/2, 10, 10);
 
     loadFurniture(scene, 'models/furniture/welcome_sign_restaurant-v1.glb', -30, 24, Math.PI, 0, 8);
-    createProceduralClock(scene, -33, 15, 27,  Math.PI/2, 0.6);
+    createProceduralClock(scene, -35, 15, 27,  Math.PI/2, 0.6);
 
     loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', -33, 37, Math.PI/2, 10, 10);
     loadFurniture(scene, 'models/furniture/AssortedShelfPlants.glb', -33, -37, -Math.PI/2, 10, 10);

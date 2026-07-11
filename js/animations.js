@@ -606,7 +606,7 @@ export function getFreeCounterSpot(basePosition) {
     const COUNTER_Z_MIN = -5; 
     const COUNTER_Z_MAX = 20;
     const TRAY_Z = -18;          
-    const SAFE_DISTANCE = 2.5; 
+    const SAFE_DISTANCE = 3.5; 
 
     let freeZ = 0;
     let isOccupied = true;
