@@ -90,6 +90,30 @@ export function createNameTag(name) {
     return sprite;
 }
 
+export function updateNameTagColor(sprite, name, color) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 64;
+    const context = canvas.getContext('2d');
+    
+    context.font = 'bold 36px "Segoe UI", sans-serif';
+    context.fillStyle = color; 
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.strokeStyle = 'black';
+    context.lineWidth = 4;
+    context.strokeText(name, 128, 32);
+    context.fillText(name, 128, 32);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    
+    if (sprite.material.map) {
+        sprite.material.map.dispose();
+    }
+    sprite.material.map = texture;
+    sprite.material.needsUpdate = true;
+}
+
 export function createPlate(foodName){
     const plateGroup = new THREE.Group();
     plateGroup.name = 'heldPlate';

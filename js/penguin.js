@@ -12,7 +12,7 @@ import {
     acquireDoorLane, releaseDoorLane, getDoorLaneOwner, watchdogDoorLane
 } from './collisions.js';
 import {updateBubble, createNameTag, createPlate, getFreeCounterSpot,
-    releaseCounterSpot, stackPlates} from './utils.js';
+    releaseCounterSpot, stackPlates, updateNameTagColor} from './utils.js';
 export { moveTowards };
 
 export const penguins = [];
@@ -571,6 +571,7 @@ export function spawnPenguin(position, role){
         const nameSprite = createNameTag(penguin.userData.nameTag);
         nameSprite.position.set(0, 4.5, 0);
         penguin.add(nameSprite);
+        penguin.userData.nameSprite = nameSprite;
     }
 
     if (role === 'chef') {
@@ -1463,6 +1464,9 @@ function updateCustomerRoutine(customer) {
                     seatPenguin(customer, chair);
                     customer.userData.seatWaypoints = null;
                     customer.userData.state = 'SEATED';
+                    if (customer.userData.nameSprite){
+                        updateNameTagColor(customer.userData.nameSprite, customer.userData.nameTag, 'white');
+                    }
                 }
             }
             break;

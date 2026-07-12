@@ -1,7 +1,7 @@
 import { animateInteractable, pickUpPlate, putDownPlate, putPlateOnCounter, stopCallingWaiter, startEating, hideAngerSymbol, shakeHead, showWarningPopup } from './animations.js';
 import { penguins, waitingQueue, KITCHEN_POS } from './penguin.js';
 import { state } from './state.js';
-import {updateBubble, releaseCounterSpot, stackPlates} from './utils.js';
+import {updateBubble, releaseCounterSpot, stackPlates, updateNameTagColor} from './utils.js';
 
 let raycaster;
 let mouse;
@@ -94,6 +94,10 @@ function onMouseClick(event){
                 if (clickedObj.userData.bubble){
                     clickedObj.remove(clickedObj.userData.bubble);
                     clickedObj.userData.bubble = null;
+                }
+
+                if (clickedObj.userData.nameSprite) {
+                    updateNameTagColor(clickedObj.userData.nameSprite, clickedObj.userData.nameTag, '#00ff00');
                 }
                 
                 clickedObj.userData.timer = 3600;
@@ -298,6 +302,7 @@ function onMouseClick(event){
                     followingPenguin.userData.targetPosition = clickedObj.position.clone();
                     clickedObj.userData.isOccupied = true;
                     followingPenguin.userData.seat = clickedObj;
+
                 }
             }
             else{
