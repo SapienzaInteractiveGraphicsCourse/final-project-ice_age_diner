@@ -8,7 +8,42 @@ let interactionCamera;
 let interactionScene;
 
 let xTexture =  null;
-// function to setup the raycasting and mouse click interactions
+const INTERACTION_RANGE = {
+    plate: 12,
+    dirty_plate: 12,
+    counter: 14,
+    tray: 12,
+    customer: 16
+};
+let clickedPoint = null;
+
+function distanceFromWaiter(waiter, object){
+    if (!waiter) return Infinity;
+
+    let targetPos = clickedPoint;
+
+    if (!targetPos){
+        if (!object) return Infinity;
+        targetPos = new THREE.Vector3();
+        object.getWorldPosition(targetPos);
+    }
+
+    const dx = targetPos.x - waiter.position.x;
+    const dz = targetPos.z - waiter.position.z;
+
+    return Math.sqrt(dx*dx + dz*dz);
+}
+
+function isInRange(waiter, object, type, whatToDo){
+    const range = INTERACTION_RANGE[type];
+    if (range === undefined) return true;
+
+    if (distanceFromWaiter(waiter, object) <= range) return true;
+
+    showWarningPopup("Get closer to " + whatToDo + "!");
+    return false;
+}
+
 export function setupInteractions(camera, scene){
     raycaster = new THREE.Raycaster();
     mouse = new THREE.Vector2();
@@ -29,11 +64,14 @@ function onMouseClick(event){
 
     if (intersects.length > 0){
         let clickedObj = null;
+        clickedPoint = null;
+
         for (let i = 0; i < intersects.length; i++){
             let obj = intersects[i].object;
             while (obj) {
                 if (obj.userData && obj.userData.isInteractable){
                     clickedObj = obj;
+                    clickedPoint = intersects[i].point.clone();
                     break;
                 }
                 obj = obj.parent;
@@ -62,6 +100,8 @@ function onMouseClick(event){
                 clickedObj.userData.isInteractable = false;
             }
             else if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'READY_TO_ORDER'){
+                if (!isInRange(waiter, clickedObj, 'customer', "take the order")) return;
+
                 console.log("Customer interaction: ready to order.");
                 const orderFood = clickedObj.userData.order;
                 state.orders.push({customer: clickedObj, food: orderFood, status: 'pending'});
@@ -76,7 +116,9 @@ function onMouseClick(event){
                 
                 return;
             }
-            else if ((clickedObj.userData.interactionType === 'plate' || clickedObj.userData.interactionType === 'dirty_plate') && clickedObj.userData.isInteractable){ 
+            else if ((clickedObj.userData.interactionType === 'plate' || clickedObj.userData.interactionType === 'dirty_plate') && clickedObj.userData.isInteractable){
+                if (!isInRange(waiter, clickedObj, clickedObj.userData.interactionType, "reach the plate")) return;
+
                 if (waiter && waiter.userData.hasPlate === false){
                     console.log("Plate interaction: picking up the first plate.");
                     const index = state.platesOnCounter.indexOf(clickedObj.position.z);
@@ -104,6 +146,8 @@ function onMouseClick(event){
                 }
             }
             else if (clickedObj.userData.interactionType === 'customer' && clickedObj.userData.state === 'WAIT_FOR_FOOD'){
+                if (!isInRange(waiter, clickedObj, 'customer', "serve the customer")) return;
+
                 if (waiter && waiter.userData.hasPlate){
                     console.log("Customer interaction: delivering food.");
                     const customerOrder = clickedObj.userData.order;
@@ -138,6 +182,8 @@ function onMouseClick(event){
                 }
             }
             else if (clickedObj.userData.interactionType === 'counter'){
+                if (!isInRange(waiter, clickedObj, 'counter', "reach the counter")) return;
+
                 if (waiter && waiter.userData.hasPlate){
                     const heldPlate = waiter.userData.plate;
 
@@ -153,6 +199,8 @@ function onMouseClick(event){
                 }
             }
             else if (clickedObj.userData.interactionType === 'tray' && clickedObj.userData.isInteractable){
+                if (!isInRange(waiter, clickedObj, 'tray', "reach the tray")) return;
+
                 if (waiter && waiter.userData.hasPlate) {
                     const heldPlate = waiter.userData.plate;
                     
@@ -177,10 +225,7 @@ function onMouseClick(event){
                         
                         waiter.userData.hasPlate = false;
                         waiter.userData.plate = null;
-                        new TWEEN.Tween(waiter.userData.rightFlipper.rotation)
-                            .to({ x: 0, y: 0, z: Math.PI/6 }, 300)
-                            .easing(TWEEN.Easing.Quadratic.In)
-                            .start();
+                        new TWEEN.Tween(waiter.userData.rightFlipper.rotation).to({ x: 0, y: 0, z: Math.PI/6 }, 300).easing(TWEEN.Easing.Quadratic.In).start();
                     }
                 
                 }
