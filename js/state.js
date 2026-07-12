@@ -35,7 +35,6 @@ export const state = {
 
     //SOUNDS
     cashSound: null,
-    closingDoorSound: null,
     customerCallingSound: null,
     foodReadySound: null,
     openingDoorSound: null,

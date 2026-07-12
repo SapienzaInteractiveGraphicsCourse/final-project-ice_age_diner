@@ -502,7 +502,6 @@ function initAudio(){
     menuSound = new THREE.Audio(state.audioListener);
     gameSound = new THREE.Audio(state.audioListener);
     state.cashSound = new THREE.Audio(state.audioListener);
-    state.closingDoorSound = new THREE.Audio(state.audioListener);
     state.customerCallingSound = new THREE.Audio(state.audioListener);
     state.foodReadySound = new THREE.Audio(state.audioListener);
     state.openingDoorSound = new THREE.Audio(state.audioListener);
@@ -531,12 +530,6 @@ function initAudio(){
         state.cashSound.setBuffer(buffer);
         state.cashSound.setVolume(currentVolume);
         state.cashSound.setLoop(false);
-    });
-
-    audioLoader.load("audio/closing_door.mp3", function(buffer){
-        state.closingDoorSound.setBuffer(buffer);
-        state.closingDoorSound.setVolume(currentVolume);
-        state.closingDoorSound.setLoop(false);
     });
 
     audioLoader.load("audio/customer_calling.mp3", function(buffer){
