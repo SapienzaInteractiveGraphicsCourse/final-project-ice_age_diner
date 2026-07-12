@@ -576,6 +576,8 @@ export function spawnPenguin(position, role){
         penguin.userData.flipperTweenStarted = false;
     }
 
+    if (role === 'chef' || role === 'dishwasher') penguin.rotation.y = Math.PI/2;
+
     if (role === 'waiter' || role === 'dishwasher' || role === "customer") {
         penguin.userData.plate = null;
     }
@@ -1217,7 +1219,6 @@ function updateCustomerRoutine(customer) {
 
                     if (mainDoor && mainDoor.userData.isOpen) {
                         customer.userData.timer = 60;
-                        state.openingDoorSound.play();
                         customer.userData.state = 'WAIT_FOR_DOOR_ANIMATION';
                         customer.userData.doorWaypoints = null;
                     }

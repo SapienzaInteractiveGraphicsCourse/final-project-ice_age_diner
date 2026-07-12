@@ -31,7 +31,7 @@ export const state = {
         {'name': 'cheese', 'price': 5}, {'name': 'cupcake', 'price': 3}, {'name': 'meat', 'price': 18}, {'name': 'turkey', 'price': 20}], 
     foodIcons:{},
     models:{},
-    penguins_name: ["Pingu", "Kowalski", "Rico", "Skipper", "Soldato", "Gunter", "Cody", "Mumble", "Flipper", "Bert"], // ADD MORE NAMES IF YOU WANT
+    penguins_name: ["Pingu", "Kowalski", "Rico", "Skipper", "Soldato", "Gunter", "Cody", "Flipper", "Bert", "Penny", "Alice", "Marlene", "Vicky", "Timmy", "Pinga", "Bernadette", "Amy"],
 
     //SOUNDS
     cashSound: null,
