@@ -1,16 +1,18 @@
 import { state } from './state.js';
 import {
-    startWalking, stopWalking, animateInteractable, seatPenguin, updateBubble, createPlate,
+    startWalking, stopWalking, animateInteractable, seatPenguin,
     resetFlippers, animateChefFridgeReach, animateChefStove, setChefPickupPose,
-    setChefCarryPose, animateChefCounterRelease, stackPlates, pickUpPlate, getFreeCounterSpot,
+    setChefCarryPose, animateChefCounterRelease, pickUpPlate,
     startReadingMenu, stopReadingMenu, startCallingWaiter, stopCallingWaiter,
-    stopEating, showAngerSymbol, hideAngerSymbol, createNameTag, triggerAngerFlap,
-    animateChefTrashToss, releaseCounterSpot, COUNTER_PLATE_X, COUNTER_PLATE_Y
+    stopEating, showAngerSymbol, hideAngerSymbol, triggerAngerFlap,
+    animateChefTrashToss, COUNTER_PLATE_X, COUNTER_PLATE_Y
 } from './animations.js';
 import {
     configureCollisions, moveTowards, isAreaFree,
     acquireDoorLane, releaseDoorLane, getDoorLaneOwner, watchdogDoorLane
 } from './collisions.js';
+import {updateBubble, createNameTag, createPlate, getFreeCounterSpot,
+    releaseCounterSpot, stackPlates} from './utils.js';
 export { moveTowards };
 
 export const penguins = [];

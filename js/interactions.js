@@ -1,6 +1,7 @@
-import { animateInteractable, pickUpPlate, putDownPlate, putPlateOnCounter, releaseCounterSpot, stackPlates, stopCallingWaiter, startEating, hideAngerSymbol, updateBubble, shakeHead, showWarningPopup } from './animations.js';
+import { animateInteractable, pickUpPlate, putDownPlate, putPlateOnCounter, stopCallingWaiter, startEating, hideAngerSymbol, shakeHead, showWarningPopup } from './animations.js';
 import { penguins, waitingQueue, KITCHEN_POS } from './penguin.js';
 import { state } from './state.js';
+import {updateBubble, releaseCounterSpot, stackPlates} from './utils.js';
 
 let raycaster;
 let mouse;
