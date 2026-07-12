@@ -2,11 +2,16 @@ import { moveTowards } from "./penguin.js";
 import { state } from './state.js';
 import { resolveDockCollision } from './environment.js';
 
-export function startWalking(penguin){
-    if (penguin.userData.isWalking) return;
-    penguin.userData.isWalking = true;
+export function startWalking(penguin, speedFactor = 1){
+    if (penguin.userData.isWalking){
+        if (penguin.userData.walkSpeedFactor === speedFactor) return;
+        stopWalking(penguin);
+    }
 
-    const duration = 250;
+    penguin.userData.isWalking = true;
+    penguin.userData.walkSpeedFactor = speedFactor;
+
+    const duration = 250 / speedFactor;
     const swingAngle = Math.PI/5;
 
     const leftFoot = penguin.userData.leftFoot;
@@ -601,40 +606,59 @@ export function createPlate(foodName){
     return plateGroup;
 }
 
+const COUNTER_Z_MIN = -12;
+const COUNTER_Z_MAX = 20;
+const TRAY_Z = -18;
+const TRAY_SAFE_DISTANCE = 5;
+const PLATE_SAFE_DISTANCE = 2.5;
+
+function isCounterSpotFree(z){
+    if (z < COUNTER_Z_MIN || z > COUNTER_Z_MAX) return false;
+    if (Math.abs(z - TRAY_Z) < TRAY_SAFE_DISTANCE) return false;
+
+    for (const plateZ of state.platesOnCounter){
+        if (Math.abs(z - plateZ) < PLATE_SAFE_DISTANCE) return false;
+    }
+    return true;
+}
+
 export function getFreeCounterSpot(basePosition) {
-    // Define counter limits on z axis
-    const COUNTER_Z_MIN = -5; 
-    const COUNTER_Z_MAX = 20;
-    const TRAY_Z = -18;          
-    const SAFE_DISTANCE = 2.5; 
+    for (let attempts = 0; attempts < 60; attempts++){
+        const freeZ = Math.random()*(COUNTER_Z_MAX - COUNTER_Z_MIN) + COUNTER_Z_MIN;
 
-    let freeZ = 0;
-    let isOccupied = true;
-    let attempts = 0;
-    
-    while (isOccupied && attempts < 50) {
-        freeZ = Math.random()*(COUNTER_Z_MAX - COUNTER_Z_MIN) + COUNTER_Z_MIN;
-        
-        isOccupied = false;
-
-        if (Math.abs(freeZ - TRAY_Z) < SAFE_DISTANCE) {
-            isOccupied = true;
+        if (isCounterSpotFree(freeZ)){
+            state.platesOnCounter.push(freeZ);
+            return new THREE.Vector3(basePosition.x, basePosition.y, freeZ);
         }
-        
-        for (let plateZ of state.platesOnCounter) {
-            if (Math.abs(freeZ - plateZ) < SAFE_DISTANCE) {
-                isOccupied = true;
-                break;
+    }
+    return null;
+}
+
+export function getCounterSpotNear(basePosition, preferredZ) {
+    const startZ = Math.min(Math.max(preferredZ, COUNTER_Z_MIN), COUNTER_Z_MAX);
+
+    if (isCounterSpotFree(startZ)){
+        state.platesOnCounter.push(startZ);
+        return new THREE.Vector3(basePosition.x, basePosition.y, startZ);
+    }
+
+    const STEP = 0.5;
+    const MAX_OFFSET = COUNTER_Z_MAX - COUNTER_Z_MIN;
+
+    for (let offset = STEP; offset <= MAX_OFFSET; offset += STEP){
+        for (const z of [startZ - offset, startZ + offset]){
+            if (isCounterSpotFree(z)){
+                state.platesOnCounter.push(z);
+                return new THREE.Vector3(basePosition.x, basePosition.y, z);
             }
         }
-        attempts++;
     }
-    
-    if (!isOccupied) {
-        state.platesOnCounter.push(freeZ);
-    }
-    
-    return new THREE.Vector3(basePosition.x, basePosition.y, freeZ);
+    return null;
+}
+
+export function releaseCounterSpot(z){
+    const idx = state.platesOnCounter.findIndex(spotZ => Math.abs(spotZ - z) < 0.01);
+    if (idx > -1) state.platesOnCounter.splice(idx, 1);
 }
 
 //Waiter <-> plate interaction
@@ -691,7 +715,8 @@ export function putPlateOnCounter(waiter, scene, counterBase){
     if (!plate) return null;
     if (plate.userData.interactionType !== 'plate') return null;
 
-    const spot = getFreeCounterSpot(counterBase);
+    const spot = getCounterSpotNear(counterBase, waiter.position.z);
+    if (!spot) return null;
 
     waiter.remove(plate);
     scene.add(plate);

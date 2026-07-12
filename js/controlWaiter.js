@@ -3,16 +3,36 @@ import { penguins } from './penguin.js';
 import { startWalking, stopWalking } from './animations.js';
 
 const keysPressed = {w: false, a: false, s: false, d: false};
+const WALK_SPEED = 0.4;
+const SPRINT_SPEED = 0.5;
+const SPRINT_ANIMATION_FACTOR = SPRINT_SPEED / WALK_SPEED;
+let isSprinting = false;
 
 export function setupControls(penguin){
     window.addEventListener("keydown", (event) => {
+        if (event.code === "Space"){
+            isSprinting = true;
+            event.preventDefault();
+            return;
+        }
+
         const key = event.key.toLowerCase();
         if (key in keysPressed) keysPressed[key] = true;
     });
 
     window.addEventListener("keyup", (event) => {
+        if (event.code === "Space"){
+            isSprinting = false;
+            return;
+        }
+
         const key = event.key.toLowerCase();
         if (key in keysPressed) keysPressed[key] = false;
+    });
+
+    window.addEventListener("blur", () => {
+        isSprinting = false;
+        for (const key in keysPressed) keysPressed[key] = false;
     });
 }
 
@@ -59,7 +79,7 @@ export function updateMovement(penguin){
     if (!penguin || !state.camera) return;
 
     const camera = state.camera;
-    const speed = 0.4;
+    const speed = isSprinting ? SPRINT_SPEED : WALK_SPEED;
 
     const forward = new THREE.Vector3();
     camera.getWorldDirection(forward);
@@ -85,8 +105,7 @@ export function updateMovement(penguin){
         }
 
         penguin.rotation.y = Math.atan2(moveVector.x, moveVector.z);
-
-        startWalking(penguin);
+        startWalking(penguin, isSprinting ? SPRINT_ANIMATION_FACTOR : 1);
     }
     else{
         stopWalking(penguin);

@@ -5,7 +5,7 @@ import {
     setChefCarryPose, animateChefCounterRelease, stackPlates, pickUpPlate, getFreeCounterSpot,
     startReadingMenu, stopReadingMenu, startCallingWaiter, stopCallingWaiter,
     stopEating, showAngerSymbol, hideAngerSymbol, createNameTag, triggerAngerFlap,
-    animateChefTrashToss, COUNTER_PLATE_X, COUNTER_PLATE_Y
+    animateChefTrashToss, releaseCounterSpot, COUNTER_PLATE_X, COUNTER_PLATE_Y
 } from './animations.js';
 import {
     configureCollisions, moveTowards, isAreaFree,
@@ -124,7 +124,10 @@ function canEnter(customer){
     if (!isSpotFree(entrySlot, customer)) return false;
     if (!isSpotFree(CUSTOMER_POSITIONS.DOOR_INSIDE, customer, DOOR_AREA_RADIUS)) return false;
 
-    return acquireDoorLane(customer);
+    if (!acquireDoorLane(customer)) return false;
+
+    customer.userData.pendingSlot = entrySlot;
+    return true;
 }
 
 function canExit(customer){
@@ -399,6 +402,7 @@ export function createPenguinModel(role, options = {}){
         pocketSeam.rotation.x = 0.36;
         penguinGroup.add(pocketSeam);
 
+        // Strings around the neck
         const leftNeckCurve = new THREE.CatmullRomCurve3([
             new THREE.Vector3(-0.45, 2.13, 0.99),
             new THREE.Vector3(-0.85, 2.2, 0.9),
@@ -663,9 +667,7 @@ export function updateRoutines(){
     }
     _dayWasInProgress = !!state.dayInProgress;
 
-    if (state.dayInProgress) {
-        updateCustomerSpawn();
-    }
+    if (state.dayInProgress) updateCustomerSpawn();
     
     penguins.forEach(penData => {
         const penguin = penData.mesh;
@@ -844,14 +846,11 @@ function updateChefRoutine(chef){
             chef.userData.timer--;
             setChefPickupPose(chef);
 
-            if (chef.userData.timer <= 0){
+            if (chef.userData.timer <= 0) {
                 const leftover = chef.userData.leftoverPlate;
 
-                if (leftover && leftover.parent === state.scene){
-                    const zIdx = state.platesOnCounter.findIndex(
-                        z => Math.abs(z - leftover.position.z) < 0.01
-                    );
-                    if (zIdx > -1) state.platesOnCounter.splice(zIdx, 1);
+                if (leftover && leftover.parent === state.scene) {
+                    releaseCounterSpot(leftover.position.z);
 
                     state.scene.remove(leftover);
                     leftover.userData.isInteractable = false;
@@ -860,7 +859,7 @@ function updateChefRoutine(chef){
 
                     chef.userData.state = 'WALK_TO_TRASH';
                 }
-                else{
+                else {
                     chef.userData.leftoverPlate = null;
                     chef.userData.state = 'WALK_IDLE';
                 }
@@ -959,7 +958,7 @@ function updateChefRoutine(chef){
                 chef.userData.hasPlate = true;
                 chef.userData.flipperTweenStarted = false;
                 const counterSpot = getFreeCounterSpot(KITCHEN_POS.COUNTER);
-                chef.userData.targetCounterZ = counterSpot.z;
+                chef.userData.targetCounterZ = counterSpot ? counterSpot.z : 0;
                 if (!chef.userData.flipperTweenStarted){
                     chef.userData.flipperTweenStarted = true;
                     pickUpPlate(chef, newplate);
@@ -1304,7 +1303,13 @@ function updateCustomerRoutine(customer) {
         }
 
         case 'WALK_TO_WAITING': {
-            const inSlot = insideSlotOf(customer);
+            let inSlot = customer.userData.pendingSlot;
+
+            if (!inSlot){
+                inSlot = insideSlotOf(customer);
+                customer.userData.pendingSlot = inSlot;
+            }
+
             if (!inSlot){
                 stopWalking(customer);
                 break;
@@ -1319,6 +1324,7 @@ function updateCustomerRoutine(customer) {
                 customer.rotation.y = -Math.PI/2;
                 stopWalking(customer);
                 releaseDoorLane(customer);
+                customer.userData.pendingSlot = null;
                 customer.userData.state = 'WAIT_FOR_WAITER';
                 break;
             }
@@ -1331,6 +1337,7 @@ function updateCustomerRoutine(customer) {
             if (moveTowards(customer, inSlot)){
                 customer.rotation.y = -Math.PI/2;
                 releaseDoorLane(customer);
+                customer.userData.pendingSlot = null;
                 customer.userData.state = 'WAIT_FOR_WAITER';
             }
             break;
@@ -1363,6 +1370,7 @@ function updateCustomerRoutine(customer) {
             const assignedSpot = insideSlotOf(customer);
             if (assignedSpot && customer.position.distanceTo(assignedSpot) > 0.5 && isSpotFree(assignedSpot, customer)){
                 customer.userData.targetPosition = assignedSpot;
+                customer.userData.pendingSlot = assignedSpot;
                 customer.userData.state = 'WALK_TO_WAITING';
             }
             else{
@@ -1558,6 +1566,7 @@ function updateCustomerRoutine(customer) {
         case 'LEAVING': {
             if (customer.userData.subState === undefined) {
                 removeFromQueue(customer);
+                customer.userData.pendingSlot = null;
                 if (!leavingQueue.includes(customer)) leavingQueue.push(customer);
 
                 if (Array.isArray(state.orders)){

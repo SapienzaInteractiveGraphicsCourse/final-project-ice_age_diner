@@ -1,4 +1,4 @@
-import { animateInteractable, pickUpPlate, putDownPlate, putPlateOnCounter, stackPlates, stopCallingWaiter, startEating, hideAngerSymbol, updateBubble, shakeHead, showWarningPopup } from './animations.js';
+import { animateInteractable, pickUpPlate, putDownPlate, putPlateOnCounter, releaseCounterSpot, stackPlates, stopCallingWaiter, startEating, hideAngerSymbol, updateBubble, shakeHead, showWarningPopup } from './animations.js';
 import { penguins, waitingQueue, KITCHEN_POS } from './penguin.js';
 import { state } from './state.js';
 
@@ -121,10 +121,7 @@ function onMouseClick(event){
 
                 if (waiter && waiter.userData.hasPlate === false){
                     console.log("Plate interaction: picking up the first plate.");
-                    const index = state.platesOnCounter.indexOf(clickedObj.position.z);
-                    if (index > -1) {
-                        state.platesOnCounter.splice(index, 1);
-                    }
+                    releaseCounterSpot(clickedObj.position.z);
                     interactionScene.remove(clickedObj);
                     pickUpPlate(waiter, clickedObj);
                     clickedObj.userData.isInteractable = false;
@@ -188,10 +185,16 @@ function onMouseClick(event){
                     const heldPlate = waiter.userData.plate;
 
                     if (heldPlate.userData.interactionType === 'plate'){
-                        console.log("Counter interaction: putting the plate back on the counter.");
-                        state.puttingPlateSound.play();
-                        putPlateOnCounter(waiter, interactionScene, KITCHEN_POS.COUNTER);
-                        state.heldFood = null;
+                        const placed = putPlateOnCounter(waiter, interactionScene, KITCHEN_POS.COUNTER);
+
+                        if (placed){
+                            console.log("Counter interaction: putting the plate back on the counter.");
+                            state.puttingPlateSound.play();
+                            state.heldFood = null;
+                        }
+                        else {
+                            showWarningPopup("There's no free spot on the counter!");
+                        }
                     }
                     else {
                         showWarningPopup("Dirty plates go on the tray, not on the counter.");
@@ -225,11 +228,14 @@ function onMouseClick(event){
                         
                         waiter.userData.hasPlate = false;
                         waiter.userData.plate = null;
-                        new TWEEN.Tween(waiter.userData.rightFlipper.rotation).to({ x: 0, y: 0, z: Math.PI/6 }, 300).easing(TWEEN.Easing.Quadratic.In).start();
+                        new TWEEN.Tween(waiter.userData.rightFlipper.rotation)
+                            .to({ x: 0, y: 0, z: Math.PI/6 }, 300)
+                            .easing(TWEEN.Easing.Quadratic.In)
+                            .start();
                     }
                 
                 }
-                else {
+                else{
                     console.log("problem with tray interaction: waiter doesn't have a plate or the plate is not dirty.");
                 }
                 
