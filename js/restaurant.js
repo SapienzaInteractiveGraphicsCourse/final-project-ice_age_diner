@@ -400,6 +400,11 @@ export function buildRestaurant() {
     controls.screenSpacePanning = true;
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
+    controls.mouseButtons = {
+        LEFT: THREE.MOUSE.PAN,
+        MIDDLE: THREE.MOUSE.DOLLY,
+        RIGHT: THREE.MOUSE.ROTATE
+    };
 
     state.gameControls = controls;
     window.addEventListener('resize', onWindowResize, false);
@@ -444,8 +449,6 @@ export function buildRestaurant() {
     loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, -23, Math.PI/2);
     loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, -28.5, Math.PI/2);
     loadFurniture(scene, 'models/furniture/kitchenCabinet.glb', -74, -34, Math.PI/2);
-    
-    //parametri: quanto vai a destra, vai indietro, rotazione, altezza, quanto piccolo
 
     loadFurniture(scene, 'models/furniture/bookcaseClosedWide.glb', -74, -40, 2*Math.PI, 0, 18);
     //lev0
@@ -576,8 +579,8 @@ export function buildRestaurant() {
 
     loadFurniture(scene, 'models/furniture/LOGO.glb', 77, 0, -Math.PI/2, 20, 9, 0, 0, 0, 0);
 
-    //Light directed towards the logo in the main room
-    function createCentralSpotlight(x, y, z, targetZ){
+    // SPotlight aimed at the logo
+    function createCentralSpotlight(x, y, z, targetZ) {
         const fixtureGeometry = new THREE.CylinderGeometry(0.3, 0.4, 1.2, 16);
         const fixtureMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, metalness: 0.8 });
         const fixtureMesh = new THREE.Mesh(fixtureGeometry, fixtureMaterial);
