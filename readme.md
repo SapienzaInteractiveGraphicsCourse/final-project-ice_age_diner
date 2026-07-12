@@ -59,6 +59,7 @@ Below is the organizational tree of the application codebase and asset repositor
 │   ├── penguin.js
 │   ├── restaurant.js
 │   ├── state.js
+|   ├── utils.js
 ├── models/
 │   ├── food/
 │   │   └── *.glb
