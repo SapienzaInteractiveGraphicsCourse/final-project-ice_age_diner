@@ -693,6 +693,8 @@ export function buildRestaurant() {
     });
 
     loadEnvironment(scene, state.icebergs);
+    installCameraWallGuard(camera, controls);
+    
     animate(waiter, camera, state.icebergs);
     scene.traverse(function(child) {
         if (child.isMesh && child.material === wallMaterial) {
@@ -714,6 +716,61 @@ export function buildRestaurant() {
     if (state.ambientLight) {
         state.ambientLight.intensity = 0.6;
     }
+}
+
+const ROOM_BOUNDS = {
+    minX: -79, maxX: 79,
+    minY: 1,   maxY: 28,
+    minZ: -44, maxZ: 44
+};
+
+const CAMERA_SKIN = 0.4;
+const CAMERA_MIN_DISTANCE = 0.3;
+let cameraOrbitPosition = null;
+
+function installCameraWallGuard(camera, controls){
+    const rawUpdate = controls.update.bind(controls);
+
+    controls.update = function(){
+        if (cameraOrbitPosition) camera.position.copy(cameraOrbitPosition);
+
+        const changed = rawUpdate();
+
+        cameraOrbitPosition = camera.position.clone();
+        keepCameraInsideRoom(camera, controls.target);
+
+        return changed;
+    };
+}
+
+function distanceToRoomExit(origin, dir){
+    let maxT = Infinity;
+
+    const axisLimit = (o, d, min, max) => {
+        if (Math.abs(d) < 1e-6) return Infinity;
+        const t = (d > 0) ? (max - o) / d : (min - o) / d;
+        return (t > 0) ? t : Infinity;
+    };
+
+    maxT = Math.min(maxT, axisLimit(origin.x, dir.x, ROOM_BOUNDS.minX, ROOM_BOUNDS.maxX));
+    maxT = Math.min(maxT, axisLimit(origin.y, dir.y, ROOM_BOUNDS.minY, ROOM_BOUNDS.maxY));
+    maxT = Math.min(maxT, axisLimit(origin.z, dir.z, ROOM_BOUNDS.minZ, ROOM_BOUNDS.maxZ));
+
+    return maxT;
+}
+
+function keepCameraInsideRoom(camera, target){
+    const dir = new THREE.Vector3().subVectors(camera.position, target);
+    const distance = dir.length();
+    if (distance < 1e-4) return;
+
+    dir.divideScalar(distance);
+
+    const maxDistance = distanceToRoomExit(target, dir) - CAMERA_SKIN;
+    if (maxDistance >= distance) return;
+
+    const clamped = Math.max(maxDistance, CAMERA_MIN_DISTANCE);
+    camera.position.copy(target).addScaledVector(dir, clamped);
 }
 
 function animate(waiter, camera, icebergs){
@@ -742,6 +799,12 @@ function animate(waiter, camera, icebergs){
         camera.position.x += deltaX;
         camera.position.y += deltaY;
         camera.position.z += deltaZ;
+
+        if (cameraOrbitPosition){
+            cameraOrbitPosition.x += deltaX;
+            cameraOrbitPosition.y += deltaY;
+            cameraOrbitPosition.z += deltaZ;
+        }
 
         state.gameControls.target.set(currentTargetX, currentTargetY, currentTargetZ);
     }

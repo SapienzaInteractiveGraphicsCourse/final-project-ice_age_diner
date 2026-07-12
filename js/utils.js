@@ -27,7 +27,8 @@ export function createBubbleTexture(textOrFood) {
             
             texture.needsUpdate = true;
         };
-    } else {
+    }
+    else{
         ctx.fillStyle = 'black';
         ctx.font = 'bold 40px Arial';
         ctx.textAlign = 'center';
