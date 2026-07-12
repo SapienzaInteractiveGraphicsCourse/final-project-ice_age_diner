@@ -5,7 +5,7 @@ import {
     setChefCarryPose, animateChefCounterRelease, stackPlates, pickUpPlate, getFreeCounterSpot,
     startReadingMenu, stopReadingMenu, startCallingWaiter, stopCallingWaiter,
     stopEating, showAngerSymbol, hideAngerSymbol, createNameTag, triggerAngerFlap,
-    animateChefTrashToss
+    animateChefTrashToss, COUNTER_PLATE_X, COUNTER_PLATE_Y
 } from './animations.js';
 import {
     configureCollisions, moveTowards, isAreaFree,
@@ -21,18 +21,19 @@ export const KITCHEN_POS = {
     FRIDGE: new THREE.Vector3(-65, 0, 24),
     TRASH: new THREE.Vector3(-64, 0, 27),
     STOVE: new THREE.Vector3(-65, 0, 4.5),
-    COUNTER: new THREE.Vector3(-42, 0, 0),
+    COUNTER: new THREE.Vector3(-44, 0, 0),
     IDLE_CHEF: new THREE.Vector3(-55, 0, 5),
     IDLE_WAITER: new THREE.Vector3(-10, 0, 10),
     IDLE_DISHWASHER: new THREE.Vector3(-55, 0, -18),
     SINK: new THREE.Vector3(-65, 0, -12),
-    COUNTER_DISHWASHER: new THREE.Vector3(-42, 0, -18)
+    COUNTER_DISHWASHER: new THREE.Vector3(-44, 0, -18)
 };
 
 export const CUSTOMER_POSITIONS = {
     SPAWN: new THREE.Vector3(124, 0, 20),
     DOOR_OUTSIDE: new THREE.Vector3(84, 0, 10), 
     DOOR_INSIDE: new THREE.Vector3(74, 0, 10),
+    DOOR_WAIT_INSIDE: new THREE.Vector3(68, 0, 10),
     DOOR_INSIDE_LEAVE: new THREE.Vector3(65, 0, 10),
     DESPAWN: new THREE.Vector3(124, 0, 10)
 };
@@ -40,6 +41,8 @@ export const CUSTOMER_POSITIONS = {
 const ANGER_THRESHOLD = 1200;
 const CUSTOMER_SPEED = 0.25;
 const CUSTOMER_ANGRY_SPEED = 0.42;
+
+const DOOR_ANIMATION_FRAMES = 60;
 
 const QUEUE_START_X = 74;
 const QUEUE_START_Z = 36;
@@ -61,7 +64,7 @@ const OUTSIDE_POSITIONS = WAITING_POSITION.slice(3);
 export const leavingQueue = [];
 
 const SLOT_CLEAR_RADIUS = 4.0;
-const DOOR_AREA_RADIUS  = 5.0;
+const DOOR_AREA_RADIUS = 5.0;
 const DOOR_CLEAR_Z = 20;
 
 configureCollisions({
@@ -192,8 +195,12 @@ function forceLeavingProgress(customer){
             break;
 
         case 'WALK_TO_DOOR_INSIDE':
+            ud.timer = DOOR_ANIMATION_FRAMES;
             ud.subState = 'WAIT_FOR_DOOR';
-            ud.timer = 60;
+            break;
+
+        case 'WAIT_FOR_DOOR':
+            ud.subState = 'WALK_TO_DOOR_OUTSIDE';
             break;
 
         case 'WALK_TO_DOOR_OUTSIDE':
@@ -773,7 +780,7 @@ function updateMainDoorState() {
         const sub = mesh.userData.subState;
         const isLeaving = (
             s === 'LEAVING' && (
-                (sub === 'WALK_TO_DOOR_INSIDE' && mesh.position.distanceTo(CUSTOMER_POSITIONS.DOOR_INSIDE) < 8) ||
+                (sub === 'WALK_TO_DOOR_INSIDE' && mesh.position.distanceTo(CUSTOMER_POSITIONS.DOOR_WAIT_INSIDE) < 8) ||
                 sub === 'WAIT_FOR_DOOR' ||
                 sub === 'WALK_TO_DOOR_OUTSIDE' ||
                 (sub === 'WALK_TO_DESPAWN' && mesh.position.distanceTo(CUSTOMER_POSITIONS.DOOR_OUTSIDE) < 8)
@@ -961,47 +968,55 @@ function updateChefRoutine(chef){
             }
             break;
 
-        case 'WALK_COUNTER':
+        case 'WALK_COUNTER': {
             const targetCounter = new THREE.Vector3(KITCHEN_POS.COUNTER.x, 0, chef.userData.targetCounterZ);
             const reachedCounter = moveTowards(chef, targetCounter);
-            
+
             if (chef.userData.hasPlate) {
                 setChefCarryPose(chef);
             }
 
             if (reachedCounter) {
                 chef.rotation.y = Math.PI / 2;
-                chef.userData.timer = 60;
+                chef.userData.timer = 80;
+                chef.userData.counterTweenStarted = false;
                 chef.userData.state = 'ACTION_COUNTER';
-                
             }
             break;
+        }
 
         case 'ACTION_COUNTER':
-            chef.userData.timer--;
+            if (!chef.userData.counterTweenStarted) {
+                chef.userData.counterTweenStarted = true;
 
-            if (chef.userData.timer <= 0) {
-                chef.userData.counterTweenStarted = false;
-                if (chef.userData.hasPlate && chef.children.find(child => child.name === 'plate')) {
-                    if (!chef.userData.counterTweenStarted) {
-                        chef.userData.counterTweenStarted = true;
-                        animateChefCounterRelease(chef);
-                    }
-                    chef.userData.hasPlate = false;
-                    const counterSpot = getFreeCounterSpot(KITCHEN_POS.COUNTER);
-                    const completedOrder = chef.children.find(child => child.name === 'plate')
-                    chef.remove(completedOrder);
+                const completedOrder = chef.children.find(child => child.name === 'plate');
+
+                const dropPosition = new THREE.Vector3(
+                    COUNTER_PLATE_X,
+                    KITCHEN_POS.COUNTER.y + COUNTER_PLATE_Y,
+                    chef.userData.targetCounterZ
+                );
+
+                animateChefCounterRelease(chef, completedOrder, state.scene, dropPosition, () => {
+                    if (!completedOrder) return;
+
                     completedOrder.userData.isInteractable = true;
                     completedOrder.userData.interactionType = 'plate';
-                    state.scene.add(completedOrder);
 
-                    completedOrder.position.set(-36, KITCHEN_POS.COUNTER.y + 4.6, chef.userData.targetCounterZ);
-                    completedOrder.rotation.set(0, 0, 0);
-                    completedOrder.scale.set(4,4,4);
-                    chef.userData.currentOrder.status = 'ready';
+                    if (chef.userData.currentOrder) {
+                        chef.userData.currentOrder.status = 'ready';
+                    }
                     state.foodReadySound.play();
-                }
-                
+                });
+
+                chef.userData.hasPlate = false;
+                chef.userData.plate = null;
+            }
+
+            chef.userData.timer--;
+            if (chef.userData.timer <= 0) {
+                chef.userData.counterTweenStarted = false;
+
                 if (state.orders.length > 0 && state.orders.some(order => order.status === 'pending')) {
                     const nextOrder = state.orders.find(order => order.status === 'pending');
                     if (nextOrder) {
@@ -1636,21 +1651,24 @@ function updateCustomerRoutine(customer) {
                 }
             }
             else if (customer.userData.subState === 'WALK_TO_DOOR_INSIDE') {
-                if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_INSIDE)){
-                    const mainDoor = getMainDoor(customer);
-                    if (!mainDoor || !mainDoor.userData.isOpen){
-                        customer.userData.subState = 'WAIT_FOR_DOOR';
-                        customer.userData.timer = 60;
-                    }
-                    else {
-                        customer.userData.subState = 'WALK_TO_DOOR_OUTSIDE';
-                    }
+                if (moveTowards(customer, CUSTOMER_POSITIONS.DOOR_WAIT_INSIDE)){
+                    customer.userData.timer = DOOR_ANIMATION_FRAMES;
+                    customer.userData.subState = 'WAIT_FOR_DOOR';
                 }
             }
             else if (customer.userData.subState === 'WAIT_FOR_DOOR') {
-                customer.userData.timer--;
-                if (customer.userData.timer <= 0) {
-                    customer.userData.subState = 'WALK_TO_DOOR_OUTSIDE';
+                stopWalking(customer);
+
+                const mainDoor = getMainDoor(customer);
+
+                if (!mainDoor || !mainDoor.userData.isOpen) {
+                    customer.userData.timer = DOOR_ANIMATION_FRAMES;
+                }
+                else {
+                    customer.userData.timer--;
+                    if (customer.userData.timer <= 0) {
+                        customer.userData.subState = 'WALK_TO_DOOR_OUTSIDE';
+                    }
                 }
             }
             else if (customer.userData.subState === 'WALK_TO_DOOR_OUTSIDE') {

@@ -606,7 +606,7 @@ export function getFreeCounterSpot(basePosition) {
     const COUNTER_Z_MIN = -5; 
     const COUNTER_Z_MAX = 20;
     const TRAY_Z = -18;          
-    const SAFE_DISTANCE = 3.5; 
+    const SAFE_DISTANCE = 2.5; 
 
     let freeZ = 0;
     let isOccupied = true;
@@ -649,23 +649,14 @@ export function pickUpPlate(penguin, plateGroup){
 
     if (penguin.userData.role === 'chef'){
         plateGroup.position.set(2.3, 1.8, 0.4);
-        new TWEEN.Tween(penguin.userData.rightFlipper.rotation)
-            .to({ x: Math.PI/2, y: Math.PI/2, z: Math.PI/2.8 }, 300)
-            .easing(TWEEN.Easing.Quadratic.Out)
-            .start();
+        new TWEEN.Tween(penguin.userData.rightFlipper.rotation).to({ x: Math.PI/2, y: Math.PI/2, z: Math.PI/2.8 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
     }
     else {
         plateGroup.position.set(2.0, 1.8, 0.5);
-        new TWEEN.Tween(penguin.userData.rightFlipper.rotation)
-            .to({ x: -Math.PI/2.2, y: 0, z: Math.PI/8 }, 300)
-            .easing(TWEEN.Easing.Quadratic.Out)
-            .start();
+        new TWEEN.Tween(penguin.userData.rightFlipper.rotation).to({ x: -Math.PI/2.2, y: 0, z: Math.PI/8 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
     }
     
-    new TWEEN.Tween(penguin.userData.leftFlipper.rotation)
-        .to({ x: 0 }, 300)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .start();
+    new TWEEN.Tween(penguin.userData.leftFlipper.rotation).to({ x: 0 }, 300).easing(TWEEN.Easing.Quadratic.Out).start();
 
     penguin.userData.hasPlate = true;
     penguin.userData.plate = plateGroup;
@@ -685,10 +676,7 @@ export function putDownPlate(waiter, scene, customer){
     plate.position.set(customer.position.x + (forward.x*6), 5.5, customer.position.z + (forward.z*6));
     plate.rotation.set(0, 0, 0);
 
-    new TWEEN.Tween(waiter.userData.rightFlipper.rotation)
-        .to({ x: 0, y: 0, z: Math.PI/6 }, 300)
-        .easing(TWEEN.Easing.Quadratic.In)
-        .start();
+    new TWEEN.Tween(waiter.userData.rightFlipper.rotation).to({ x: 0, y: 0, z: Math.PI/6 }, 300).easing(TWEEN.Easing.Quadratic.In).start();
 
     waiter.userData.hasPlate = false;
     waiter.userData.plate = null;
@@ -696,9 +684,8 @@ export function putDownPlate(waiter, scene, customer){
     return plate;
 }
 
-const COUNTER_TOP_X = -36;
-const COUNTER_TOP_Y = 4.6;
-
+export const COUNTER_PLATE_X = -37.5;
+export const COUNTER_PLATE_Y = 4.6;
 export function putPlateOnCounter(waiter, scene, counterBase){
     const plate = waiter.userData.plate;
     if (!plate) return null;
@@ -709,17 +696,14 @@ export function putPlateOnCounter(waiter, scene, counterBase){
     waiter.remove(plate);
     scene.add(plate);
 
-    plate.position.set(COUNTER_TOP_X, counterBase.y + COUNTER_TOP_Y, spot.z);
+    plate.position.set(COUNTER_PLATE_X, counterBase.y + COUNTER_PLATE_Y, spot.z);
     plate.rotation.set(0, 0, 0);
     plate.scale.set(4, 4, 4);
 
     plate.userData.isInteractable = true;
     plate.userData.interactionType = 'plate';
 
-    new TWEEN.Tween(waiter.userData.rightFlipper.rotation)
-        .to({ x: 0, y: 0, z: Math.PI/6 }, 300)
-        .easing(TWEEN.Easing.Quadratic.In)
-        .start();
+    new TWEEN.Tween(waiter.userData.rightFlipper.rotation).to({ x: 0, y: 0, z: Math.PI/6 }, 300).easing(TWEEN.Easing.Quadratic.In).start();
 
     waiter.userData.hasPlate = false;
     waiter.userData.plate = null;
@@ -731,7 +715,6 @@ export function animateChefTrashToss(chef){
     const right = chef.userData.rightFlipper;
 
     new TWEEN.Tween(right.rotation).to({ x: -Math.PI/1.6, y: 0, z: Math.PI/8 }, 240).easing(TWEEN.Easing.Quadratic.Out).start();
-
     new TWEEN.Tween(right.rotation).to({ x: Math.PI/5, y: 0, z: Math.PI/6 }, 180).easing(TWEEN.Easing.Quadratic.In).delay(270).start();
 }
 
@@ -823,14 +806,48 @@ export function setChefCarryPose(chef){
 
 // One-shot tween sequence for setting the plate down on the counter and
 // bringing the flippers back to rest
-export function animateChefCounterRelease(chef){
-    //const finalReleaseAngle = -Math.PI/2.5 + (Math.PI/4);
-    const finalReleaseAngle = -0.3;
+export function animateChefCounterRelease(chef, plate, scene, targetPosition, onPlaced){
+    const left = chef.userData.leftFlipper;
+    const right = chef.userData.rightFlipper;
 
-    new TWEEN.Tween(chef.userData.leftFlipper.rotation).to({ x: finalReleaseAngle, y: 0, z: -Math.PI/16 }, 400).easing(TWEEN.Easing.Quadratic.Out).start();
-    new TWEEN.Tween(chef.userData.rightFlipper.rotation).to({ x: finalReleaseAngle, y: 0, z: Math.PI/16 }, 400).easing(TWEEN.Easing.Quadratic.Out).start();
-    new TWEEN.Tween(chef.userData.leftFlipper.rotation).to({ x: 0, y: 0, z: -Math.PI/6 }, 300).easing(TWEEN.Easing.Quadratic.Out).delay(660).start();
-    new TWEEN.Tween(chef.userData.rightFlipper.rotation).to({ x: 0, y: 0, z: Math.PI/6 }, 300).easing(TWEEN.Easing.Quadratic.Out).delay(660).start();
+    const REACH_MS = 380;
+    const SLIDE_MS = 450;
+
+    new TWEEN.Tween(right.rotation).to({ x: -Math.PI/2.1, y: -Math.PI/9, z: Math.PI/12 }, REACH_MS).easing(TWEEN.Easing.Quadratic.Out).start();
+    new TWEEN.Tween(left.rotation).to({ x: -Math.PI/2.4, y: Math.PI/9, z: -Math.PI/12 }, REACH_MS).easing(TWEEN.Easing.Quadratic.Out).start();
+
+    const backToRest = () => {
+        new TWEEN.Tween(right.rotation).to({ x: 0, y: 0, z: Math.PI/6 }, 320).easing(TWEEN.Easing.Quadratic.InOut).delay(180).start();
+        new TWEEN.Tween(left.rotation).to({ x: 0, y: 0, z: -Math.PI/6 }, 320).easing(TWEEN.Easing.Quadratic.InOut).delay(180).start();
+    };
+
+    if (!plate){
+        backToRest();
+        if (typeof onPlaced === 'function') onPlaced();
+        return;
+    }
+
+    new TWEEN.Tween(plate.position).to({ x: 1.2, y: 2.0, z: 2.0 }, REACH_MS).easing(TWEEN.Easing.Quadratic.Out)
+        .onComplete(() => {
+            const worldPos = new THREE.Vector3();
+            plate.getWorldPosition(worldPos);
+
+            chef.remove(plate);
+            scene.add(plate);
+
+            plate.position.copy(worldPos);
+            plate.rotation.set(0, chef.rotation.y, 0);
+            plate.scale.set(4.4, 4.4, 4.4);
+
+            new TWEEN.Tween(plate.position).to({ x: targetPosition.x, y: targetPosition.y, z: targetPosition.z }, SLIDE_MS).easing(TWEEN.Easing.Quadratic.InOut).start();
+            new TWEEN.Tween(plate.rotation).to({ y: 0 }, SLIDE_MS).easing(TWEEN.Easing.Quadratic.InOut).start();
+            new TWEEN.Tween(plate.scale).to({ x: 4, y: 4, z: 4 }, SLIDE_MS).easing(TWEEN.Easing.Quadratic.InOut).start();
+
+            backToRest();
+
+            if (typeof onPlaced === 'function') onPlaced();
+        })
+        .start();
 }
 
 export function shakeHead(penguin, onComplete) {
